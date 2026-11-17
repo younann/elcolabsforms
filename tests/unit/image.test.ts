@@ -66,4 +66,21 @@ describe('compressImage', () => {
     expect(cib).toHaveBeenCalledOnce();
     expect(draw).toHaveBeenCalledWith(expect.anything(), 0, 0, 800, 600);
   });
+
+  test('png mode keeps transparency and caps the long edge', async () => {
+    const cib = vi
+      .fn()
+      .mockResolvedValueOnce({ width: 2000, height: 1000, close() {} })
+      .mockResolvedValueOnce({ width: 800, height: 400, close() {} });
+    vi.stubGlobal('createImageBitmap', cib);
+    const fill = vi.fn();
+    const draw = vi.fn();
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({ fillRect: fill, drawImage: draw, fillStyle: '' } as never);
+    const toBlob = vi.spyOn(HTMLCanvasElement.prototype, 'toBlob').mockImplementation((cb) => cb(new Blob(['x'], { type: 'image/png' })));
+    const out = await compressImage(new File(['x'], 's.png', { type: 'image/png' }), { maxEdge: 800, png: true });
+    expect(out.type).toBe('image/png');
+    expect(toBlob.mock.calls[0][1]).toBe('image/png');
+    expect(fill).not.toHaveBeenCalled();
+    expect(draw).toHaveBeenCalledWith(expect.anything(), 0, 0, 800, 400);
+  });
 });

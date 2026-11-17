@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { ImageSquare, UploadSimple, WarningOctagon } from '@phosphor-icons/react';
 import { api, ApiError } from '../../lib/api';
 import { useLoad } from '../../lib/useLoad';
+import { compressImage } from '../../lib/image';
 import { Button, EmptyState, TextArea, TextField, toast } from '../../ui';
 
 type S = { recipientEmail: string; companyName: string; companyDetails: string; hasStamp: boolean };
@@ -103,8 +104,10 @@ function StampCard({ hasStamp }: { hasStamp: boolean }) {
     setBusy(true);
     setPreview(URL.createObjectURL(file));
     try {
+      // png keeps the stamp transparent
+      const small = await compressImage(file, { maxEdge: 800, png: true });
       const fd = new FormData();
-      fd.set('file', file, file.name);
+      fd.set('file', small, 'stamp.png');
       await api('/api/settings/stamp', { method: 'PUT', body: fd });
       setSrc(`/api/settings/stamp?v=${Date.now()}`);
       toast.success('החותמת עודכנה');

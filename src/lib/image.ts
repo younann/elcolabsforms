@@ -41,10 +41,12 @@ async function resized(img: Decoded, w: number, h: number): Promise<Decoded> {
   }
 }
 
-/** JPEG, long edge at most 1600px, quality 0.8. */
-export async function compressImage(file: File | Blob): Promise<Blob> {
+export type CompressOptions = { maxEdge?: number; png?: boolean };
+
+/** JPEG, long edge at most 1600px, quality 0.8; `png` keeps transparency. */
+export async function compressImage(file: File | Blob, { maxEdge = MAX_EDGE, png = false }: CompressOptions = {}): Promise<Blob> {
   const full = await decode(file);
-  const scale = Math.min(1, MAX_EDGE / Math.max(full.w, full.h));
+  const scale = Math.min(1, maxEdge / Math.max(full.w, full.h));
   const w = Math.max(1, Math.round(full.w * scale));
   const h = Math.max(1, Math.round(full.h * scale));
   const img = await resized(full, w, h);
@@ -54,11 +56,13 @@ export async function compressImage(file: File | Blob): Promise<Blob> {
     canvas.height = h;
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('canvas unavailable');
-    // white under transparent PNGs
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(0, 0, w, h);
+    if (!png) {
+      // white under transparent PNGs
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, w, h);
+    }
     ctx.drawImage(img.src, 0, 0, w, h);
-    const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, 'image/jpeg', QUALITY));
+    const blob = await new Promise<Blob | null>((r) => (png ? canvas.toBlob(r, 'image/png') : canvas.toBlob(r, 'image/jpeg', QUALITY)));
     if (!blob) throw new Error('encode failed');
     return blob;
   } finally {
