@@ -14,7 +14,7 @@ if (existing.length) {
   console.log('exists');
 } else {
   await db.insert(schema.users).values({
-    username,
+    username: username.toLowerCase(),
     displayName: username,
     passwordHash: await bcrypt.hash(password, 10),
     role: 'admin',
