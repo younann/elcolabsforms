@@ -1,6 +1,10 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { timingSafeEqual } from 'node:crypto';
+import { randomUUID, timingSafeEqual } from 'node:crypto';
+import { rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { Report, type ReportProps } from '../shared/pdf/Report';
 import { FONT_CSS, PRINT_CSS } from '../shared/pdf/assets.gen';
 import type { FormDef } from '../shared/forms/types';
@@ -35,15 +39,20 @@ export async function htmlToPdf(html: string, opts: { footerText?: string } = {}
   let args: string[] = ['--no-sandbox'];
   if (!local) {
     const { default: chromium } = await import('@sparticuz/chromium');
+    chromium.setGraphicsMode = false;
     executablePath = await chromium.executablePath();
     args = await puppeteer.defaultArgs({ args: chromium.args, headless: 'shell' });
   }
-  const browser = await puppeteer.launch({ executablePath, args, headless: 'shell' });
+    // file load avoids pushing large html over the protocol
+  const file = join(tmpdir(), `report-${randomUUID()}.html`);
+  await writeFile(file, html);
+  const browser = await puppeteer.launch({ executablePath, args, headless: 'shell', protocolTimeout: 180_000 });
   try {
     const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'load' });
+    await page.goto(pathToFileURL(file).href, { waitUntil: 'load', timeout: 120_000 });
     await page.evaluate(() => document.fonts.ready);
     const pdf = await page.pdf({
+      timeout: 120_000,
       format: 'A4',
       printBackground: true,
       preferCSSPageSize: true,
@@ -53,7 +62,8 @@ export async function htmlToPdf(html: string, opts: { footerText?: string } = {}
     });
     return Buffer.from(pdf);
   } finally {
-    await browser.close();
+    await browser.close().catch(() => undefined);
+    await rm(file, { force: true });
   }
 }
 

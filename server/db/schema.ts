@@ -58,6 +58,7 @@ export const submissions = pgTable(
     emailedAt: timestamp('emailed_at', { withTimezone: true }),
     pdfKey: text('pdf_key'),
     sendError: text('send_error'),
+    sendClaimedAt: timestamp('send_claimed_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },

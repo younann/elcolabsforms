@@ -1,4 +1,4 @@
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, isNull, lt, or, sql } from 'drizzle-orm';
 import { getDb, schema } from '../../server/db/client';
 import { getBlob, putBlob, dataUrl } from '../../server/blobs';
 import { sendMail } from '../../server/mail';
@@ -6,7 +6,7 @@ import { htmlToPdf, internalKeyOk, pdfKey, renderReportHtml, reportSubject } fro
 import { getForm } from '../../shared/forms';
 import type { FormData } from '../../shared/forms/types';
 import type { ReportImages } from '../../shared/pdf/Report';
-import { loadSettings } from './settings.mts';
+import { loadSettings } from '../../server/settings';
 
 const blobUrl = async (key: string | null | undefined) => {
   if (!key) return undefined;
@@ -20,12 +20,27 @@ const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
 const ilDate = (d: Date) =>
   new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
 
-async function run(id: string) {
+const CLAIM_MINUTES = 14;
+
+// true when this run claimed the row
+async function run(id: string): Promise<boolean> {
   const db = getDb();
-  const [sub] = await db.select().from(schema.submissions).where(eq(schema.submissions.id, id));
-  if (!sub || sub.status !== 'sending') {
-    console.log('report skipped', id, sub?.status);
-    return;
+  const S = schema.submissions;
+  // claim the row; a stale claim (crashed run) may be taken over
+  const [sub] = await db
+    .update(S)
+    .set({ sendClaimedAt: new Date() })
+    .where(
+      and(
+        eq(S.id, id),
+        eq(S.status, 'sending'),
+        or(isNull(S.sendClaimedAt), lt(S.sendClaimedAt, sql`now() - interval '${sql.raw(String(CLAIM_MINUTES))} minutes'`)),
+      ),
+    )
+    .returning();
+  if (!sub) {
+    console.log('report skipped, not claimable', id);
+    return false;
   }
   const def = getForm(sub.formId, sub.formVersion);
   const data = (sub.data ?? {}) as FormData;
@@ -77,8 +92,9 @@ async function run(id: string) {
 
   await db
     .update(schema.submissions)
-    .set({ status: 'emailed', pdfKey: key, emailedAt: new Date(), sendError: null, updatedAt: new Date() })
-    .where(and(eq(schema.submissions.id, id), eq(schema.submissions.status, 'sending')));
+    .set({ status: 'emailed', pdfKey: key, emailedAt: new Date(), sendError: null, sendClaimedAt: null, updatedAt: new Date() })
+    .where(and(eq(S.id, id), eq(S.status, 'sending')));
+  return true;
 }
 
 export default async (req: Request) => {
@@ -98,10 +114,14 @@ export default async (req: Request) => {
   } catch (e) {
     console.error('report failed', id, e);
     const msg = (e instanceof Error ? e.message : String(e)).slice(0, 500);
-    await getDb()
-      .update(schema.submissions)
-      .set({ status: 'send_failed', sendError: msg, updatedAt: new Date() })
-      .where(and(eq(schema.submissions.id, id), eq(schema.submissions.status, 'sending')));
+    try {
+      await getDb()
+        .update(schema.submissions)
+        .set({ status: 'send_failed', sendError: msg, sendClaimedAt: null, updatedAt: new Date() })
+        .where(and(eq(schema.submissions.id, id), eq(schema.submissions.status, 'sending')));
+    } catch (e2) {
+      console.error('report failure not recorded', id, e2);
+    }
   }
   return new Response(null, { status: 202 });
 };

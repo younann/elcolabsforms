@@ -120,6 +120,10 @@ describe('report helpers', () => {
     expect(internalKeyOk('k1', { INTERNAL_KEY: 'k1' })).toBe(true);
     expect(internalKeyOk('k2', { INTERNAL_KEY: 'k1' })).toBe(false);
     expect(internalKeyOk(null, { INTERNAL_KEY: 'k1' })).toBe(false);
+    expect(internalKeyOk('', { INTERNAL_KEY: 'k1' })).toBe(false);
+    expect(internalKeyOk('', { INTERNAL_KEY: 'k1', APP_URL: 'http://localhost:8888' })).toBe(false);
+    expect(internalKeyOk('', { INTERNAL_KEY: '', APP_URL: 'https://forms.example.com' })).toBe(false);
+    expect(internalKeyOk('', { APP_URL: 'http://localhost:8888' })).toBe(true);
     expect(internalKeyOk(null, { APP_URL: 'http://localhost:8888' })).toBe(true);
     expect(internalKeyOk(null, { APP_URL: 'https://forms.example.com' })).toBe(false);
     expect(internalKeyOk(null, {})).toBe(false);
