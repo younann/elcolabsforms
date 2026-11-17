@@ -118,7 +118,11 @@ export default handle(async (req) => {
   if (sub) throw new HttpError(404, 'לא נמצא');
 
   if (req.method === 'GET') {
-    const attachments = await db.select().from(schema.attachments).where(eq(schema.attachments.submissionId, id));
+    const attachments = await db
+      .select()
+      .from(schema.attachments)
+      .where(eq(schema.attachments.submissionId, id))
+      .orderBy(asc(schema.attachments.createdAt));
     const out: Record<string, unknown> = {
       submission: s,
       attachments: attachments.map((a) => ({ id: a.id, fieldId: a.fieldId, kind: a.kind, url: `/api/files/${a.id}` })),

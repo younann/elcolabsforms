@@ -45,8 +45,8 @@ function SignatureSlot({ fieldId, title, disabled }: { fieldId: string; title: s
     setOpen(true);
   };
   const current = attachments.filter((a) => a.fieldId === fieldId && a.kind === 'signature');
-  // the report uses the first one, so show the same
-  const sig = current[0];
+  // the report uses the newest, so show the same
+  const sig = current.at(-1);
   const locked = disabled || readOnly;
   const alive = useRef(true);
   useEffect(() => {

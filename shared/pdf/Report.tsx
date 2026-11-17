@@ -196,6 +196,8 @@ function Scenario({ f, value }: { f: Extract<Field, { type: 'scenarioMatrix' }>;
 function FieldView({ f, p }: { f: Field; p: ReportProps }) {
   const v = p.data[f.id];
   const imgs = p.images[f.id] ?? [];
+  // oldest first; newest signature wins
+  const last = imgs.at(-1);
   switch (f.type) {
     case 'textarea':
       return (
@@ -239,7 +241,7 @@ function FieldView({ f, p }: { f: Field; p: ReportProps }) {
           <h3>{f.label}</h3>
           <Table
             head={['שם', 'תפקיד', 'טלפון', 'שעה', 'חתימה']}
-            rows={[[<V v={c.name} />, <V v={c.role} />, <V v={c.phone} />, <V v={c.time} />, <Img src={imgs[0]} className="td-sig" />]]}
+            rows={[[<V v={c.name} />, <V v={c.role} />, <V v={c.phone} />, <V v={c.time} />, <Img src={last} className="td-sig" />]]}
           />
         </>
       );
@@ -268,7 +270,7 @@ function FieldView({ f, p }: { f: Field; p: ReportProps }) {
           <div className="who">
             {f.label}: {p.inspectorName ? <V v={p.inspectorName} /> : null}
           </div>
-          {imgs[0] ? <Img src={imgs[0]} /> : <div className="line" />}
+          {last ? <Img src={last} /> : <div className="line" />}
         </div>
       );
     case 'drawing':

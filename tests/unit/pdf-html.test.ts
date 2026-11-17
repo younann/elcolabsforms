@@ -94,6 +94,21 @@ describe('renderReportHtml', () => {
     expect(html).toContain(formatDate(fx.approver.date));
   });
 
+  it('uses the newest signature', () => {
+    const fx = load('gas');
+    const def = getForm('gas');
+    const ack = def.sections.flatMap((s) => s.fields).find((f) => f.type === 'contactAck')!;
+    const images = {
+      inspectorSignature: ['data:image/png;base64,OLDSIG', 'data:image/png;base64,NEWSIG'],
+      [ack.id]: ['data:image/png;base64,OLDACK', 'data:image/png;base64,NEWACK'],
+    };
+    const html = renderReportHtml({ ...fx, def, images });
+    expect(html).toContain('NEWSIG');
+    expect(html).not.toContain('OLDSIG');
+    expect(html).toContain('NEWACK');
+    expect(html).not.toContain('OLDACK');
+  });
+
   it('puts photos two per appendix page', () => {
     const fx = load('gas');
     const html = renderReportHtml({ ...fx, def: getForm('gas'), images: { photos: [PNG, PNG, PNG] } });

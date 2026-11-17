@@ -67,6 +67,17 @@ describe('FormFiller', () => {
     expect(within(results).getAllByRole('radio', { name: 'לא' })[0]).toHaveAttribute('aria-checked', 'true');
   });
 
+  test('shows the newest signature, like the report', () => {
+    const def = FORMS.find((f) => f.id === 'aerosol')!;
+    const atts = [
+      { id: 'a1', url: '/api/files/old', fieldId: 'inspectorSignature', kind: 'signature' as const },
+      { id: 'a2', url: '/api/files/new', fieldId: 'inspectorSignature', kind: 'signature' as const },
+    ];
+    render(<FormFiller def={def} submission={row('aerosol')} initialData={{}} attachments={atts} readOnly />);
+    const img = document.getElementById('field-inspectorSignature')!.querySelector('img')!;
+    expect(img.getAttribute('src')).toBe('/api/files/new');
+  });
+
   test('approver signature is not editable by the inspector', () => {
     const def = FORMS.find((f) => f.id === 'aerosol')!;
     render(<FormFiller def={def} submission={row('aerosol')} initialData={{}} attachments={[]} />);
