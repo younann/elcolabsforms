@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { SignOut } from '@phosphor-icons/react';
 import { useAuth } from '../lib/auth';
+import { InstallBanner } from '../pwa/InstallBanner';
 import { Brand } from './Brand';
 import { cx } from './cx';
 
@@ -60,6 +61,7 @@ export function AppShell() {
         </div>
       </header>
       <main className="safe-x safe-bottom mx-auto w-full max-w-5xl flex-1 pt-5 md:pt-8">
+        <InstallBanner />
         <Outlet />
       </main>
     </div>
