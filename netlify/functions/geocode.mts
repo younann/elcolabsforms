@@ -4,10 +4,9 @@ import { handle, json, HttpError } from '../../server/http';
 import { requireUser } from '../../server/auth';
 import { formatAddress } from '../../shared/geocode';
 
-const Query = z.object({
-  lat: z.coerce.number().min(-90).max(90),
-  lon: z.coerce.number().min(-180).max(180),
-});
+// empty strings would coerce to 0
+const coord = (max: number) => z.string().trim().min(1).transform(Number).pipe(z.number().min(-max).max(max));
+const Query = z.object({ lat: coord(90), lon: coord(180) });
 
 const UA = 'elco-labs-forms/1.0 (+https://elco-labs-forms.netlify.app)';
 
