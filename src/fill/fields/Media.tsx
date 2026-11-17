@@ -1,7 +1,8 @@
-import { memo, useRef, useState, type ChangeEvent } from 'react';
+import { memo, useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { Camera, CircleNotch, Image as ImageIcon, PencilSimpleLine, Signature, Trash, X } from '@phosphor-icons/react';
 import { Button, toast } from '../../ui';
 import { useAuth } from '../../lib/auth';
+import { api } from '../../lib/api';
 import { compressImage } from '../../lib/image';
 import type { ContactAckValue, Field } from '../../../shared/forms/types';
 import { fieldDomId, useFill, type Attachment } from '../context';
@@ -17,7 +18,17 @@ type Drawing = Extract<Field, { type: 'drawing' }>;
 const errMsg = (e: unknown) => (e instanceof Error && e.message ? e.message : 'הפעולה נכשלה');
 
 async function fetchSaved(): Promise<Blob> {
-  const res = await fetch('/api/profile/signature', { credentials: 'include' });
+  let res: Response;
+  try {
+    res = await fetch('/api/profile/signature', { credentials: 'include' });
+  } catch {
+    throw new Error('אין חיבור לשרת. בדוק את החיבור לרשת ונסה שוב');
+  }
+  if (res.status === 401) {
+    // same session-expiry path as api(): flush, then login
+    await api('/api/profile').catch(() => undefined);
+    throw new Error('נדרשת התחברות');
+  }
   if (res.status === 404) throw new Error('אין חתימה שמורה בפרופיל');
   if (!res.ok) throw new Error('טעינת החתימה השמורה נכשלה');
   return res.blob();
@@ -34,17 +45,43 @@ function SignatureSlot({ fieldId, title, disabled }: { fieldId: string; title: s
     setOpen(true);
   };
   const current = attachments.filter((a) => a.fieldId === fieldId && a.kind === 'signature');
-  const sig = current.at(-1);
+  // the report uses the first one, so show the same
+  const sig = current[0];
   const locked = disabled || readOnly;
+  const alive = useRef(true);
+  useEffect(() => {
+    alive.current = true;
+    return () => {
+      alive.current = false;
+    };
+  }, []);
+
+  // old signature must go so the report picks the new one
+  async function dropOld(ids: string[]) {
+    for (const id of ids) {
+      for (let attempt = 0; ; attempt++) {
+        try {
+          await remove(id);
+          break;
+        } catch {
+          if (attempt === 2) toast.error('מחיקת החתימה הקודמת נכשלה. מנסה שוב ברקע');
+          if (attempt >= 2 && !alive.current) return;
+          await new Promise((r) => setTimeout(r, attempt < 2 ? 1000 * (attempt + 1) : 10_000));
+        }
+      }
+    }
+  }
 
   async function replace(blob: Blob) {
+    const old = current.map((a) => a.id);
     try {
       await upload(fieldId, 'signature', blob, 'signature.png');
-      await Promise.allSettled(current.map((a) => remove(a.id)));
     } catch (e) {
       toast.error(errMsg(e));
       throw e;
     }
+    // first tries block the sheet; later ones run in the background
+    await Promise.race([dropOld(old), new Promise((r) => setTimeout(r, 3500))]);
   }
 
   async function applySaved() {
@@ -62,8 +99,14 @@ function SignatureSlot({ fieldId, title, disabled }: { fieldId: string; title: s
     <>
       {sig ? (
         <div className="flex items-center gap-3">
-          <div className="grid h-24 flex-1 place-items-center rounded-box border border-border bg-[#fdfdfd] p-2">
+          <div className="relative grid h-24 flex-1 place-items-center rounded-box border border-border bg-[#fdfdfd] p-2">
             <img src={sig.url} alt={`חתימה: ${title}`} className="max-h-full max-w-full object-contain" />
+            {current.length > 1 && (
+              <span className="absolute inset-x-2 bottom-1 flex items-center justify-center gap-1.5 text-[13px] font-medium text-[#8a5300]" role="status">
+                <CircleNotch className="size-3.5 animate-spin" aria-hidden />
+                מעדכן חתימה…
+              </span>
+            )}
           </div>
           {!locked && (
             <Button variant="secondary" onClick={show}>

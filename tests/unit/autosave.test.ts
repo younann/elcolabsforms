@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { createAutosave, flushAll, preferLocal, readLocal, type SaveStatus } from '../../src/lib/autosave';
+import { createAutosave, flushAll, preferLocal, readLocal, sameData, type SaveStatus } from '../../src/lib/autosave';
 
 const KEY = 'draft:test';
 
@@ -160,5 +160,123 @@ describe('local copy base', () => {
     a.dispose();
     // server clock ahead of the device
     expect(preferLocal(KEY, { x: 1 }, '2026-11-17T10:00:09Z')).toEqual({ data: { x: 2 }, fromLocal: true });
+  });
+});
+
+describe('conflicts', () => {
+  const conflictErr = () => Object.assign(new Error('stale'), { status: 409 });
+
+  test('lost response then 409 with equal server data ends saved', async () => {
+    let updatedAt = 'v0';
+    const sent: string[] = [];
+    // first PATCH commits but its reply is lost
+    const save = vi
+      .fn<(d: Record<string, unknown>) => Promise<{ updatedAt: string }>>()
+      .mockImplementationOnce(async () => {
+        sent.push(updatedAt);
+        throw Object.assign(new Error('net'), { status: 0 });
+      })
+      .mockImplementationOnce(async () => {
+        sent.push(updatedAt);
+        throw conflictErr();
+      })
+      .mockImplementation(async () => {
+        sent.push(updatedAt);
+        return { updatedAt: 'v2' };
+      });
+    const onConflict = vi.fn(async (d: Record<string, unknown>) => {
+      expect(d).toEqual({ x: 1 });
+      updatedAt = 'v1';
+      return { resolved: true as const, updatedAt: 'v1' };
+    });
+    const a = createAutosave({ save, storageKey: KEY, delay: 10, base: 'v0', onConflict });
+    const seen: SaveStatus[] = [];
+    a.subscribe((s) => seen.push(s));
+    a.update({ x: 1 });
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(onConflict).toHaveBeenCalledOnce();
+    expect(seen.at(-1)).toBe('saved');
+    expect(localStorage.getItem(KEY)).toBeNull();
+    // later edits save against the adopted version
+    a.update({ x: 2 });
+    await vi.advanceTimersByTimeAsync(100);
+    expect(sent.at(-1)).toBe('v1');
+    expect(seen.at(-1)).toBe('saved');
+    a.dispose();
+  });
+
+  test('409 with different server data enters conflict and keeps the local copy', async () => {
+    const save = vi.fn<(d: unknown) => Promise<{ updatedAt: string }>>().mockRejectedValue(conflictErr());
+    const onConflict = vi.fn(async () => ({ resolved: false as const }));
+    const a = createAutosave({ save, storageKey: KEY, delay: 10, onConflict });
+    a.update({ x: 1 });
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(a.status()).toBe('conflict');
+    expect(save).toHaveBeenCalledOnce();
+    expect(readLocal(KEY)?.data).toEqual({ x: 1 });
+    a.dispose();
+  });
+
+  test('keepMine re-saves local data on the server version', async () => {
+    const save = vi
+      .fn<(d: unknown) => Promise<{ updatedAt: string }>>()
+      .mockRejectedValueOnce(conflictErr())
+      .mockResolvedValue({ updatedAt: 'v9' });
+    const a = createAutosave({ save, storageKey: KEY, delay: 10, onConflict: async () => ({ resolved: false as const }) });
+    a.update({ x: 1 });
+    await vi.advanceTimersByTimeAsync(100);
+    expect(a.status()).toBe('conflict');
+    a.keepMine('v8');
+    expect(readLocal(KEY)?.base).toBe('v8');
+    await vi.advanceTimersByTimeAsync(100);
+    expect(save).toHaveBeenLastCalledWith({ x: 1 });
+    expect(a.status()).toBe('saved');
+    a.dispose();
+  });
+
+  test('takeServer drops the local copy', async () => {
+    const save = vi.fn<(d: unknown) => Promise<{ updatedAt: string }>>().mockRejectedValue(conflictErr());
+    const a = createAutosave({ save, storageKey: KEY, delay: 10, onConflict: async () => ({ resolved: false as const }) });
+    a.update({ x: 1 });
+    await vi.advanceTimersByTimeAsync(100);
+    a.takeServer('v5');
+    expect(localStorage.getItem(KEY)).toBeNull();
+    expect(a.status()).toBe('saved');
+    a.dispose();
+  });
+
+  test('after an expired flush, unmount flush does not save again', async () => {
+    const save = vi.fn(ok);
+    const a = createAutosave({ save, storageKey: KEY, delay: 1000 });
+    a.update({ x: 1 });
+    await flushAll({ expired: true });
+    await a.flush();
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(save).not.toHaveBeenCalled();
+    expect(readLocal(KEY)?.data).toEqual({ x: 1 });
+    a.dispose();
+  });
+});
+
+describe('preferLocal with a different base', () => {
+  test('keeps a local copy with different data and reports the conflict', () => {
+    localStorage.setItem(KEY, JSON.stringify({ data: { a: 'local' }, at: Date.parse('2026-11-17T09:00:00Z'), base: '2026-11-17T08:00:00Z' }));
+    const r = preferLocal(KEY, { a: 'server' }, '2026-11-17T10:00:00Z');
+    expect(r).toEqual({ data: { a: 'server' }, fromLocal: false, conflict: { a: 'local' } });
+    expect(readLocal(KEY)?.data).toEqual({ a: 'local' });
+  });
+
+  test('drops a local copy equal to the server data, whatever the key order', () => {
+    localStorage.setItem(KEY, JSON.stringify({ data: { b: 1, a: { y: 2, x: 1 } }, at: 1, base: 'old' }));
+    expect(preferLocal(KEY, { a: { x: 1, y: 2 }, b: 1 }, '2026-11-17T10:00:00Z')).toEqual({
+      data: { a: { x: 1, y: 2 }, b: 1 },
+      fromLocal: false,
+    });
+    expect(localStorage.getItem(KEY)).toBeNull();
+  });
+
+  test('sameData ignores key order and undefined', () => {
+    expect(sameData({ a: 1, b: { c: undefined, d: [1, 2] } }, { b: { d: [1, 2] }, a: 1 })).toBe(true);
+    expect(sameData({ a: [1, 2] }, { a: [2, 1] })).toBe(false);
   });
 });

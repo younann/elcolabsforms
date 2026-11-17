@@ -16,7 +16,7 @@ export async function flushAll(opts: FlushOptions = {}): Promise<void> {
   await Promise.allSettled([...flushers].map((fn) => fn(opts)));
 }
 
-export type SaveStatus = 'saved' | 'saving' | 'offline' | 'error';
+export type SaveStatus = 'saved' | 'saving' | 'offline' | 'error' | 'conflict';
 
 /** `base`: server updatedAt the edits started from. */
 export type LocalCopy<T> = { data: T; at: number; base?: string };
@@ -48,14 +48,48 @@ export function clearLocal(key: string) {
   }
 }
 
-/** Local copy wins when based on the current server version or written after it. */
-export function preferLocal<T>(key: string, server: T, serverUpdatedAt: string): { data: T; fromLocal: boolean } {
+// stable JSON: sorted keys, undefined dropped
+function canon(v: unknown): unknown {
+  if (Array.isArray(v)) return v.map(canon);
+  if (v && typeof v === 'object') {
+    const o = v as Record<string, unknown>;
+    return Object.fromEntries(
+      Object.keys(o)
+        .filter((k) => o[k] !== undefined)
+        .sort()
+        .map((k) => [k, canon(o[k])]),
+    );
+  }
+  return v;
+}
+
+/** Deep equality as the server stores it (key order ignored). */
+export function sameData(a: unknown, b: unknown): boolean {
+  return JSON.stringify(canon(a ?? null)) === JSON.stringify(canon(b ?? null));
+}
+
+export type Picked<T> = { data: T; fromLocal: boolean; conflict?: T };
+
+/**
+ * Local copy wins when based on the current server version.
+ * A copy based on another version is kept and reported as a conflict unless it equals the server.
+ */
+export function preferLocal<T>(key: string, server: T, serverUpdatedAt: string): Picked<T> {
   const local = readLocal<T>(key);
+  if (!local) return { data: server, fromLocal: false };
   const serverAt = Date.parse(serverUpdatedAt);
-  const sameBase = !!local?.base && Date.parse(local.base) === serverAt;
-  if (local && (sameBase || Number.isNaN(serverAt) || local.at > serverAt)) return { data: local.data, fromLocal: true };
-  if (local) clearLocal(key);
-  return { data: server, fromLocal: false };
+  if (local.base && Date.parse(local.base) === serverAt) return { data: local.data, fromLocal: true };
+  if (sameData(local.data, server)) {
+    clearLocal(key);
+    return { data: server, fromLocal: false };
+  }
+  // older copies carry no base
+  if (!local.base) {
+    if (Number.isNaN(serverAt) || local.at > serverAt) return { data: local.data, fromLocal: true };
+    clearLocal(key);
+    return { data: server, fromLocal: false };
+  }
+  return { data: server, fromLocal: false, conflict: local.data };
 }
 
 export type AutosaveOptions<T> = {
@@ -64,6 +98,8 @@ export type AutosaveOptions<T> = {
   delay?: number;
   /** Server updatedAt of the loaded data. */
   base?: string;
+  /** On 409: resolved when the server already holds the sent data. */
+  onConflict?: (sent: T) => Promise<{ resolved: true; updatedAt: string } | { resolved: false }>;
 };
 
 export type Autosave<T> = {
@@ -71,6 +107,10 @@ export type Autosave<T> = {
   flush(): Promise<void>;
   subscribe(fn: (s: SaveStatus) => void): () => void;
   status(): SaveStatus;
+  /** Conflict: save local data over the given server version. */
+  keepMine(serverUpdatedAt: string, data?: T): void;
+  /** Conflict: drop local edits, server version becomes the base. */
+  takeServer(serverUpdatedAt: string): void;
   dispose(): void;
 };
 
@@ -85,7 +125,7 @@ function retryable(e: unknown) {
   return s === undefined || s === 0 || s === 408 || s === 429 || s >= 500;
 }
 
-export function createAutosave<T>({ save, storageKey, delay = 1500, base }: AutosaveOptions<T>): Autosave<T> {
+export function createAutosave<T>({ save, storageKey, delay = 1500, base, onConflict }: AutosaveOptions<T>): Autosave<T> {
   let latest: { data: T } | null = null;
   let version = 0;
   let savedVersion = 0;
@@ -94,6 +134,7 @@ export function createAutosave<T>({ save, storageKey, delay = 1500, base }: Auto
   let inFlight: Promise<void> | null = null;
   let current: SaveStatus = 'saved';
   let stopped = false;
+  let expired = false;
   const listeners = new Set<(s: SaveStatus) => void>();
 
   const set = (s: SaveStatus) => {
@@ -112,13 +153,19 @@ export function createAutosave<T>({ save, storageKey, delay = 1500, base }: Auto
     clearTimeout(timer);
     timer = undefined;
     if (inFlight) return inFlight;
+    if (stopped || expired || current === 'conflict') return Promise.resolve();
     if (!latest || savedVersion === version) return Promise.resolve();
     const v = version;
     const data = latest.data;
     set('saving');
     inFlight = (async () => {
       try {
-        const r = await save(data);
+        const r = await save(data).catch(async (e) => {
+          if (statusOf(e) !== 409 || !onConflict) throw e;
+          const c = await onConflict(data);
+          if (c.resolved) return { updatedAt: c.updatedAt };
+          throw Object.assign(new Error('conflict'), { conflict: true });
+        });
         if (r?.updatedAt) base = r.updatedAt;
         attempt = 0;
         savedVersion = Math.max(savedVersion, v);
@@ -130,6 +177,10 @@ export function createAutosave<T>({ save, storageKey, delay = 1500, base }: Auto
           writeLocal(storageKey, latest.data, base);
         }
       } catch (e) {
+        if (e && typeof e === 'object' && (e as { conflict?: boolean }).conflict) {
+          set('conflict');
+          return;
+        }
         const offline = statusOf(e) === 0 || (typeof navigator !== 'undefined' && navigator.onLine === false);
         set(offline ? 'offline' : 'error');
         if (retryable(e)) schedule(BACKOFF[Math.min(attempt++, BACKOFF.length - 1)]);
@@ -155,6 +206,7 @@ export function createAutosave<T>({ save, storageKey, delay = 1500, base }: Auto
     try {
       // session gone: local copy already holds everything
       if (opts.expired) {
+        expired = true;
         clearTimeout(timer);
         return;
       }
@@ -183,6 +235,24 @@ export function createAutosave<T>({ save, storageKey, delay = 1500, base }: Auto
       };
     },
     status: () => current,
+    keepMine(serverUpdatedAt: string, data?: T) {
+      base = serverUpdatedAt;
+      if (data !== undefined) latest = { data };
+      if (!latest) return;
+      version++;
+      writeLocal(storageKey, latest.data, base);
+      attempt = 0;
+      set('saving');
+      void run();
+    },
+    takeServer(serverUpdatedAt: string) {
+      base = serverUpdatedAt;
+      clearTimeout(timer);
+      latest = null;
+      savedVersion = version;
+      clearLocal(storageKey);
+      set('saved');
+    },
     dispose() {
       stopped = true;
       clearTimeout(timer);

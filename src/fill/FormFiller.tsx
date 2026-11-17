@@ -2,7 +2,7 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type React
 import { CheckCircle, CircleNotch, CloudSlash, Checks, ListBullets, PaperPlaneTilt, WarningCircle } from '@phosphor-icons/react';
 import { Banner, Button, Sheet, StatusBadge, cx, toast, type SubmissionStatus } from '../ui';
 import { api, ApiError } from '../lib/api';
-import { createAutosave, type Autosave, type SaveStatus } from '../lib/autosave';
+import { clearLocal, createAutosave, readLocal, sameData, type Autosave, type SaveStatus } from '../lib/autosave';
 import type { AttachmentRef, Field, FormData, FormDef, Section } from '../../shared/forms/types';
 import { markSectionNA, validateForSubmit, type Missing } from '../../shared/forms/validate';
 import { FillContext, fieldDomId, sectionDomId, type Attachment, type FillCtx, type FillMode } from './context';
@@ -18,7 +18,7 @@ export type SubmissionRow = {
   data: FormData;
   updatedAt: string;
   reviewNote?: string | null;
-  revision?: number;
+  revision: number;
 };
 
 export type FormFillerProps = {
@@ -37,6 +37,8 @@ export type FormFillerProps = {
 };
 
 export const draftKey = (id: string) => `draft:${id}`;
+
+type Conflict = { server: FormData; serverUpdatedAt: string; mine: FormData };
 
 const SIMPLE = new Set<Field['type']>(['text', 'number', 'date', 'time', 'choice']);
 
@@ -69,6 +71,7 @@ function SaveIndicator({ status, onRetry }: { status: SaveStatus; onRetry(): voi
     saving: { Icon: CircleNotch, text: 'שומר…', cls: 'text-muted' },
     offline: { Icon: CloudSlash, text: 'אין חיבור, נשמר במכשיר', cls: 'text-warning' },
     error: { Icon: WarningCircle, text: 'השמירה נכשלה, נסה שוב', cls: 'text-danger' },
+    conflict: { Icon: WarningCircle, text: 'הטופס השתנה במכשיר אחר', cls: 'text-danger' },
   }[status];
   const body = (
     <>
@@ -100,7 +103,15 @@ export function FormFiller({
   onSubmitted,
   actions,
 }: FormFillerProps) {
-  const [data, setData] = useState<FormData>(initialData);
+  // device copy based on another server version
+  const [conflict, setConflict] = useState<Conflict | null>(() => {
+    if (readOnly || unsaved) return null;
+    const local = readLocal<FormData>(draftKey(submission.id));
+    if (!local?.base || Date.parse(local.base) === Date.parse(submission.updatedAt)) return null;
+    if (sameData(local.data, initialData)) return null;
+    return { server: initialData, serverUpdatedAt: submission.updatedAt, mine: local.data };
+  });
+  const [data, setData] = useState<FormData>(() => conflict?.mine ?? initialData);
   const [atts, setAtts] = useState<Attachment[]>(initialAtts);
   const [status, setStatus] = useState<SaveStatus>('saved');
   const [navOpen, setNavOpen] = useState(false);
@@ -110,7 +121,13 @@ export function FormFiller({
   const [current, setCurrent] = useState<string | undefined>(def.sections[0]?.id);
   const updatedAt = useRef(submission.updatedAt);
   const saver = useRef<Autosave<FormData> | null>(null);
-  const initial = useRef(initialData);
+  const initial = useRef(data);
+  const locked = readOnly || !!conflict;
+
+  // drafts of forms no longer editable are stale
+  useEffect(() => {
+    if (readOnly) clearLocal(draftKey(submission.id));
+  }, [readOnly, submission.id]);
 
   // created in an effect so strict-mode remounts get a live instance
   useEffect(() => {
@@ -124,6 +141,17 @@ export function FormFiller({
         });
         updatedAt.current = r.submission.updatedAt;
         return { updatedAt: r.submission.updatedAt };
+      },
+      // 409: maybe our earlier save landed but its reply was lost
+      onConflict: async (sent) => {
+        const r = await api<{ submission: SubmissionRow }>(`/api/submissions/${submission.id}`);
+        const server = r.submission.data ?? {};
+        if (sameData(server, sent)) {
+          updatedAt.current = r.submission.updatedAt;
+          return { resolved: true, updatedAt: r.submission.updatedAt };
+        }
+        setConflict({ server, serverUpdatedAt: r.submission.updatedAt, mine: sent });
+        return { resolved: false };
       },
     });
     saver.current = a;
@@ -144,6 +172,21 @@ export function FormFiller({
   useEffect(() => {
     if (data !== initial.current && !readOnly) saver.current?.update(data);
   }, [data, readOnly]);
+
+  function takeServer(c: Conflict) {
+    updatedAt.current = c.serverUpdatedAt;
+    saver.current?.takeServer(c.serverUpdatedAt);
+    clearLocal(draftKey(submission.id));
+    initial.current = c.server;
+    setData(c.server);
+    setConflict(null);
+  }
+
+  function keepMine(c: Conflict) {
+    updatedAt.current = c.serverUpdatedAt;
+    saver.current?.keepMine(c.serverUpdatedAt, data);
+    setConflict(null);
+  }
 
   const onChange = useCallback((id: string, v: unknown) => setData((d) => ({ ...d, [id]: v })), []);
 
@@ -246,7 +289,7 @@ export function FormFiller({
       <div className="pb-32 lg:grid lg:grid-cols-[16rem_minmax(0,1fr)] lg:gap-8">
         <aside className="hidden lg:block">
           <div className="sticky top-[calc(var(--safe-top)+4.5rem)] max-h-[calc(100dvh-var(--safe-top)-10rem)] overflow-y-auto overscroll-contain pb-4">
-            <SectionNav items={items} current={current} onJump={jumpSection} onMarkNA={readOnly ? undefined : markNA} />
+            <SectionNav items={items} current={current} onJump={jumpSection} onMarkNA={locked ? undefined : markNA} />
           </div>
         </aside>
 
@@ -258,6 +301,24 @@ export function FormFiller({
             </div>
             <h1 className="mt-2 text-[22px] leading-tight font-semibold tracking-tight text-balance md:text-2xl">{def.title}</h1>
           </header>
+
+          {conflict && (
+            <Banner
+              tone="warning"
+              title="הטופס השתנה במכשיר אחר"
+              className="mb-5"
+              action={
+                <>
+                  <Button onClick={() => takeServer(conflict)}>טען את הגרסה מהשרת</Button>
+                  <Button variant="secondary" onClick={() => keepMine(conflict)}>
+                    השאר את השינויים שלי
+                  </Button>
+                </>
+              }
+            >
+              השינויים במכשיר הזה שונים מהגרסה השמורה בשרת. בחר איזו גרסה לשמור.
+            </Banner>
+          )}
 
           {submission.status === 'returned' && submission.reviewNote && (
             <Banner tone="warning" title="הוחזר לתיקון" className="mb-5">
@@ -273,7 +334,7 @@ export function FormFiller({
                 item={items[i]}
                 data={data}
                 onChange={onChange}
-                readOnly={readOnly}
+                readOnly={locked}
                 missingIds={missingIds}
                 onMarkNA={markNA}
               />
@@ -293,7 +354,7 @@ export function FormFiller({
           <div className="min-w-0 flex-1">{!readOnly && <SaveIndicator status={status} onRetry={() => void saver.current?.flush()} />}</div>
           {actions ??
             (!readOnly && mode === 'inspector' && (
-              <Button variant="accent" loading={submitting} icon={<PaperPlaneTilt className="size-5 -scale-x-100" aria-hidden />} onClick={submit}>
+              <Button variant="accent" loading={submitting} disabled={!!conflict} icon={<PaperPlaneTilt className="size-5 -scale-x-100" aria-hidden />} onClick={submit}>
                 שליחה לאישור
               </Button>
             ))}
@@ -301,7 +362,7 @@ export function FormFiller({
       </div>
 
       <Sheet open={navOpen} onClose={() => setNavOpen(false)} title="סעיפים">
-        <SectionNav items={items} current={current} onJump={jumpSection} onMarkNA={readOnly ? undefined : markNA} />
+        <SectionNav items={items} current={current} onJump={jumpSection} onMarkNA={locked ? undefined : markNA} />
       </Sheet>
 
       <Sheet open={showMissing} onClose={() => setShowMissing(false)} title="חסרים פרטים לשליחה">

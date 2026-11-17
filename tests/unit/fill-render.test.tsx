@@ -32,6 +32,7 @@ const row = (formId: string): SubmissionRow => ({
   status: 'draft',
   data: {},
   updatedAt: '2026-11-17T10:00:00.000Z',
+  revision: 1,
 });
 
 describe('FormFiller', () => {
@@ -72,5 +73,30 @@ describe('FormFiller', () => {
     const approver = document.getElementById('field-approverSignature')!;
     expect(within(approver).queryByRole('button')).toBeNull();
     expect(approver).toHaveTextContent('ייחתם על ידי המאשר');
+  });
+});
+
+describe('FormFiller conflicts', () => {
+  test('a device copy based on another version shows the choice and keeps both', () => {
+    const def = FORMS.find((f) => f.id === 'aerosol')!;
+    const sub = row('aerosol');
+    localStorage.setItem(
+      `draft:${sub.id}`,
+      JSON.stringify({ data: { siteName: 'מקומי' }, at: 1, base: '2026-11-17T09:00:00.000Z' }),
+    );
+    render(<FormFiller def={def} submission={sub} initialData={{ siteName: 'שרת' }} attachments={[]} />);
+    expect(screen.getByText('הטופס השתנה במכשיר אחר', { selector: 'p' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'שם האתר' })).toHaveValue('מקומי');
+    fireEvent.click(screen.getByRole('button', { name: 'טען את הגרסה מהשרת' }));
+    expect(screen.getByRole('textbox', { name: 'שם האתר' })).toHaveValue('שרת');
+    expect(localStorage.getItem(`draft:${sub.id}`)).toBeNull();
+  });
+
+  test('read-only forms clear a stale device copy', () => {
+    const def = FORMS.find((f) => f.id === 'aerosol')!;
+    const sub = { ...row('aerosol'), status: 'submitted' as const };
+    localStorage.setItem(`draft:${sub.id}`, JSON.stringify({ data: { siteName: 'x' }, at: 1, base: 'old' }));
+    render(<FormFiller def={def} submission={sub} initialData={{}} attachments={[]} readOnly />);
+    expect(localStorage.getItem(`draft:${sub.id}`)).toBeNull();
   });
 });

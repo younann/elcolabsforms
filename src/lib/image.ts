@@ -1,11 +1,16 @@
 const MAX_EDGE = 1600;
 const QUALITY = 0.8;
 
-async function decode(file: Blob): Promise<{ src: CanvasImageSource; w: number; h: number; close(): void }> {
+export const UNSUPPORTED_IMAGE = 'פורמט התמונה אינו נתמך (HEIC). צלם מחדש או בחר JPEG';
+
+type Decoded = { src: CanvasImageSource; w: number; h: number; close(): void };
+
+const fromBitmap = (b: ImageBitmap): Decoded => ({ src: b, w: b.width, h: b.height, close: () => b.close() });
+
+async function decode(file: Blob): Promise<Decoded> {
   if (typeof createImageBitmap === 'function') {
     try {
-      const b = await createImageBitmap(file, { imageOrientation: 'from-image' });
-      return { src: b, w: b.width, h: b.height, close: () => b.close() };
+      return fromBitmap(await createImageBitmap(file, { imageOrientation: 'from-image' }));
     } catch {
       // fall back to <img>
     }
@@ -17,20 +22,34 @@ async function decode(file: Blob): Promise<{ src: CanvasImageSource; w: number; 
     img.src = url;
     await img.decode();
     return { src: img, w: img.naturalWidth, h: img.naturalHeight, close: () => URL.revokeObjectURL(url) };
-  } catch (e) {
+  } catch {
     URL.revokeObjectURL(url);
-    throw e;
+    // e.g. HEIC outside Safari
+    throw new Error(UNSUPPORTED_IMAGE);
+  }
+}
+
+// high-quality downscale where the browser supports it
+async function resized(img: Decoded, w: number, h: number): Promise<Decoded> {
+  if (typeof createImageBitmap !== 'function' || (img.w === w && img.h === h)) return img;
+  try {
+    const b = await createImageBitmap(img.src as ImageBitmapSource, { resizeWidth: w, resizeHeight: h, resizeQuality: 'high' });
+    img.close();
+    return fromBitmap(b);
+  } catch {
+    return img;
   }
 }
 
 /** JPEG, long edge at most 1600px, quality 0.8. */
 export async function compressImage(file: File | Blob): Promise<Blob> {
-  const img = await decode(file);
+  const full = await decode(file);
+  const scale = Math.min(1, MAX_EDGE / Math.max(full.w, full.h));
+  const w = Math.max(1, Math.round(full.w * scale));
+  const h = Math.max(1, Math.round(full.h * scale));
+  const img = await resized(full, w, h);
+  const canvas = document.createElement('canvas');
   try {
-    const scale = Math.min(1, MAX_EDGE / Math.max(img.w, img.h));
-    const w = Math.max(1, Math.round(img.w * scale));
-    const h = Math.max(1, Math.round(img.h * scale));
-    const canvas = document.createElement('canvas');
     canvas.width = w;
     canvas.height = h;
     const ctx = canvas.getContext('2d');
@@ -44,6 +63,9 @@ export async function compressImage(file: File | Blob): Promise<Blob> {
     return blob;
   } finally {
     img.close();
+    // release canvas memory on iOS
+    canvas.width = 0;
+    canvas.height = 0;
   }
 }
 
