@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer';
-import { loadSettings } from '../netlify/functions/settings.mts';
+import { loadSettings } from './settings';
 import type { FormDef } from '../shared/forms/types';
 import type { Submission } from './db/schema';
 
@@ -13,6 +13,9 @@ export async function sendMail(m: MailInput): Promise<void> {
   }
   const t = nodemailer.createTransport({
     service: 'gmail',
+    connectionTimeout: 5000,
+    greetingTimeout: 5000,
+    socketTimeout: 5000,
     auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
   });
   await t.sendMail({ from: process.env.GMAIL_USER, ...m });

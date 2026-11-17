@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, boolean, timestamp, integer, jsonb, serial, index } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, boolean, timestamp, integer, jsonb, serial, index, uniqueIndex } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -61,7 +61,7 @@ export const submissions = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [index('submissions_status').on(t.status), index('submissions_inspector').on(t.inspectorId)],
+  (t) => [index('submissions_status').on(t.status), index('submissions_inspector').on(t.inspectorId), uniqueIndex('submissions_parent').on(t.parentId)],
 );
 
 export const attachments = pgTable('attachments', {

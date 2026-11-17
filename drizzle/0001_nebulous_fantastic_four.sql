@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "submissions_parent" ON "submissions" USING btree ("parent_id");

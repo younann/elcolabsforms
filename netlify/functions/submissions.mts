@@ -84,7 +84,7 @@ export default handle(async (req) => {
       .values({
         formId: s.formId,
         formVersion: s.formVersion,
-        inspectorId: me.id,
+        inspectorId: s.inspectorId,
         data,
         ...mirror(data),
         updatedAt: new Date(),

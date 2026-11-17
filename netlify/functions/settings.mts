@@ -6,6 +6,7 @@ import { handle, json, parseBody, HttpError } from '../../server/http';
 import { requireUser } from '../../server/auth';
 import { putBlob } from '../../server/blobs';
 import { readPngBody } from '../../server/upload';
+import { loadSettings } from '../../server/settings';
 
 const Put = z.object({
   recipientEmail: z.union([z.literal(''), z.email()]),
@@ -13,13 +14,7 @@ const Put = z.object({
   companyDetails: z.string().trim().max(1000),
 });
 
-export async function loadSettings() {
-  const db = getDb();
-  const [s] = await db.select().from(schema.settings).where(eq(schema.settings.id, 1));
-  if (s) return s;
-  const [created] = await db.insert(schema.settings).values({ id: 1 }).returning();
-  return created;
-}
+export { loadSettings };
 
 export default handle(async (req) => {
   const url = new URL(req.url);

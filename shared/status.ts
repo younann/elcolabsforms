@@ -12,12 +12,16 @@ const NEXT: Record<Action, Partial<Record<Status, Status>>> = {
   edit: { draft: 'draft', returned: 'returned', submitted: 'submitted' },
 };
 
-export function canTransition(from: Status, action: Action, role: Role): Status | null {
+export const STUCK_MS = 15 * 60_000;
+
+// retry from sending only when stuck; pass updatedAt and now for that case
+export function canTransition(from: Status, action: Action, role: Role, updatedAt?: Date, now = Date.now()): Status | null {
   if (action === 'edit') {
     const ok = role === 'admin' ? from === 'submitted' : from === 'draft' || from === 'returned';
     return ok ? NEXT.edit[from] ?? null : null;
   }
   if (action === 'submit') return NEXT.submit[from] ?? null;
   if (role !== 'admin') return null;
+  if (action === 'retry' && from === 'sending') return updatedAt && now - updatedAt.getTime() > STUCK_MS ? 'sending' : null;
   return NEXT[action][from] ?? null;
 }

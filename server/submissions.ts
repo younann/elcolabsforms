@@ -41,11 +41,18 @@ export function duplicateData(def: FormDef, data: FormData): FormData {
 }
 
 // atomic status change; no row means someone else got there first
-export async function transition(id: string, expected: Status, set: Partial<Submission>): Promise<Submission> {
+export async function transition(
+  id: string,
+  expected: Status,
+  set: Partial<Submission>,
+  expectedUpdatedAt?: Date,
+): Promise<Submission> {
+  const conds = [eq(schema.submissions.id, id), eq(schema.submissions.status, expected)];
+  if (expectedUpdatedAt) conds.push(eq(schema.submissions.updatedAt, expectedUpdatedAt));
   const rows = await getDb()
     .update(schema.submissions)
     .set({ ...set, updatedAt: new Date() })
-    .where(and(eq(schema.submissions.id, id), eq(schema.submissions.status, expected)))
+    .where(and(...conds))
     .returning();
   if (!rows[0]) throw new HttpError(409, 'מצב הטופס השתנה, רענן ונסה שוב');
   return rows[0];
@@ -60,10 +67,26 @@ export async function audit(
   await getDb().insert(schema.auditLog).values({ submissionId, userId, action, ...extra });
 }
 
-// fire-and-forget; never fails the caller
-export function triggerReport(req: Request, id: string) {
-  const base = process.env.APP_URL || new URL(req.url).origin;
-  fetch(`${base}/.netlify/functions/report-background`, { method: 'POST', body: JSON.stringify({ id }) }).catch((e) =>
-    console.error('report trigger failed', e),
-  );
+// best-effort audit; never fails the caller
+export async function auditSafe(...args: Parameters<typeof audit>) {
+  try {
+    await audit(...args);
+  } catch (e) {
+    console.error('audit failed', e);
+  }
+}
+
+// background fn answers 202; failure only logged
+export async function triggerReport(req: Request, id: string) {
+  try {
+    const base = process.env.APP_URL || new URL(req.url).origin;
+    const r = await fetch(`${base}/.netlify/functions/report-background`, {
+      method: 'POST',
+      headers: { 'x-internal-key': process.env.INTERNAL_KEY ?? '' },
+      body: JSON.stringify({ id }),
+    });
+    if (!r.ok) console.error('report trigger status', r.status);
+  } catch (e) {
+    console.error('report trigger failed', e);
+  }
 }

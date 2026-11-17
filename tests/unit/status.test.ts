@@ -19,4 +19,11 @@ describe('canTransition', () => {
     expect(canTransition('draft', 'approve', 'admin')).toBeNull();
     expect(canTransition('draft', 'reopen', 'admin')).toBeNull();
   });
+  it('allows retry from a stuck sending state only', () => {
+    const now = Date.now();
+    expect(canTransition('sending', 'retry', 'admin')).toBeNull();
+    expect(canTransition('sending', 'retry', 'admin', new Date(now - 60_000), now)).toBeNull();
+    expect(canTransition('sending', 'retry', 'admin', new Date(now - 16 * 60_000), now)).toBe('sending');
+    expect(canTransition('sending', 'retry', 'inspector', new Date(now - 16 * 60_000), now)).toBeNull();
+  });
 });
