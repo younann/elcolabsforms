@@ -4,6 +4,7 @@ import { Segmented, TextField } from '../../ui';
 import type { Field } from '../../../shared/forms/types';
 import { fieldDomId } from '../context';
 import { Label, Select, TextArea, str, type FieldProps } from './inputs';
+import { LocateButton, hasGeolocation } from './LocateButton';
 
 type Simple = Extract<Field, { type: 'text' | 'textarea' | 'number' | 'date' | 'time' }>;
 
@@ -39,6 +40,8 @@ export const SimpleField = memo(function SimpleField({ field: f, value, onChange
       : f.type === 'date' || f.type === 'time'
         ? { type: f.type }
         : { type: 'text', enterKeyHint: 'next' as const };
+  // gps fill for the site address only
+  const locate = f.id === 'siteAddress' && !disabled && hasGeolocation();
   return (
     <TextField
       id={fieldDomId(f.id)}
@@ -47,6 +50,7 @@ export const SimpleField = memo(function SimpleField({ field: f, value, onChange
       disabled={disabled}
       required={f.required}
       onChange={(e) => onChange(f.id, e.target.value)}
+      end={locate ? <LocateButton value={v} onFill={(a) => onChange(f.id, a)} /> : undefined}
       {...extra}
     />
   );
