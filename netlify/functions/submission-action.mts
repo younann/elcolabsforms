@@ -8,6 +8,7 @@ import { getForm } from '../../shared/forms';
 import { validateForSubmit } from '../../shared/forms/validate';
 import { canTransition, type Status } from '../../shared/status';
 import { getBlob, putBlob } from '../../server/blobs';
+import { notifySubmitted } from '../../server/mail';
 import { asData, assertAccess, audit, loadSubmission, transition, triggerReport } from '../../server/submissions';
 
 const Body = z.object({
@@ -37,6 +38,7 @@ export default handle(async (req) => {
     if (!v.ok) throw new HttpError(422, 'חסרים שדות חובה', { missing: v.missing });
     const row = await transition(id, from, { status: to, submittedAt: new Date(), reviewNote: null });
     await audit(id, me.id, 'submit');
+    await notifySubmitted(row, def, me.displayName);
     return json({ submission: row });
   }
 
