@@ -45,6 +45,12 @@ export function handle(fn: (req: Request, ctx: any) => Promise<Response>) {
   };
 }
 
+// runs after the response when the platform allows
+export function background(ctx: { waitUntil?: (p: Promise<unknown>) => void } | undefined, p: Promise<unknown>) {
+  const safe = p.catch((e) => console.error('background task failed', e));
+  if (typeof ctx?.waitUntil === 'function') ctx.waitUntil(safe);
+}
+
 export async function parseBody<T>(req: Request, schema: ZodType<T>): Promise<T> {
   let raw: unknown;
   try {

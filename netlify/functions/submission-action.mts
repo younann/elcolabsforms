@@ -2,7 +2,7 @@ import type { Config } from '@netlify/functions';
 import { z } from 'zod';
 import { eq } from 'drizzle-orm';
 import { getDb, schema } from '../../server/db/client';
-import { handle, json, parseBody, HttpError } from '../../server/http';
+import { background, handle, json, parseBody, HttpError } from '../../server/http';
 import { requireUser } from '../../server/auth';
 import { getForm } from '../../shared/forms';
 import { validateForSubmit } from '../../shared/forms/validate';
@@ -16,7 +16,7 @@ const Body = z.object({
   note: z.string().trim().max(2000).optional(),
 });
 
-export default handle(async (req) => {
+export default handle(async (req, ctx) => {
   if (req.method !== 'POST') throw new HttpError(405, 'Method not allowed');
   const me = await requireUser(req);
   const id = new URL(req.url).pathname.split('/')[3];
@@ -42,7 +42,8 @@ export default handle(async (req) => {
     if (s.inspectorId !== me.id) throw new HttpError(403, 'אין הרשאה');
     const def = await check();
     const row = await transition(id, from, { status: to, submittedAt: new Date(), reviewNote: null }, s.updatedAt);
-    await notifySubmitted(row, def, me.displayName);
+    // smtp must not delay the reply
+    background(ctx, notifySubmitted(row, def, me.displayName));
     await auditSafe(id, me.id, 'submit');
     return json({ submission: row });
   }

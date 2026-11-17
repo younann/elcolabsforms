@@ -50,3 +50,18 @@ describe('sliding session', () => {
     expect(res.headers.get('set-cookie')).toBeNull();
   });
 });
+
+describe('background', () => {
+  test('hands the task to waitUntil and swallows failures', async () => {
+    const { background } = await import('../../server/http');
+    const waitUntil = vi.fn();
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+    background({ waitUntil }, Promise.reject(new Error('smtp down')));
+    expect(waitUntil).toHaveBeenCalledOnce();
+    await waitUntil.mock.calls[0][0];
+    expect(err).toHaveBeenCalled();
+    background(undefined, Promise.reject(new Error('x')));
+    await new Promise((r) => setTimeout(r, 0));
+    err.mockRestore();
+  });
+});
