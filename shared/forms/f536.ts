@@ -95,7 +95,6 @@ export const f536: FormDef = {
           (t, i): Field => ({
             id: `doc${i + 1}`,
             type: 'check',
-            clause: '2',
             topic: 'רשימת מסמכים',
             text: t,
             answers: 'fitNotfitNA',
@@ -199,7 +198,6 @@ export const f536: FormDef = {
         {
           id: 'planConclusion',
           type: 'check',
-          clause: '9',
           topic: 'מסקנה להתאמת מכ"ר 500 הוראה 536',
           text: 'תוצאות בדיקת התכנון: תכנון המערכת מתאים/ לא מתאים .',
           answers: 'conclusion',

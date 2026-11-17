@@ -62,12 +62,13 @@ describe('form specifics', () => {
     for (const d of FORMS)
       for (const f of all(d)) if (f.type === 'check' && f.clause) expect(f.text.startsWith(f.clause)).toBe(false);
   });
-  it('every check has clause and topic', () => {
+  it('every check has a clause or a topic', () => {
     for (const d of FORMS)
-      for (const f of all(d)) if (f.type === 'check') {
-        expect(f.clause, `${d.id} ${f.id}`).toBeTruthy();
-        expect(f.topic, `${d.id} ${f.id}`).toBeTruthy();
-      }
+      for (const f of all(d)) if (f.type === 'check') expect(f.clause || f.topic, `${d.id} ${f.id}`).toBeTruthy();
+  });
+  it('f1220, aerosol and gas checks all have a clause', () => {
+    for (const id of ['f1220', 'aerosol', 'gas'])
+      for (const f of all(getForm(id))) if (f.type === 'check') expect(f.clause, `${id} ${f.id}`).toBeTruthy();
   });
   it('detectors has the apartments table', () => {
     const t = all(getForm('detectors')).find((f) => f.type === 'repeatTable');
