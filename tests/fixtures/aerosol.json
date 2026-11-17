@@ -1,0 +1,196 @@
+{
+  "formId": "aerosol",
+  "revision": 0,
+  "inspectorName": "אבי מזרחי",
+  "approver": {
+    "name": "רונית אלקו",
+    "date": "2026-11-17"
+  },
+  "settings": {
+    "companyName": "אלקו מעבדות",
+    "companyDetails": "מעבדה מוסמכת לבדיקת מערכות גילוי וכיבוי אש · טל׳ 04-1234567 · elco.labs22@gmail.com"
+  },
+  "data": {
+    "date": "2026-11-12",
+    "testNumber": "B-2026/0417",
+    "orderNumber": "PO-88123",
+    "startTime": "09:30",
+    "endTime": "12:15",
+    "siteName": "מגדל הים – בניין B",
+    "siteAddress": "רח׳ הרצל 45, חיפה",
+    "buildingPurpose": "מגורים ומסחר",
+    "gush": "10842",
+    "helka": "17",
+    "migrash": "3A",
+    "ownerName": "יוסי לוי",
+    "ownerMobile": "050-1234567",
+    "ownerOffice": "04-8123456",
+    "customerName": "א.ב. נכסים בע\"מ",
+    "customerAddress": "שד׳ ההסתדרות 12, חיפה",
+    "customerPhone": "04-8555123",
+    "customerEmail": "office@ab-assets.co.il",
+    "installerName": "אש-טק מערכות",
+    "installerAddress": "רח׳ התעשייה 8, נשר",
+    "installerPhone": "052-7654321",
+    "installerId": "034567891",
+    "buildingArea": "33",
+    "buildingHeight": "34",
+    "buildingDescription": "גלאי עשן דגם SD-851 כמות 12",
+    "protectedSpaces": [
+      {
+        "no": "מס' 1",
+        "desc": "תיאור החלל המוגן 1",
+        "location": "מיקום 1",
+        "risk": "דרגת סיכון 1",
+        "dims": "מידות החלל המוגן 1",
+        "volume": "2",
+        "agentWeight": "2"
+      },
+      {
+        "no": "מס' 2",
+        "desc": "תיאור החלל המוגן 2",
+        "location": "מיקום 2",
+        "risk": "דרגת סיכון 2",
+        "dims": "מידות החלל המוגן 2",
+        "volume": "7",
+        "agentWeight": "7"
+      }
+    ],
+    "equipment": [
+      {
+        "manufacturer": "Apollo",
+        "model": "XP95-0",
+        "qty": "1"
+      },
+      {},
+      {},
+      {
+        "manufacturer": "System Sensor",
+        "model": "SD-851",
+        "qty": "12"
+      },
+      {},
+      {},
+      {
+        "manufacturer": "Apollo",
+        "model": "XP95-6",
+        "qty": "7"
+      },
+      {},
+      {},
+      {
+        "manufacturer": "Apollo",
+        "model": "XP95-9",
+        "qty": "10"
+      },
+      {},
+      {},
+      {
+        "manufacturer": "Apollo",
+        "model": "XP95-12",
+        "qty": "13"
+      },
+      {},
+      {},
+      {
+        "manufacturer": "Apollo",
+        "model": "XP95-15",
+        "qty": "16"
+      },
+      {}
+    ],
+    "noticeAck1": {
+      "name": "דנה כהן",
+      "role": "קב\"ט",
+      "phone": "054-3322110",
+      "time": "11:40"
+    },
+    "noticeAck2": {
+      "name": "דנה כהן",
+      "role": "קב\"ט",
+      "phone": "054-3322110",
+      "time": "11:40"
+    },
+    "dialerPhone": "ערך מספר קו טלפון המחובר לחייגן 30",
+    "c1": {
+      "answer": "כן"
+    },
+    "c2": {
+      "answer": "כן",
+      "note": "גלאי עשן דגם SD-851 כמות 12"
+    },
+    "c3": {
+      "answer": "לא"
+    },
+    "c4": {
+      "answer": "כן"
+    },
+    "c5": {
+      "answer": "כן"
+    },
+    "c6": {
+      "answer": "לא",
+      "note": "הערה 36"
+    },
+    "c7": {
+      "answer": "כן"
+    },
+    "c8": {
+      "answer": "כן"
+    },
+    "c9": {
+      "answer": "לא"
+    },
+    "c10": {
+      "answer": "כן",
+      "note": "גלאי עשן דגם SD-851 כמות 12"
+    },
+    "c11": {
+      "answer": "כן"
+    },
+    "c12": {
+      "answer": "לא"
+    },
+    "c13": {
+      "answer": "כן"
+    },
+    "c14": {
+      "answer": "כן",
+      "note": "הערה 44"
+    },
+    "c15": {
+      "answer": "לא"
+    },
+    "c16": {
+      "answer": "כן",
+      "inline": {
+        "labName": "מכון התקנים",
+        "certNumber": "IL-4446"
+      }
+    },
+    "c17": {
+      "answer": "כן"
+    },
+    "c18": {
+      "answer": "לא",
+      "note": "גלאי עשן דגם SD-851 כמות 12"
+    },
+    "c19": {
+      "answer": "כן"
+    },
+    "c20": {
+      "answer": "כן"
+    },
+    "c21": {
+      "answer": "לא"
+    },
+    "c22": {
+      "answer": "כן",
+      "note": "הערה 52"
+    },
+    "c23": {
+      "answer": "כן"
+    },
+    "defects": "גלאי עשן דגם SD-851 כמות 12\nנמצא ליקוי בלחצן הפעלה בקומה 3 (MCP-200)."
+  }
+}

@@ -1,0 +1,128 @@
+{
+  "formId": "detectors",
+  "revision": 0,
+  "inspectorName": "אבי מזרחי",
+  "approver": {
+    "name": "רונית אלקו",
+    "date": "2026-11-17"
+  },
+  "settings": {
+    "companyName": "אלקו מעבדות",
+    "companyDetails": "מעבדה מוסמכת לבדיקת מערכות גילוי וכיבוי אש · טל׳ 04-1234567 · elco.labs22@gmail.com"
+  },
+  "data": {
+    "date": "2026-11-12",
+    "testNumber": "B-2026/0417",
+    "orderNumber": "PO-88123",
+    "siteName": "מגדל הים – בניין B",
+    "siteAddress": "רח׳ הרצל 45, חיפה",
+    "buildingPurpose": "מגורים ומסחר",
+    "gush": "10842",
+    "helka": "17",
+    "migrash": "3A",
+    "customerName": "א.ב. נכסים בע\"מ",
+    "customerAddress": "שד׳ ההסתדרות 12, חיפה",
+    "customerPhone": "04-8555123",
+    "customerEmail": "office@ab-assets.co.il",
+    "installerName": "אש-טק מערכות",
+    "installerAddress": "רח׳ התעשייה 8, נשר",
+    "installerPhone": "052-7654321",
+    "installerId": "034567891",
+    "companyName": "גלאי עשן דגם SD-851 כמות 12",
+    "companyAddress": "ערך כתובת החברה 19",
+    "floors": "30",
+    "apartmentsInBuilding": "31",
+    "apartmentsWithDetectors": "32",
+    "detectorModel": "ערך דגם 23",
+    "detectorMaker": "ערך מתוצרת חברת 24",
+    "detectorLocation": "ערך מיקום התקנת הגלאי 25",
+    "batteryModel": "ערך דגם סוללת הגלאי 26",
+    "c1": {
+      "answer": "מתאים",
+      "note": "הערה 28"
+    },
+    "c2": {
+      "answer": "מתאים"
+    },
+    "c3": {
+      "answer": "לא מתאים"
+    },
+    "c4": {
+      "answer": "מתאים"
+    },
+    "c5": {
+      "answer": "מתאים",
+      "note": "גלאי עשן דגם SD-851 כמות 12"
+    },
+    "c6": {
+      "answer": "לא מתאים"
+    },
+    "c7": {
+      "answer": "מתאים"
+    },
+    "c8": {
+      "answer": "מתאים"
+    },
+    "c9": {
+      "answer": "לא מתאים",
+      "note": "הערה 36"
+    },
+    "c10": {
+      "answer": "מתאים"
+    },
+    "c11": {
+      "answer": "מתאים"
+    },
+    "c12": {
+      "answer": "לא מתאים"
+    },
+    "c13": {
+      "answer": "מתאים",
+      "note": "גלאי עשן דגם SD-851 כמות 12"
+    },
+    "c14": {
+      "answer": "מתאים"
+    },
+    "c15": {
+      "answer": "לא מתאים"
+    },
+    "c16": {
+      "answer": "מתאים"
+    },
+    "c17": {
+      "answer": "מתאים",
+      "note": "הערה 44"
+    },
+    "c18": {
+      "answer": "לא מתאים"
+    },
+    "c19": {
+      "answer": "מתאים"
+    },
+    "c20": {
+      "answer": "מתאים"
+    },
+    "c21": {
+      "answer": "לא מתאים",
+      "note": "גלאי עשן דגם SD-851 כמות 12"
+    },
+    "apartments": [
+      {
+        "floor": "קומה 1",
+        "apartment": "מס' דירה 1",
+        "count": "2",
+        "location": "מיקום גלאים 1"
+      },
+      {
+        "floor": "קומה 2",
+        "apartment": "מס' דירה 2",
+        "count": "7",
+        "location": "מיקום גלאים 2"
+      }
+    ],
+    "conclusion": {
+      "answer": "מתאים"
+    },
+    "defects": "גלאי עשן דגם SD-851 כמות 12\nנמצא ליקוי בלחצן הפעלה בקומה 3 (MCP-200)."
+  }
+}

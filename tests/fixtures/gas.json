@@ -1,0 +1,310 @@
+{
+  "formId": "gas",
+  "revision": 0,
+  "inspectorName": "אבי מזרחי",
+  "approver": {
+    "name": "רונית אלקו",
+    "date": "2026-11-17"
+  },
+  "settings": {
+    "companyName": "אלקו מעבדות",
+    "companyDetails": "מעבדה מוסמכת לבדיקת מערכות גילוי וכיבוי אש · טל׳ 04-1234567 · elco.labs22@gmail.com"
+  },
+  "data": {
+    "date": "2026-11-12",
+    "testNumber": "B-2026/0417",
+    "orderNumber": "PO-88123",
+    "startTime": "09:30",
+    "endTime": "12:15",
+    "siteName": "מגדל הים – בניין B",
+    "siteAddress": "רח׳ הרצל 45, חיפה",
+    "buildingPurpose": "מגורים ומסחר",
+    "gush": "10842",
+    "helka": "17",
+    "migrash": "3A",
+    "ownerName": "יוסי לוי",
+    "ownerMobile": "050-1234567",
+    "ownerOffice": "04-8123456",
+    "customerName": "א.ב. נכסים בע\"מ",
+    "customerAddress": "שד׳ ההסתדרות 12, חיפה",
+    "customerPhone": "04-8555123",
+    "customerEmail": "office@ab-assets.co.il",
+    "installerName": "אש-טק מערכות",
+    "installerAddress": "רח׳ התעשייה 8, נשר",
+    "installerPhone": "052-7654321",
+    "installerId": "034567891",
+    "buildingArea": "33",
+    "buildingHeight": "34",
+    "buildingDescription": "גלאי עשן דגם SD-851 כמות 12",
+    "equipment": [
+      {
+        "manufacturer": "Apollo",
+        "model": "XP95-0",
+        "qty": "1"
+      },
+      {},
+      {},
+      {
+        "manufacturer": "System Sensor",
+        "model": "SD-851",
+        "qty": "12"
+      },
+      {},
+      {},
+      {
+        "manufacturer": "Apollo",
+        "model": "XP95-6",
+        "qty": "7"
+      },
+      {},
+      {},
+      {
+        "manufacturer": "Apollo",
+        "model": "XP95-9",
+        "qty": "10"
+      },
+      {},
+      {},
+      {
+        "manufacturer": "Apollo",
+        "model": "XP95-12",
+        "qty": "13"
+      },
+      {},
+      {},
+      {
+        "manufacturer": "Apollo",
+        "model": "XP95-15",
+        "qty": "16"
+      },
+      {}
+    ],
+    "dialer": "ערך חייגן 27",
+    "noticeAck1": {
+      "name": "דנה כהן",
+      "role": "קב\"ט",
+      "phone": "054-3322110",
+      "time": "11:40"
+    },
+    "noticeAck2": {
+      "name": "דנה כהן",
+      "role": "קב\"ט",
+      "phone": "054-3322110",
+      "time": "11:40"
+    },
+    "dialerPhone": "ערך מספר קו טלפון המחובר לחייגן 30",
+    "c1": {
+      "answer": "כן"
+    },
+    "c2": {
+      "answer": "כן",
+      "note": "גלאי עשן דגם SD-851 כמות 12"
+    },
+    "c3": {
+      "answer": "לא"
+    },
+    "c4": {
+      "answer": "כן"
+    },
+    "c5": {
+      "answer": "כן",
+      "inline": {
+        "gasType": "מכון התקנים",
+        "systemMaker": "IL-4435"
+      }
+    },
+    "c6": {
+      "answer": "לא",
+      "note": "הערה 36"
+    },
+    "c7": {
+      "answer": "כן"
+    },
+    "c8": {
+      "answer": "כן"
+    },
+    "c9": {
+      "answer": "לא",
+      "inline": {
+        "delaySeconds": "מכון התקנים"
+      }
+    },
+    "c10": {
+      "answer": "כן",
+      "note": "גלאי עשן דגם SD-851 כמות 12",
+      "inline": {
+        "tankReading": "מכון התקנים"
+      }
+    },
+    "c11": {
+      "answer": "כן"
+    },
+    "c12": {
+      "answer": "לא",
+      "inline": {
+        "gasLoss": "מכון התקנים"
+      }
+    },
+    "c13": {
+      "answer": "כן"
+    },
+    "c14": {
+      "answer": "כן",
+      "note": "הערה 44"
+    },
+    "c15": {
+      "answer": "לא",
+      "inline": {
+        "sealTested": "מכון התקנים",
+        "doorsClosed": "IL-4445",
+        "sealOk": "IL-4445"
+      }
+    },
+    "c16": {
+      "answer": "כן"
+    },
+    "c17": {
+      "answer": "כן",
+      "inline": {
+        "pipeLayout": "מכון התקנים",
+        "pipeDiameter": "IL-4447"
+      }
+    },
+    "c18": {
+      "answer": "לא",
+      "note": "גלאי עשן דגם SD-851 כמות 12",
+      "inline": {
+        "holderType": "מכון התקנים",
+        "holderDistance": "IL-4448"
+      }
+    },
+    "c19": {
+      "answer": "כן",
+      "inline": {
+        "nozzleDistance": "מכון התקנים",
+        "nozzleObstacles": "IL-4449",
+        "electricDistance": "IL-4449"
+      }
+    },
+    "c20": {
+      "answer": "כן"
+    },
+    "c21": {
+      "answer": "לא"
+    },
+    "c22": {
+      "answer": "כן",
+      "note": "הערה 52"
+    },
+    "c23": {
+      "answer": "כן"
+    },
+    "c24": {
+      "answer": "לא"
+    },
+    "c25": {
+      "answer": "כן"
+    },
+    "c26": {
+      "answer": "כן",
+      "note": "גלאי עשן דגם SD-851 כמות 12"
+    },
+    "c27": {
+      "answer": "לא"
+    },
+    "c28": {
+      "answer": "כן"
+    },
+    "c29": {
+      "answer": "כן"
+    },
+    "c30": {
+      "answer": "לא",
+      "note": "הערה 60"
+    },
+    "c31": {
+      "answer": "כן"
+    },
+    "c32": {
+      "answer": "כן"
+    },
+    "c33": {
+      "answer": "לא"
+    },
+    "c34": {
+      "answer": "כן",
+      "note": "גלאי עשן דגם SD-851 כמות 12"
+    },
+    "c35": {
+      "answer": "כן",
+      "inline": {
+        "delayMeasured": "מכון התקנים"
+      }
+    },
+    "c36": {
+      "answer": "לא"
+    },
+    "c37": {
+      "answer": "כן"
+    },
+    "tanks": [
+      {
+        "desc": "תיאור 1",
+        "t1": "סוג הגז 1",
+        "t2": "יצרן 1",
+        "t3": "צנרת 1",
+        "t4": "נחיר 1",
+        "t5": "נפץ/ סולנואיד 1",
+        "t6": "תאריך בדיקת מכל 1",
+        "t7": "כמות גז 1",
+        "t8": "משקל מכל 1",
+        "t9": "אטימות 1",
+        "t10": "שילוט 1",
+        "t11": "לחץ 1",
+        "t12": "טמפרטורה 1",
+        "t13": "תאריך מילוי/ בדיקת המכל 1",
+        "t14": "פגיעות מכאניות במכל/ שיתוך 1",
+        "t15": "חימוש המכל בתום הבדיקה 1"
+      },
+      {
+        "desc": "תיאור 2",
+        "t1": "סוג הגז 2",
+        "t2": "יצרן 2",
+        "t3": "צנרת 2",
+        "t4": "נחיר 2",
+        "t5": "נפץ/ סולנואיד 2",
+        "t6": "תאריך בדיקת מכל 2",
+        "t7": "כמות גז 2",
+        "t8": "משקל מכל 2",
+        "t9": "אטימות 2",
+        "t10": "שילוט 2",
+        "t11": "לחץ 2",
+        "t12": "טמפרטורה 2",
+        "t13": "תאריך מילוי/ בדיקת המכל 2",
+        "t14": "פגיעות מכאניות במכל/ שיתוך 2",
+        "t15": "חימוש המכל בתום הבדיקה 2"
+      }
+    ],
+    "protectedSpaces": [
+      {
+        "no": "מס' 1",
+        "desc": "תיאור החלל המוגן 1",
+        "location": "מיקום 1",
+        "risk": "דרגת סיכון 1",
+        "dims": "מידות החלל המוגן 1",
+        "volume": "2",
+        "agentWeight": "2"
+      },
+      {
+        "no": "מס' 2",
+        "desc": "תיאור החלל המוגן 2",
+        "location": "מיקום 2",
+        "risk": "דרגת סיכון 2",
+        "dims": "מידות החלל המוגן 2",
+        "volume": "7",
+        "agentWeight": "7"
+      }
+    ],
+    "defects": "גלאי עשן דגם SD-851 כמות 12\nנמצא ליקוי בלחצן הפעלה בקומה 3 (MCP-200)."
+  }
+}

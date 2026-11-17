@@ -1,0 +1,67 @@
+@page { size: A4; margin: 12mm 11mm 16mm 11mm; }
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: 'Heebo', sans-serif;
+  font-size: 9.5pt;
+  line-height: 1.4;
+  color: #1a1a1a;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+bdi { unicode-bidi: isolate; }
+img { max-width: 100%; }
+
+.head { display: flex; justify-content: space-between; align-items: flex-start; gap: 6mm; border-bottom: 2px solid #b3261e; padding-bottom: 3mm; margin-bottom: 4mm; }
+.company-name { font-size: 15pt; font-weight: 700; }
+.company-details { font-size: 8.5pt; color: #555; white-space: pre-wrap; max-width: 110mm; }
+.doc { text-align: left; font-size: 9pt; color: #333; }
+.doc .num { font-weight: 700; font-size: 11pt; }
+.rev { display: inline-block; margin-top: 1mm; padding: 0.5mm 2mm; border: 1px solid #b3261e; color: #b3261e; font-weight: 700; border-radius: 2px; }
+h1 { font-size: 14pt; margin: 0 0 4mm; text-align: center; }
+
+.section { margin-bottom: 4mm; }
+h2 { font-size: 11pt; margin: 0 0 2mm; padding: 1mm 2mm; background: #f1ece9; border-right: 3px solid #b3261e; break-after: avoid; }
+h3 { font-size: 9.5pt; margin: 2mm 0 1mm; break-after: avoid; }
+
+.kv { display: grid; grid-template-columns: 1fr 1fr; gap: 1mm 6mm; margin-bottom: 2mm; }
+.kv > div { display: flex; gap: 2mm; border-bottom: 1px dotted #bbb; padding: 0.5mm 0; break-inside: avoid; }
+.kv .k { color: #555; flex: 0 0 auto; max-width: 55%; }
+.kv .v { color: #000; }
+.block { margin-bottom: 2mm; break-inside: avoid; }
+.block .k { color: #555; }
+.block .v { white-space: pre-wrap; border: 1px solid #ddd; padding: 1.5mm 2mm; min-height: 8mm; }
+.note { color: #444; font-style: italic; margin: 1mm 0 2mm; }
+.empty { color: #aaa; }
+
+table { width: 100%; border-collapse: collapse; margin-bottom: 2.5mm; }
+thead { display: table-header-group; }
+tr { break-inside: avoid; }
+th, td { border: 1px solid #c9c9c9; padding: 1mm 1.5mm; vertical-align: top; text-align: right; }
+th { background: #f1ece9; font-weight: 700; font-size: 8.5pt; }
+td.c, th.c { text-align: center; }
+.checks .clause { width: 11mm; text-align: center; }
+.checks .res { width: 22mm; text-align: center; font-weight: 700; }
+.checks .rem { width: 42mm; }
+.checks tr.topic td { background: #faf7f5; font-weight: 700; }
+.inline { color: #444; font-size: 8.5pt; margin-top: 0.5mm; }
+.inline span + span::before { content: ' · '; }
+.bad { color: #b3261e; }
+.matrix td, .matrix th { font-size: 8pt; text-align: center; padding: 0.7mm; }
+.matrix td:first-child, .matrix th:first-child { text-align: right; width: 40mm; }
+
+.sig { display: flex; gap: 6mm; align-items: flex-end; break-inside: avoid; margin: 2mm 0; }
+.sig .who { min-width: 50mm; }
+.sig img { height: 18mm; max-width: 60mm; object-fit: contain; }
+.sig .line { border-bottom: 1px solid #555; min-width: 50mm; height: 18mm; }
+.td-sig { height: 12mm; max-width: 35mm; object-fit: contain; }
+.signs { break-inside: avoid; }
+.scenario { margin-bottom: 3mm; }
+.approval { border: 1px solid #c9c9c9; padding: 3mm; display: flex; justify-content: space-between; align-items: center; break-inside: avoid; }
+.stamp { height: 32mm; max-width: 55mm; object-fit: contain; }
+.drawing img { display: block; max-height: 150mm; margin: 0 auto 2mm; border: 1px solid #ddd; }
+
+.photo-page { break-before: page; }
+.photo-page h2 { margin-bottom: 4mm; }
+.photo { height: 118mm; display: flex; align-items: center; justify-content: center; margin-bottom: 4mm; border: 1px solid #ddd; }
+.photo img { max-height: 116mm; max-width: 100%; object-fit: contain; }

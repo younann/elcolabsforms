@@ -1,0 +1,562 @@
+{
+  "formId": "f1220",
+  "revision": 0,
+  "inspectorName": "אבי מזרחי",
+  "approver": {
+    "name": "רונית אלקו",
+    "date": "2026-11-17"
+  },
+  "settings": {
+    "companyName": "אלקו מעבדות",
+    "companyDetails": "מעבדה מוסמכת לבדיקת מערכות גילוי וכיבוי אש · טל׳ 04-1234567 · elco.labs22@gmail.com"
+  },
+  "data": {
+    "date": "2026-11-12",
+    "testNumber": "B-2026/0417",
+    "orderNumber": "PO-88123",
+    "startTime": "09:30",
+    "endTime": "12:15",
+    "siteName": "מגדל הים – בניין B",
+    "siteAddress": "רח׳ הרצל 45, חיפה",
+    "buildingPurpose": "מגורים ומסחר",
+    "gush": "10842",
+    "helka": "17",
+    "migrash": "3A",
+    "customerName": "א.ב. נכסים בע\"מ",
+    "customerAddress": "שד׳ ההסתדרות 12, חיפה",
+    "customerPhone": "04-8555123",
+    "customerEmail": "office@ab-assets.co.il",
+    "installerName": "אש-טק מערכות",
+    "installerAddress": "רח׳ התעשייה 8, נשר",
+    "installerPhone": "052-7654321",
+    "installerId": "034567891",
+    "buildingArea": "30",
+    "buildingHeight": "31",
+    "buildingDescription": "גלאי עשן דגם SD-851 כמות 12",
+    "protectedArea": "33",
+    "protectedSpaces": "תיאור חופשי 24 – Model X-24",
+    "unprotectedSpaces": "תיאור חופשי 25 – Model X-25",
+    "authorityRequirements": "תיאור חופשי 26 – Model X-26",
+    "riskLevel": "רמת סיכון 1 – עדיפות רגילה",
+    "panelLocation": "ערך מיקום רכזת גילוי אש 28",
+    "noticeAck1": {
+      "name": "דנה כהן",
+      "role": "קב\"ט",
+      "phone": "054-3322110",
+      "time": "11:40"
+    },
+    "noticeAck2": {
+      "name": "דנה כהן",
+      "role": "קב\"ט",
+      "phone": "054-3322110",
+      "time": "11:40"
+    },
+    "dialerPhone": "ערך מספר קו טלפון המחובר לחייגן 31",
+    "managerDeclaration": {
+      "name": "דנה כהן",
+      "role": "קב\"ט",
+      "phone": "054-3322110",
+      "time": "11:40"
+    },
+    "equipment": [
+      {
+        "manufacturer": "Apollo",
+        "model": "XP95-0",
+        "qty": "1"
+      },
+      {
+        "manufacturer": "System Sensor",
+        "model": "SD-851",
+        "qty": "12"
+      },
+      {},
+      {
+        "manufacturer": "Apollo",
+        "model": "XP95-3",
+        "qty": "4"
+      },
+      {},
+      {},
+      {
+        "manufacturer": "Apollo",
+        "model": "XP95-6",
+        "qty": "7"
+      },
+      {},
+      {},
+      {
+        "manufacturer": "Apollo",
+        "model": "XP95-9",
+        "qty": "10"
+      },
+      {},
+      {},
+      {
+        "manufacturer": "Apollo",
+        "model": "XP95-12",
+        "qty": "13"
+      },
+      {},
+      {},
+      {
+        "manufacturer": "Apollo",
+        "model": "XP95-15",
+        "qty": "16"
+      },
+      {},
+      {},
+      {
+        "manufacturer": "Apollo",
+        "model": "XP95-18",
+        "qty": "19"
+      },
+      {}
+    ],
+    "connected": {
+      "אמצעי שחרור עשן": "כן",
+      "מיזוג אוויר": "לא",
+      "מעליות": "כן",
+      "אלקטרו מגנט דלתות": "לא",
+      "מדפי אש": "כן",
+      "כריזה": "לא",
+      "מערכת מתיזים": "כן",
+      "כיבוי בגז/אירוסול": "לא",
+      "מערכת BMS": "כן"
+    },
+    "c1": {
+      "answer": "כן"
+    },
+    "c2": {
+      "answer": "כן"
+    },
+    "c3": {
+      "answer": "לא"
+    },
+    "c4": {
+      "answer": "כן",
+      "note": "גלאי עשן דגם SD-851 כמות 12"
+    },
+    "c5": {
+      "answer": "כן"
+    },
+    "c6": {
+      "answer": "לא"
+    },
+    "c7": {
+      "answer": "כן"
+    },
+    "c8": {
+      "answer": "כן",
+      "note": "הערה 44"
+    },
+    "c9": {
+      "answer": "לא"
+    },
+    "c10": {
+      "answer": "כן"
+    },
+    "c11": {
+      "answer": "כן"
+    },
+    "c12": {
+      "answer": "לא",
+      "note": "גלאי עשן דגם SD-851 כמות 12"
+    },
+    "c13": {
+      "answer": "כן"
+    },
+    "c14": {
+      "answer": "כן"
+    },
+    "c15": {
+      "answer": "לא"
+    },
+    "c16": {
+      "answer": "כן",
+      "note": "הערה 52"
+    },
+    "c17": {
+      "answer": "כן"
+    },
+    "c18": {
+      "answer": "לא"
+    },
+    "c19": {
+      "answer": "כן"
+    },
+    "c20": {
+      "answer": "כן",
+      "note": "גלאי עשן דגם SD-851 כמות 12"
+    },
+    "c21": {
+      "answer": "לא"
+    },
+    "c22": {
+      "answer": "כן"
+    },
+    "c23": {
+      "answer": "כן"
+    },
+    "c24": {
+      "answer": "לא",
+      "note": "הערה 60"
+    },
+    "c25": {
+      "answer": "כן"
+    },
+    "c26": {
+      "answer": "כן"
+    },
+    "c27": {
+      "answer": "לא"
+    },
+    "c28": {
+      "answer": "כן",
+      "note": "גלאי עשן דגם SD-851 כמות 12"
+    },
+    "c29": {
+      "answer": "כן"
+    },
+    "c30": {
+      "answer": "לא"
+    },
+    "c31": {
+      "answer": "כן"
+    },
+    "c32": {
+      "answer": "כן",
+      "note": "הערה 68"
+    },
+    "c33": {
+      "answer": "לא"
+    },
+    "c34": {
+      "answer": "כן"
+    },
+    "c35": {
+      "answer": "כן"
+    },
+    "c36": {
+      "answer": "לא",
+      "note": "גלאי עשן דגם SD-851 כמות 12"
+    },
+    "c37": {
+      "answer": "כן"
+    },
+    "c38": {
+      "answer": "כן"
+    },
+    "c39": {
+      "answer": "לא"
+    },
+    "c40": {
+      "answer": "כן",
+      "note": "הערה 76"
+    },
+    "c41": {
+      "answer": "כן"
+    },
+    "c42": {
+      "answer": "לא"
+    },
+    "c43": {
+      "answer": "כן"
+    },
+    "c44": {
+      "answer": "כן",
+      "note": "גלאי עשן דגם SD-851 כמות 12"
+    },
+    "c45": {
+      "answer": "לא"
+    },
+    "c46": {
+      "answer": "כן"
+    },
+    "c47": {
+      "answer": "כן"
+    },
+    "c48": {
+      "answer": "לא",
+      "note": "הערה 84"
+    },
+    "c49": {
+      "answer": "כן"
+    },
+    "c50": {
+      "answer": "כן"
+    },
+    "c51": {
+      "answer": "לא"
+    },
+    "c52": {
+      "answer": "כן",
+      "note": "גלאי עשן דגם SD-851 כמות 12"
+    },
+    "c53": {
+      "answer": "כן"
+    },
+    "c54": {
+      "answer": "לא"
+    },
+    "c55": {
+      "answer": "כן"
+    },
+    "c56": {
+      "answer": "כן",
+      "note": "הערה 92"
+    },
+    "c57": {
+      "answer": "לא"
+    },
+    "c58": {
+      "answer": "כן"
+    },
+    "c59": {
+      "answer": "כן"
+    },
+    "c60": {
+      "answer": "לא",
+      "note": "גלאי עשן דגם SD-851 כמות 12"
+    },
+    "c61": {
+      "answer": "כן"
+    },
+    "c62": {
+      "answer": "כן"
+    },
+    "c63": {
+      "answer": "לא"
+    },
+    "c64": {
+      "answer": "כן",
+      "note": "הערה 100"
+    },
+    "c65": {
+      "answer": "כן"
+    },
+    "c66": {
+      "answer": "לא"
+    },
+    "c67": {
+      "answer": "כן"
+    },
+    "c68": {
+      "answer": "כן",
+      "note": "גלאי עשן דגם SD-851 כמות 12"
+    },
+    "c69": {
+      "answer": "לא"
+    },
+    "c70": {
+      "answer": "כן"
+    },
+    "c71": {
+      "answer": "כן"
+    },
+    "c72": {
+      "answer": "לא",
+      "note": "הערה 108"
+    },
+    "c73": {
+      "answer": "כן"
+    },
+    "c74": {
+      "answer": "כן"
+    },
+    "c75": {
+      "answer": "לא"
+    },
+    "c76": {
+      "answer": "כן",
+      "note": "גלאי עשן דגם SD-851 כמות 12"
+    },
+    "c77": {
+      "answer": "כן"
+    },
+    "c78": {
+      "answer": "לא"
+    },
+    "c79": {
+      "answer": "כן"
+    },
+    "c80": {
+      "answer": "כן",
+      "note": "הערה 116"
+    },
+    "c81": {
+      "answer": "לא"
+    },
+    "c82": {
+      "answer": "כן"
+    },
+    "c83": {
+      "answer": "כן"
+    },
+    "c84": {
+      "answer": "לא",
+      "note": "גלאי עשן דגם SD-851 כמות 12"
+    },
+    "c85": {
+      "answer": "כן"
+    },
+    "c86": {
+      "answer": "כן"
+    },
+    "c87": {
+      "answer": "לא"
+    },
+    "c88": {
+      "answer": "כן",
+      "note": "הערה 124"
+    },
+    "c89": {
+      "answer": "כן"
+    },
+    "c90": {
+      "answer": "לא"
+    },
+    "c91": {
+      "answer": "כן"
+    },
+    "c92": {
+      "answer": "כן",
+      "note": "גלאי עשן דגם SD-851 כמות 12"
+    },
+    "c93": {
+      "answer": "לא"
+    },
+    "c94": {
+      "answer": "כן"
+    },
+    "c95": {
+      "answer": "כן",
+      "inline": {
+        "measured": "מכון התקנים"
+      }
+    },
+    "c96": {
+      "answer": "לא",
+      "note": "הערה 132"
+    },
+    "c97": {
+      "answer": "כן"
+    },
+    "c98": {
+      "answer": "כן"
+    },
+    "c99": {
+      "answer": "לא"
+    },
+    "c100": {
+      "answer": "כן",
+      "note": "גלאי עשן דגם SD-851 כמות 12"
+    },
+    "c101": {
+      "answer": "כן"
+    },
+    "c102": {
+      "answer": "לא"
+    },
+    "c103": {
+      "answer": "כן"
+    },
+    "c104": {
+      "answer": "כן",
+      "note": "הערה 140"
+    },
+    "c105": {
+      "answer": "לא"
+    },
+    "c106": {
+      "answer": "כן"
+    },
+    "c107": {
+      "answer": "כן"
+    },
+    "c108": {
+      "answer": "לא",
+      "note": "גלאי עשן דגם SD-851 כמות 12"
+    },
+    "c109": {
+      "answer": "כן"
+    },
+    "c110": {
+      "answer": "כן"
+    },
+    "c111": {
+      "answer": "לא"
+    },
+    "c112": {
+      "answer": "כן",
+      "note": "הערה 148"
+    },
+    "c113": {
+      "answer": "כן"
+    },
+    "c114": {
+      "answer": "לא"
+    },
+    "c115": {
+      "answer": "כן"
+    },
+    "c116": {
+      "answer": "כן",
+      "note": "גלאי עשן דגם SD-851 כמות 12"
+    },
+    "c117": {
+      "answer": "לא"
+    },
+    "c118": {
+      "answer": "כן"
+    },
+    "c119": {
+      "answer": "כן"
+    },
+    "c120": {
+      "answer": "לא",
+      "note": "הערה 156"
+    },
+    "c121": {
+      "answer": "כן"
+    },
+    "c122": {
+      "answer": "כן"
+    },
+    "c123": {
+      "answer": "לא"
+    },
+    "c124": {
+      "answer": "כן",
+      "note": "גלאי עשן דגם SD-851 כמות 12"
+    },
+    "c125": {
+      "answer": "כן"
+    },
+    "c126": {
+      "answer": "לא"
+    },
+    "c127": {
+      "answer": "כן"
+    },
+    "c128": {
+      "answer": "כן",
+      "note": "הערה 164"
+    },
+    "c129": {
+      "answer": "לא"
+    },
+    "panels": [
+      {
+        "detail": "פירוט לוח חשמל 1",
+        "location": "מיקום לוח חשמל 1",
+        "cutoff": "כן"
+      },
+      {
+        "detail": "פירוט לוח חשמל 2",
+        "location": "מיקום לוח חשמל 2",
+        "cutoff": "לא"
+      }
+    ],
+    "defects": "גלאי עשן דגם SD-851 כמות 12\nנמצא ליקוי בלחצן הפעלה בקומה 3 (MCP-200)."
+  }
+}
