@@ -109,64 +109,66 @@ export function InspectorPicker({
         {label}
       </label>
       <div className="relative">
-        <MagnifyingGlass className="pointer-events-none absolute inset-y-0 start-3.5 my-auto size-5 text-muted" aria-hidden />
-        <input
-          ref={input}
-          id={id}
-          type="text"
-          role="combobox"
-          aria-expanded={shown}
-          aria-controls={listId}
-          aria-autocomplete="list"
-          aria-activedescendant={activeId}
-          autoComplete="off"
-          autoCorrect="off"
-          autoCapitalize="none"
-          spellCheck={false}
-          enterKeyHint="search"
-          autoFocus={autoFocus}
-          placeholder={placeholder}
-          value={text}
-          onFocus={() => {
-            setEditing(true);
-            setOpen(true);
-            setActive(0);
-          }}
-          onBlur={() => {
-            setEditing(false);
-            setQuery('');
-            if (!inline) setOpen(false);
-          }}
-          onChange={(e) => {
-            setQuery(e.target.value);
-            setEditing(true);
-            setOpen(true);
-            setActive(0);
-          }}
-          onKeyDown={onKey}
-          className={cx(
-            'block min-h-12 w-full rounded-ctl border border-border-strong bg-surface ps-11 text-[17px] text-text',
-            'placeholder:text-muted transition-[border-color,box-shadow] duration-150',
-            'focus:border-accent focus:outline-none focus:ring-3 focus:ring-accent/20',
-            clearable && value ? 'pe-12' : 'pe-3.5',
-          )}
-        />
-        {clearable && value && (
-          <button
-            type="button"
-            aria-label="ניקוי הבודק"
-            data-testid="picker-clear"
-            // keep focus where it is
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => {
-              onChange(null);
-              setQuery('');
+        <div className="relative">
+          <MagnifyingGlass className="pointer-events-none absolute inset-y-0 start-3.5 my-auto size-5 text-muted" aria-hidden />
+          <input
+            ref={input}
+            id={id}
+            type="text"
+            role="combobox"
+            aria-expanded={shown}
+            aria-controls={listId}
+            aria-autocomplete="list"
+            aria-activedescendant={activeId}
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="none"
+            spellCheck={false}
+            enterKeyHint="search"
+            autoFocus={autoFocus}
+            placeholder={placeholder}
+            value={text}
+            onFocus={() => {
+              setEditing(true);
+              setOpen(true);
+              setActive(0);
             }}
-            className="press absolute inset-y-0 end-0.5 my-auto grid size-11 touch-manipulation place-items-center rounded-full text-muted select-none transition-[transform,background-color] duration-150 ease-snap hover:bg-surface-2 active:scale-[0.94]"
-          >
-            <X className="size-[18px]" weight="bold" aria-hidden />
-          </button>
-        )}
+            onBlur={() => {
+              setEditing(false);
+              setQuery('');
+              if (!inline) setOpen(false);
+            }}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setEditing(true);
+              setOpen(true);
+              setActive(0);
+            }}
+            onKeyDown={onKey}
+            className={cx(
+              'block min-h-12 w-full rounded-ctl border border-border-strong bg-surface ps-11 text-[17px] text-text',
+              'placeholder:text-muted transition-[border-color,box-shadow] duration-150',
+              'focus:border-accent focus:outline-none focus:ring-3 focus:ring-accent/20',
+              clearable && value ? 'pe-12' : 'pe-3.5',
+            )}
+          />
+          {clearable && value && (
+            <button
+              type="button"
+              aria-label="ניקוי הבודק"
+              data-testid="picker-clear"
+              // keep focus where it is
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
+                onChange(null);
+                setQuery('');
+              }}
+              className="press absolute inset-y-0 end-0.5 my-auto grid size-11 touch-manipulation place-items-center rounded-full text-muted select-none transition-[transform,background-color] duration-150 ease-snap hover:bg-surface-2 active:scale-[0.94]"
+            >
+              <X className="size-[18px]" weight="bold" aria-hidden />
+            </button>
+          )}
+        </div>
         <ul
           id={listId}
           role="listbox"
