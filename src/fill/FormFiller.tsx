@@ -4,7 +4,7 @@ import { Banner, Button, Sheet, StatusBadge, cx, toast, type SubmissionStatus } 
 import { api, ApiError } from '../lib/api';
 import { clearLocal, createAutosave, dataHash, readLocal, sameData, type Autosave, type SaveStatus } from '../lib/autosave';
 import type { AttachmentRef, Field, FormData, FormDef, Section } from '../../shared/forms/types';
-import { markSectionNA, validateForSubmit, type Missing } from '../../shared/forms/validate';
+import { markSectionNACount, validateForSubmit, type Missing } from '../../shared/forms/validate';
 import { FillContext, fieldDomId, sectionDomId, type Attachment, type FillCtx, type FillMode } from './context';
 import { FieldRenderer } from './FieldRenderer';
 import { SectionNav, type SectionItem } from './SectionNav';
@@ -112,6 +112,9 @@ export function FormFiller({
     return { server: initialData, serverUpdatedAt: submission.updatedAt, mine: local.data };
   });
   const [data, setData] = useState<FormData>(() => conflict?.mine ?? initialData);
+  // latest data for event handlers
+  const dataRef = useRef(data);
+  dataRef.current = data;
   const [atts, setAtts] = useState<Attachment[]>(initialAtts);
   const [status, setStatus] = useState<SaveStatus>('saved');
   const [navOpen, setNavOpen] = useState(false);
@@ -240,10 +243,10 @@ export function FormFiller({
   }
 
   function markNA(sectionId: string) {
-    setData((d) => markSectionNA(def, sectionId, d));
-    const s = def.sections.find((x) => x.id === sectionId);
-    const n = s ? s.fields.filter((f) => f.type === 'check').length - countAnsweredChecks(s, data) : 0;
-    toast.success(n > 0 ? `${n} סעיפים סומנו` : 'כל הסעיפים כבר סומנו');
+    const r = markSectionNACount(def, sectionId, dataRef.current);
+    dataRef.current = r.data;
+    setData(r.data);
+    toast.success(r.changed > 0 ? `${r.changed} סעיפים סומנו` : 'כל הסעיפים כבר סומנו');
   }
 
   async function submit() {
@@ -390,10 +393,6 @@ export function FormFiller({
       </Sheet>
     </FillContext.Provider>
   );
-}
-
-function countAnsweredChecks(s: Section, data: FormData) {
-  return s.fields.filter((f) => f.type === 'check' && (data[f.id] as { answer?: string } | undefined)?.answer).length;
 }
 
 type SectionCardProps = {

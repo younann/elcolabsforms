@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { FORMS, getForm } from '../../shared/forms';
-import { validateForSubmit, markSectionNA } from '../../shared/forms/validate';
+import { validateForSubmit, markSectionNA, markSectionNACount } from '../../shared/forms/validate';
 import type { AttachmentRef, FormDef } from '../../shared/forms/types';
 
 const checks = (d: FormDef) => d.sections.flatMap((s) => s.fields).filter((f) => f.type === 'check');
@@ -52,5 +52,23 @@ describe('markSectionNA', () => {
     const s = d.sections.find((x) => x.fields.includes(c))!;
     const out = markSectionNA(d, s.id, {}) as Record<string, any>;
     expect(out[c.id].answer).toBe('לא קיים');
+  });
+  it('leaves a partly answered existsActive check alone', () => {
+    const d = getForm('f536');
+    const c = d.sections.flatMap((s) => s.fields).find((f) => f.type === 'check' && f.answers === 'existsActive')!;
+    const s = d.sections.find((x) => x.fields.includes(c))!;
+    const input = { [c.id]: { answer: 'קיים', remark: 'r' } };
+    const out = markSectionNA(d, s.id, input) as Record<string, any>;
+    expect(out[c.id]).toEqual({ answer: 'קיים', remark: 'r' });
+    expect(validateForSubmit(d, out, []).missing.map((m) => m.fieldId)).toContain(c.id);
+  });
+  it('counts only the checks it changed', () => {
+    const d = getForm('f536');
+    const c = d.sections.flatMap((s) => s.fields).find((f) => f.type === 'check' && f.answers === 'existsActive')!;
+    const s = d.sections.find((x) => x.fields.includes(c))!;
+    const total = s.fields.filter((f) => f.type === 'check').length;
+    expect(markSectionNACount(d, s.id, {}).changed).toBe(total);
+    expect(markSectionNACount(d, s.id, { [c.id]: { answer: 'קיים' } }).changed).toBe(total - 1);
+    expect(markSectionNACount(d, s.id, markSectionNA(d, s.id, {})).changed).toBe(0);
   });
 });

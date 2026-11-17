@@ -65,15 +65,22 @@ export function validateForSubmit(
   return { ok: missing.length === 0, missing };
 }
 
-export function markSectionNA(def: FormDef, sectionId: string, data: FormData): FormData {
+// any started answer is left as is
+export function markSectionNACount(def: FormDef, sectionId: string, data: FormData): { data: FormData; changed: number } {
   const out: FormData = { ...data };
+  let changed = 0;
   const sec = def.sections.find((s) => s.id === sectionId);
-  if (!sec) return out;
+  if (!sec) return { data: out, changed };
   for (const f of sec.fields) {
     if (f.type !== 'check') continue;
     const cur = out[f.id] as CheckValue | undefined;
-    if (checkAnswered(f, cur)) continue;
+    if (cur && !blank(cur.answer)) continue;
     out[f.id] = { ...cur, answer: NA_VALUE[f.answers] };
+    changed++;
   }
-  return out;
+  return { data: out, changed };
+}
+
+export function markSectionNA(def: FormDef, sectionId: string, data: FormData): FormData {
+  return markSectionNACount(def, sectionId, data).data;
 }
