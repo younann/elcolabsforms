@@ -8,6 +8,7 @@ import { act } from '../../lib/submissions';
 import { Banner, Button, Sheet, TextArea, toast } from '../../ui';
 import { FormFiller, draftKey } from '../../fill/FormFiller';
 import { MailModeBanner } from '../../components/MailMode';
+import { ReassignCard } from '../../components/ReassignCard';
 import { AuditButton, BackLink, DetailError, DetailSkeleton, useSubmission } from '../../components/SubmissionDetail';
 
 // edits must reach the server before a status change
@@ -109,6 +110,14 @@ export function Review() {
           הדוח נחתם בחתימה השמורה שלך בעת האישור. בלי חתימה תיבת המאשר תישאר ריקה.
         </Banner>
       )}
+      <ReassignCard
+        submissionId={s.id}
+        status={s.status}
+        inspectorId={s.inspectorId}
+        inspectorName={state.inspectorName}
+        before={() => saved(id)}
+        onDone={() => void load(true)}
+      />
       <FormFiller
         key={`${s.id}-${s.updatedAt}`}
         def={state.def}

@@ -8,6 +8,7 @@ import { Banner, Button, Sheet, toast } from '../ui';
 import { FormFiller } from '../fill/FormFiller';
 import { DuplicateButton } from '../components/DuplicateButton';
 import { MailModeBanner, useMailMode } from '../components/MailMode';
+import { ReassignCard } from '../components/ReassignCard';
 import { AuditButton, BackLink, DetailError, DetailSkeleton, useSubmission } from '../components/SubmissionDetail';
 
 const POLL_MS = 4000;
@@ -113,6 +114,15 @@ export function SubmissionView() {
         <Banner tone="success" title="הדוח נשלח" className="mb-5">
           {s.emailedAt ? `נשלח ב-${new Date(s.emailedAt).toLocaleString('he-IL', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Jerusalem' })}` : null}
         </Banner>
+      )}
+      {admin && (
+        <ReassignCard
+          submissionId={s.id}
+          status={s.status}
+          inspectorId={s.inspectorId}
+          inspectorName={state.inspectorName}
+          onDone={() => void load(true)}
+        />
       )}
       <FormFiller
         key={`${s.id}-${s.status}`}

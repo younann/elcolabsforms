@@ -54,6 +54,17 @@ export function act(id: string, action: 'return' | 'approve' | 'reopen' | 'retry
   });
 }
 
+export function reassign(id: string, inspectorId: string) {
+  return api<{ submission: { id: string; inspectorId: string; updatedAt: string }; inspectorName: string }>(`/api/submissions/${id}/reassign`, {
+    method: 'POST',
+    json: { inspectorId },
+  });
+}
+
+/** Active inspectors for pickers; admin only. */
+export const listInspectors = () =>
+  api<{ inspectors: { id: string; displayName: string; username: string }[] }>('/api/users?inspectors=1').then((r) => r.inspectors);
+
 export const pdfUrl = (id: string) => `/api/submissions/${id}/pdf`;
 export const docxUrl = (id: string) => `/api/submissions/${id}/docx`;
 

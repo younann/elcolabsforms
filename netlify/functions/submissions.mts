@@ -8,11 +8,13 @@ import { getBlob, putBlob } from '../../server/blobs';
 import { docxKey } from '../../server/docx';
 import { DOCX_TYPE, loadReportAssets, renderDocxFor, reportFileBase } from '../../server/report-assets';
 import { FORMS, getForm } from '../../shared/forms';
-import { canTransition } from '../../shared/status';
+import { canTransition, type Status } from '../../shared/status';
+import { reassignCheck } from '../../shared/reassign';
 import {
   asData,
   assertAccess,
   audit,
+  auditSafe,
   changedFieldIds,
   duplicateData,
   loadSubmission,
@@ -22,6 +24,7 @@ import {
 const Create = z.object({ formId: z.enum(FORMS.map((f) => f.id) as [string, ...string[]]) });
 const Patch = z.object({ data: z.record(z.string(), z.unknown()), updatedAt: z.string() });
 const Id = z.uuid();
+const Reassign = z.object({ inspectorId: z.uuid() });
 
 export default handle(async (req) => {
   const me = await requireUser(req);
@@ -142,6 +145,24 @@ export default handle(async (req) => {
       },
     });
   }
+  if (sub === 'reassign') {
+    if (req.method !== 'POST') throw new HttpError(405, 'Method not allowed');
+    if (me.role !== 'admin') throw new HttpError(403, 'אין הרשאה');
+    const b = await parseBody(req, Reassign);
+    const [target] = await db.select().from(schema.users).where(eq(schema.users.id, b.inspectorId));
+    const ok = reassignCheck({ status: s.status as Status, fromId: s.inspectorId, target: target ?? null });
+    if (!ok.ok) throw new HttpError(ok.status, ok.error);
+    // only if nobody changed status or owner meanwhile
+    const rows = await db
+      .update(schema.submissions)
+      .set({ inspectorId: target.id, updatedAt: new Date() })
+      .where(and(eq(schema.submissions.id, id), eq(schema.submissions.status, s.status), eq(schema.submissions.inspectorId, s.inspectorId)))
+      .returning();
+    if (!rows[0]) throw new HttpError(409, 'מצב הטופס השתנה, רענן ונסה שוב');
+    const [from] = await db.select({ displayName: schema.users.displayName }).from(schema.users).where(eq(schema.users.id, s.inspectorId));
+    await auditSafe(id, me.id, 'reassign', { oldValue: s.inspectorId, newValue: target.id, note: `${from?.displayName ?? s.inspectorId} → ${target.displayName}` });
+    return json({ submission: rows[0], inspectorName: target.displayName });
+  }
   if (sub) throw new HttpError(404, 'לא נמצא');
 
   if (req.method === 'GET') {
@@ -155,6 +176,8 @@ export default handle(async (req) => {
       attachments: attachments.map((a) => ({ id: a.id, fieldId: a.fieldId, kind: a.kind, url: `/api/files/${a.id}` })),
     };
     if (me.role === 'admin') {
+      const [owner] = await db.select({ displayName: schema.users.displayName }).from(schema.users).where(eq(schema.users.id, s.inspectorId));
+      out.inspectorName = owner?.displayName ?? null;
       out.audit = await db.select().from(schema.auditLog).where(eq(schema.auditLog.submissionId, id)).orderBy(asc(schema.auditLog.at));
     }
     return json(out);
@@ -197,5 +220,5 @@ export default handle(async (req) => {
   throw new HttpError(405, 'Method not allowed');
 });
 
-export const config: Config = { path: ['/api/submissions', '/api/submissions/:id', '/api/submissions/:id/duplicate', '/api/submissions/:id/pdf', '/api/submissions/:id/docx'] };
+export const config: Config = { path: ['/api/submissions', '/api/submissions/:id', '/api/submissions/:id/duplicate', '/api/submissions/:id/pdf', '/api/submissions/:id/docx', '/api/submissions/:id/reassign'] };
 

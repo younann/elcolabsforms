@@ -28,6 +28,8 @@ export type Detail = {
   fromLocal: boolean;
   attachments: Attachment[];
   audit: AuditEntry[];
+  /** Owner name, admins only. */
+  inspectorName: string | null;
 };
 
 /** Loads a submission; editable statuses prefer the device copy. */
@@ -37,12 +39,12 @@ export function useSubmission(id: string, editable: (s: FullSubmission) => boole
     async (quiet = false) => {
       if (!quiet) setState(null);
       try {
-        const r = await api<{ submission: FullSubmission; attachments: Attachment[]; audit?: AuditEntry[] }>(`/api/submissions/${id}`);
+        const r = await api<{ submission: FullSubmission; attachments: Attachment[]; audit?: AuditEntry[]; inspectorName?: string | null }>(`/api/submissions/${id}`);
         const def = getForm(r.submission.formId, r.submission.formVersion);
         const picked = editable(r.submission)
           ? preferLocal(draftKey(id), r.submission.data ?? {}, r.submission.updatedAt)
           : { data: r.submission.data ?? {}, fromLocal: false };
-        setState({ def, submission: r.submission, data: picked.data, fromLocal: picked.fromLocal, attachments: r.attachments, audit: r.audit ?? [] });
+        setState({ def, submission: r.submission, data: picked.data, fromLocal: picked.fromLocal, attachments: r.attachments, audit: r.audit ?? [], inspectorName: r.inspectorName ?? null });
       } catch (e) {
         if (e instanceof ApiError && e.status === 401) return;
         if (!quiet) setState({ error: e instanceof Error ? e.message : 'טעינת הטופס נכשלה' });
@@ -104,6 +106,7 @@ const ACTIONS: Record<string, string> = {
   reopen: 'נפתח כגרסה חדשה',
   edit: 'שינוי שדה',
   docx_failed: 'קובץ Word לא הופק',
+  reassign: 'שויך לבודק אחר',
 };
 
 function fieldLabel(def: FormDef, id: string | null) {
@@ -167,7 +170,7 @@ export function AuditButton({ def, audit }: { def: FormDef; audit: AuditEntry[] 
                     </p>
                   </div>
                 )}
-                {a.note && (a.action === 'return' || a.action === 'approve') && <p className="mt-1.5 text-[15px] whitespace-pre-wrap">{a.note}</p>}
+                {a.note && (a.action === 'return' || a.action === 'approve' || a.action === 'reassign') && <p className="mt-1.5 text-[15px] whitespace-pre-wrap">{a.note}</p>}
               </li>
             ))}
           </ol>
