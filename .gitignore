@@ -1,0 +1,10 @@
+node_modules
+dist
+.env
+.env.*
+.netlify
+out
+.superpowers
+test-results
+playwright-report
+.DS_Store
