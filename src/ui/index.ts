@@ -11,3 +11,4 @@ export { toast, dismissToast, Toaster } from './toast';
 export { Brand, APP_NAME } from './Brand';
 export { cx } from './cx';
 export { InspectorPicker, type InspectorPickerProps, type Inspector } from './InspectorPicker';
+export { BackGuard, useBackCloses, useGoBack } from './back';

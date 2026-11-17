@@ -14,7 +14,7 @@ import { AuditButton, BackLink, DetailError, DetailSkeleton, useSubmission } fro
 const POLL_MS = 4000;
 
 const linkBtn =
-  'press inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-ctl border border-border-strong bg-surface px-4 text-base font-medium whitespace-nowrap text-text transition-[transform,background-color] duration-150 ease-snap hover:bg-surface-2 active:scale-[0.97]';
+  'press inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-ctl border border-border-strong bg-surface px-3 text-base max-sm:flex-1 sm:px-4 font-medium whitespace-nowrap text-text transition-[transform,background-color] duration-150 ease-snap hover:bg-surface-2 active:scale-[0.97]';
 
 /** Read-only submission with its delivery status and actions. */
 export function SubmissionView() {
@@ -66,9 +66,9 @@ export function SubmissionView() {
   const logged = admin && s.status === 'emailed' && !!s.mailLogged;
   const canRetry = admin && (s.status === 'send_failed' || isStuck(s) || (logged && mailMode === 'live'));
   const actions = (
-    <div className="flex shrink-0 items-center gap-2">
+    <div className="flex w-full flex-wrap items-center gap-2">
       {admin && <AuditButton def={state.def} audit={state.audit} />}
-      {owner && <DuplicateButton id={s.id} variant="secondary" />}
+      {owner && <DuplicateButton id={s.id} variant="secondary" className="max-sm:flex-1" />}
       {s.pdfKey && (admin || s.status === 'emailed') && (
         <>
           <a href={pdfUrl(s.id)} download className={linkBtn} data-testid="pdf-link">
@@ -82,7 +82,7 @@ export function SubmissionView() {
         </>
       )}
       {admin && s.status === 'emailed' && (
-        <Button variant="secondary" icon={<ArrowsCounterClockwise className="size-5" aria-hidden />} onClick={() => setConfirmReopen(true)}>
+        <Button variant="secondary" className="max-sm:px-3" icon={<ArrowsCounterClockwise className="size-5" aria-hidden />} onClick={() => setConfirmReopen(true)}>
           <span className="max-sm:sr-only">פתיחה כגרסה</span>
         </Button>
       )}

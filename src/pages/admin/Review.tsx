@@ -81,12 +81,12 @@ export function Review() {
   }
 
   const actions = (
-    <div className="flex shrink-0 items-center gap-2">
+    <div className="flex w-full items-center gap-2">
       <AuditButton def={state.def} audit={state.audit} />
-      <Button variant="secondary" icon={<ArrowUUpRight className="size-5" aria-hidden />} onClick={() => setSheet('return')} disabled={pending !== null}>
+      <Button variant="secondary" className="max-sm:flex-1" icon={<ArrowUUpRight className="size-5" aria-hidden />} onClick={() => setSheet('return')} disabled={pending !== null}>
         החזרה
       </Button>
-      <Button variant="accent" icon={<CheckCircle className="size-5" aria-hidden />} onClick={() => setSheet('approve')} disabled={pending !== null}>
+      <Button variant="accent" className="max-sm:flex-1" icon={<CheckCircle className="size-5" aria-hidden />} onClick={() => setSheet('approve')} disabled={pending !== null}>
         אישור
       </Button>
     </div>

@@ -98,7 +98,7 @@ export function Toaster() {
   return (
     <ol
       aria-live="polite"
-      className="pointer-events-none fixed inset-x-0 bottom-0 z-50 mx-auto flex w-full max-w-md flex-col gap-2 px-4 pb-[max(1rem,var(--safe-bottom))]"
+      className="pointer-events-none fixed inset-x-0 top-0 z-50 mx-auto flex w-full max-w-md flex-col gap-2 px-4 pt-[calc(var(--safe-top)+4rem)] lg:top-auto lg:bottom-0 lg:pt-0 lg:pb-[max(1rem,var(--safe-bottom))]"
     >
       {list.map((t) => (
         <Toast key={t.id} item={t} />

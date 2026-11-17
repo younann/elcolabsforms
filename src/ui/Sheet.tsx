@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, type PointerEvent, type ReactNode } from 'react';
 import { X } from '@phosphor-icons/react';
 import { cx } from './cx';
+import { useBackCloses } from './back';
 
 export type SheetProps = {
   open: boolean;
@@ -25,6 +26,27 @@ export function Sheet({ open, onClose, title, children, footer, className }: She
     if (!d || typeof d.showModal !== 'function') return;
     if (open && !d.open) d.showModal();
     if (!open && d.open) d.close();
+  }, [open]);
+
+  useBackCloses(open, onClose);
+
+  // lift above the iOS keyboard, which overlays fixed elements
+  useEffect(() => {
+    const vv = window.visualViewport;
+    const d = ref.current;
+    if (!open || !vv || !d) return;
+    const fit = () => {
+      const kb = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
+      d.style.setProperty('--kb', `${kb}px`);
+    };
+    fit();
+    vv.addEventListener('resize', fit);
+    vv.addEventListener('scroll', fit);
+    return () => {
+      vv.removeEventListener('resize', fit);
+      vv.removeEventListener('scroll', fit);
+      d.style.removeProperty('--kb');
+    };
   }, [open]);
 
   // lock page scroll while open

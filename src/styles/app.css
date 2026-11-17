@@ -66,11 +66,11 @@
 /* Sheet: bottom sheet on phones, centered dialog from 768px */
 .sheet {
   position: fixed;
-  inset: auto 0 0 0;
+  inset: auto 0 var(--kb, 0px) 0;
   margin: 0;
   width: 100%;
   max-width: 100%;
-  max-height: calc(100dvh - var(--safe-top) - 1.5rem);
+  max-height: calc(100dvh - var(--kb, 0px) - var(--safe-top) - 1.5rem);
   padding: 0;
   border: 0;
   border-radius: var(--radius-box) var(--radius-box) 0 0;
@@ -158,17 +158,30 @@
     opacity 320ms var(--motion-out);
 }
 
+/* phones: toasts drop in from the top, clear of bottom bars */
 @starting-style {
   .toast {
     opacity: 0;
-    transform: translateY(100%);
+    transform: translateY(-100%);
   }
 }
 
 .toast[data-leaving] {
   opacity: 0;
-  transform: translateY(40%);
+  transform: translateY(-40%);
   transition-duration: 180ms;
+}
+
+@media (min-width: 1024px) {
+  @starting-style {
+    .toast {
+      transform: translateY(100%);
+    }
+  }
+
+  .toast[data-leaving] {
+    transform: translateY(40%);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider, RequireRole } from './lib/auth';
 import { AppShell } from './ui/AppShell';
 import { Toaster } from './ui/toast';
+import { BackGuard } from './ui/back';
 import { Login } from './pages/Login';
 import { Home } from './pages/Home';
 import { NewForm } from './pages/NewForm';
@@ -18,6 +19,7 @@ function Root() {
     <AuthProvider>
       <Outlet />
       <Toaster />
+      <BackGuard />
     </AuthProvider>
   );
 }

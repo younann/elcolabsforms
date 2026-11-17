@@ -1,6 +1,7 @@
 import { useState, type ComponentType } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
+  ArrowRight,
   FilePlus,
   Files,
   GearSix,
@@ -14,9 +15,12 @@ import {
 import { useAuth, type Role } from '../lib/auth';
 import { InstallBanner } from '../pwa/InstallBanner';
 import { Brand } from './Brand';
+import { Button } from './Button';
+import { Sheet } from './Sheet';
+import { useGoBack } from './back';
 import { cx } from './cx';
 
-type Tab = { to: string; label: string; Icon: ComponentType<IconProps>; end?: boolean };
+type Tab = { to: string; label: string; /** Bottom bar label. */ short?: string; Icon: ComponentType<IconProps>; end?: boolean };
 
 const TABS: Record<Role, Tab[]> = {
   inspector: [
@@ -26,7 +30,7 @@ const TABS: Record<Role, Tab[]> = {
   ],
   admin: [
     { to: '/', label: 'לאישור', Icon: Tray, end: true },
-    { to: '/admin/submissions', label: 'כל הטפסים', Icon: Files },
+    { to: '/admin/submissions', label: 'כל הטפסים', short: 'טפסים', Icon: Files },
     { to: '/admin/users', label: 'משתמשים', Icon: UsersThree },
     { to: '/admin/settings', label: 'הגדרות', Icon: GearSix },
     { to: '/profile', label: 'פרופיל', Icon: UserCircle },
@@ -36,13 +40,21 @@ const TABS: Record<Role, Tab[]> = {
 // full-screen task pages carry their own bottom bar
 const TASK = /^\/(fill|submissions|admin\/review)\//;
 
+// where back goes without in-app history
+function backTarget(pathname: string, role?: Role) {
+  if (pathname.startsWith('/submissions/') && role === 'admin') return '/admin/submissions';
+  return '/';
+}
+
 /** Logged-in frame: bottom tabs on phones, side navigation from 1024px. */
 export function AppShell() {
   const { user, logout } = useAuth();
   const { pathname } = useLocation();
   const [leaving, setLeaving] = useState(false);
+  const [confirmOut, setConfirmOut] = useState(false);
   const tabs = TABS[user?.role ?? 'inspector'];
   const task = TASK.test(pathname);
+  const goBack = useGoBack(backTarget(pathname, user?.role));
 
   async function onLogout() {
     setLeaving(true);
@@ -50,13 +62,14 @@ export function AppShell() {
       await logout();
     } finally {
       setLeaving(false);
+      setConfirmOut(false);
     }
   }
 
   const logoutBtn = (withLabel: boolean) => (
     <button
       type="button"
-      onClick={onLogout}
+      onClick={() => setConfirmOut(true)}
       disabled={leaving}
       aria-label="יציאה"
       className="press inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-ctl px-2.5 text-[15px] font-medium text-muted transition-[transform,background-color,color] duration-150 hover:bg-surface-2 hover:text-text active:scale-[0.97] disabled:opacity-50"
@@ -108,9 +121,21 @@ export function AppShell() {
       <div className="flex min-h-dvh min-w-0 flex-col">
         <header className="safe-x sticky top-0 z-30 border-b border-border bg-bg/90 pt-[var(--safe-top)] backdrop-blur-md lg:hidden">
           <div className="mx-auto flex h-14 max-w-5xl items-center gap-2">
-            <NavLink to="/" className="press me-1 flex min-h-11 min-w-11 items-center rounded-ctl" aria-label="דף הבית">
-              <Brand />
-            </NavLink>
+            {task ? (
+              <button
+                type="button"
+                onClick={goBack}
+                className="press -ms-2 inline-flex min-h-11 items-center gap-1.5 rounded-ctl px-2 text-[16px] font-medium transition-[transform,background-color] duration-150 hover:bg-surface-2 active:scale-[0.97]"
+                data-testid="header-back"
+              >
+                <ArrowRight className="size-5" aria-hidden />
+                חזרה
+              </button>
+            ) : (
+              <NavLink to="/" className="press me-1 flex min-h-11 min-w-11 items-center rounded-ctl" aria-label="דף הבית">
+                <Brand />
+              </NavLink>
+            )}
             <div className="ms-auto flex items-center gap-1">
               <span className="hidden max-w-[16ch] truncate text-[15px] text-muted sm:inline">{user?.displayName}</span>
               {logoutBtn(false)}
@@ -123,7 +148,7 @@ export function AppShell() {
             task ? 'safe-bottom' : 'pb-[calc(5.5rem+var(--safe-bottom))] lg:pb-12',
           )}
         >
-          <InstallBanner />
+          {!task && <InstallBanner />}
           <Outlet />
         </main>
       </div>
@@ -139,9 +164,12 @@ export function AppShell() {
                 <NavLink
                   to={t.to}
                   end={t.end}
+                  aria-label={t.short ? t.label : undefined}
                   className={({ isActive }) =>
                     cx(
-                      'press flex min-h-14 flex-col items-center justify-center gap-0.5 px-1 text-[12px] font-medium transition-[transform,color] duration-150 active:scale-[0.94]',
+                      'press flex min-h-14 flex-col items-center justify-center gap-0.5 px-0.5 font-medium transition-[transform,color] duration-150 active:scale-[0.94]',
+                      // five tabs need the smaller size at 320px
+                      tabs.length > 4 ? 'text-[11px]' : 'text-[12px]',
                       isActive ? 'text-accent' : 'text-muted',
                     )
                   }
@@ -149,7 +177,7 @@ export function AppShell() {
                   {({ isActive }) => (
                     <>
                       <t.Icon className="size-6" weight={isActive ? 'fill' : 'regular'} aria-hidden />
-                      <span className="max-w-full truncate">{t.label}</span>
+                      <span className="max-w-full truncate">{t.short ?? t.label}</span>
                     </>
                   )}
                 </NavLink>
@@ -158,6 +186,24 @@ export function AppShell() {
           </ul>
         </nav>
       )}
+
+      <Sheet
+        open={confirmOut}
+        onClose={() => !leaving && setConfirmOut(false)}
+        title="יציאה מהחשבון"
+        footer={
+          <div className="flex gap-2">
+            <Button variant="secondary" className="flex-1" disabled={leaving} onClick={() => setConfirmOut(false)}>
+              ביטול
+            </Button>
+            <Button variant="danger" className="flex-1" loading={leaving} onClick={onLogout} data-testid="confirm-logout">
+              יציאה
+            </Button>
+          </div>
+        }
+      >
+        <p className="text-[15px] leading-relaxed">טיוטות פתוחות נשמרות לפני היציאה. כדי להמשיך תצטרך להתחבר שוב.</p>
+      </Sheet>
     </div>
   );
 }

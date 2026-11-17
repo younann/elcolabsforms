@@ -106,7 +106,7 @@ describe('app shell', () => {
     auth.user.role = 'admin';
     shell('/');
     const navs = screen.getAllByRole('navigation', { name: 'ניווט ראשי', hidden: true });
-    const labels = within(navs[navs.length - 1]).getAllByRole('link').map((a) => a.textContent);
+    const labels = within(navs[navs.length - 1]).getAllByRole('link').map((a) => a.getAttribute('aria-label') ?? a.textContent);
     expect(labels).toEqual(['לאישור', 'כל הטפסים', 'משתמשים', 'הגדרות', 'פרופיל']);
   });
 

@@ -2,6 +2,7 @@ import { useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } 
 import { MagnifyingGlass, UserCircle, X } from '@phosphor-icons/react';
 import { rankInspectors, type Inspector } from '../../shared/inspector-rank';
 import { cx } from './cx';
+import { useBackCloses } from './back';
 
 export type { Inspector };
 
@@ -53,6 +54,11 @@ export function InspectorPicker({
     [query, options, excludeId],
   );
   const shown = inline || open;
+
+  useBackCloses(!inline && open, () => {
+    setOpen(false);
+    input.current?.blur();
+  });
   const activeId = shown && matches[active] ? `${id}-opt-${matches[active].id}` : undefined;
 
   function choose(o: Inspector) {

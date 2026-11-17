@@ -287,7 +287,12 @@ export function FormFiller({
 
   return (
     <FillContext.Provider value={ctx}>
-      <div className="pb-32 lg:grid lg:grid-cols-[16rem_minmax(0,1fr)] lg:gap-8">
+      <div
+        className={cx(
+          'pb-[calc(6rem+var(--safe-bottom))] lg:grid lg:grid-cols-[16rem_minmax(0,1fr)] lg:gap-8 lg:pb-32',
+          !!actions && 'max-sm:pb-[calc(9.5rem+var(--safe-bottom))]',
+        )}
+      >
         <aside className="hidden lg:block">
           <div className="sticky top-[calc(var(--safe-top)+4.5rem)] max-h-[calc(100dvh-var(--safe-top)-10rem)] overflow-y-auto overscroll-contain pb-4">
             <SectionNav items={items} current={current} onJump={jumpSection} onMarkNA={locked ? undefined : markNA} />
@@ -345,20 +350,29 @@ export function FormFiller({
       </div>
 
       <div className="safe-x fixed inset-x-0 bottom-0 z-20 lg:start-(--nav-w) border-t border-border bg-bg/92 pt-2.5 pb-[max(0.625rem,var(--safe-bottom))] backdrop-blur-md">
-        <div className="mx-auto flex max-w-5xl items-center gap-2">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-2">
           <Button variant="secondary" className="lg:hidden" icon={<ListBullets className="size-5" aria-hidden />} onClick={() => setNavOpen(true)}>
             <span className="tabular-nums" dir="ltr">
               {totals.done}/{totals.total}
             </span>
             <span className="sr-only">סעיפים</span>
           </Button>
-          <div className="min-w-0 flex-1">{!readOnly && <SaveIndicator status={status} onRetry={() => void saver.current?.flush()} />}</div>
-          {actions ??
-            (!readOnly && mode === 'inspector' && (
+          {!readOnly && (
+            <div className="min-w-0 flex-1">
+              <SaveIndicator status={status} onRetry={() => void saver.current?.flush()} />
+            </div>
+          )}
+          {actions ? (
+            // own full-width row on phones
+            <div className="flex min-w-0 max-sm:basis-full">{actions}</div>
+          ) : (
+            !readOnly &&
+            mode === 'inspector' && (
               <Button variant="accent" loading={submitting} disabled={!!conflict} icon={<PaperPlaneTilt className="size-5 -scale-x-100" aria-hidden />} onClick={submit}>
                 שליחה לאישור
               </Button>
-            ))}
+            )
+          )}
         </div>
       </div>
 

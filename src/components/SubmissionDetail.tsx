@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { ArrowRight, ClockCounterClockwise, WarningOctagon } from '@phosphor-icons/react';
 import { api, ApiError } from '../lib/api';
 import { preferLocal } from '../lib/autosave';
 import { fmtTime, type AuditEntry } from '../lib/submissions';
-import { Button, EmptyState, Sheet } from '../ui';
+import { Button, EmptyState, Sheet, useGoBack } from '../ui';
 import { getForm } from '../../shared/forms';
 import type { Field, FormData, FormDef } from '../../shared/forms/types';
 import { draftKey, type SubmissionRow } from '../fill/FormFiller';
@@ -85,15 +84,18 @@ export function DetailError({ error, onRetry }: { error: string; onRetry(): void
   );
 }
 
+/** Desktop back; phones use the header's back button. */
 export function BackLink({ to, label }: { to: string; label: string }) {
+  const goBack = useGoBack(to);
   return (
-    <Link
-      to={to}
-      className="press -ms-2 mb-2 inline-flex min-h-11 items-center gap-1.5 rounded-ctl px-2 text-[15px] font-medium text-muted transition-[transform,color] duration-150 hover:text-text active:scale-[0.97]"
+    <button
+      type="button"
+      onClick={goBack}
+      className="press -ms-2 mb-2 hidden min-h-11 items-center gap-1.5 rounded-ctl px-2 text-[15px] font-medium text-muted transition-[transform,color] duration-150 hover:text-text active:scale-[0.97] lg:inline-flex"
     >
       <ArrowRight className="size-[18px]" aria-hidden />
       {label}
-    </Link>
+    </button>
   );
 }
 

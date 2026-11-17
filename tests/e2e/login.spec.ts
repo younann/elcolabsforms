@@ -34,6 +34,7 @@ test('correct password lands on home', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1 })).toContainText('שלום');
 
   await page.getByRole('button', { name: 'יציאה' }).click();
+  await page.getByTestId('confirm-logout').click();
   await expect(page).toHaveURL(/\/login$/);
 });
 

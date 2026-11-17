@@ -46,8 +46,8 @@ export function UpdateBanner() {
   }
 
   return (
-    <div className="safe-x pointer-events-none fixed inset-x-0 bottom-0 z-40 pb-[max(0.75rem,var(--safe-bottom))]">
-      <div className="pointer-events-auto mx-auto max-w-md transition-[opacity,transform] duration-200 ease-snap starting:translate-y-2 starting:opacity-0">
+    <div className="safe-x pointer-events-none fixed inset-x-0 top-0 z-40 pt-[calc(var(--safe-top)+4rem)] lg:top-auto lg:bottom-0 lg:pt-0 lg:pb-[max(0.75rem,var(--safe-bottom))]">
+      <div className="pointer-events-auto mx-auto max-w-md transition-[opacity,transform] duration-200 ease-snap starting:-translate-y-2 starting:opacity-0 lg:starting:translate-y-2">
         <Banner
           tone="info"
           title="גרסה חדשה זמינה"

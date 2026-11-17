@@ -8,6 +8,7 @@ import { getForm } from '../../shared/forms';
 import type { FormData, FormDef } from '../../shared/forms/types';
 import { FormFiller, draftKey, type SubmissionRow } from '../fill/FormFiller';
 import type { Attachment } from '../fill/context';
+import { BackLink } from '../components/SubmissionDetail';
 
 type Loaded = { def: FormDef; submission: SubmissionRow; data: FormData; fromLocal: boolean; attachments: Attachment[] };
 
@@ -68,7 +69,9 @@ export function Fill() {
   const s = state.submission;
   const readOnly = !EDITABLE.includes(s.status);
   return (
-    <FormFiller
+    <>
+      <BackLink to="/" label="לטפסים שלי" />
+      <FormFiller
       key={s.id}
       def={state.def}
       submission={s}
@@ -78,6 +81,7 @@ export function Fill() {
       mode="inspector"
       readOnly={readOnly}
       onSubmitted={() => void load()}
-    />
+      />
+    </>
   );
 }
