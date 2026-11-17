@@ -1,3 +1,6 @@
+import { RouterProvider } from 'react-router-dom';
+import { router } from './routes';
+
 export function App() {
-  return <main className="p-6">טפסי בדיקה</main>;
+  return <RouterProvider router={router} />;
 }
