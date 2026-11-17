@@ -4,18 +4,21 @@ import { asc, eq } from 'drizzle-orm';
 import { getDb, schema } from '../../server/db/client';
 import { handle, json, parseBody, HttpError } from '../../server/http';
 import { requireUser, hashPassword } from '../../server/auth';
+import { PASSWORD_MIN } from '../../shared/password';
+
+const PASSWORD_HINT = `סיסמה: לפחות ${PASSWORD_MIN} תווים`;
 
 const Create = z.object({
   username: z.string().trim().toLowerCase().regex(/^[a-z0-9._-]{3,32}$/, 'שם משתמש: אותיות לועזיות, ספרות, נקודה או מקף'),
   displayName: z.string().trim().min(1).max(80),
-  password: z.string().min(6).max(200),
+  password: z.string().min(PASSWORD_MIN, PASSWORD_HINT).max(200),
   role: z.enum(['admin', 'inspector']),
 });
 const Patch = z.object({
   displayName: z.string().trim().min(1).max(80).optional(),
   role: z.enum(['admin', 'inspector']).optional(),
   active: z.boolean().optional(),
-  password: z.string().min(6).max(200).optional(),
+  password: z.string().min(PASSWORD_MIN, PASSWORD_HINT).max(200).optional(),
 });
 
 const view = (u: typeof schema.users.$inferSelect) => ({
@@ -26,6 +29,7 @@ export default handle(async (req, ctx) => {
   const me = await requireUser(req, 'admin');
   const db = getDb();
   const id = ctx.params?.id as string | undefined;
+  if (id !== undefined && !z.uuid().safeParse(id).success) throw new HttpError(404, 'משתמש לא נמצא');
 
   if (!id && req.method === 'GET') {
     const rows = await db.select().from(schema.users).orderBy(asc(schema.users.displayName));

@@ -5,6 +5,7 @@ import { useAuth, type Role } from '../../lib/auth';
 import { useLoad } from '../../lib/useLoad';
 import { Banner, Button, EmptyState, Segmented, Sheet, TextField, cx, toast } from '../../ui';
 import { ListSkeleton } from '../../components/SubmissionList';
+import { PASSWORD_MIN } from '../../../shared/password';
 
 type U = { id: string; username: string; displayName: string; role: Role; active: boolean };
 
@@ -162,9 +163,9 @@ function CreateSheet({ open, onClose, onCreated }: { open: boolean; onClose(): v
         />
         <TextField
           label="סיסמה"
-          hint="לפחות 6 תווים"
+          hint={`לפחות ${PASSWORD_MIN} תווים`}
           required
-          minLength={6}
+          minLength={PASSWORD_MIN}
           dir="ltr"
           autoComplete="new-password"
           value={form.password}
@@ -248,20 +249,20 @@ function EditSheet({ user, self, onClose, onSaved }: { user: U | null; self: boo
             className="flex items-end gap-2"
             onSubmit={(e) => {
               e.preventDefault();
-              if (password.length >= 6) void patch('password', { password }, 'הסיסמה אופסה. המשתמש ינותק מכל המכשירים');
+              if (password.length >= PASSWORD_MIN) void patch('password', { password }, 'הסיסמה אופסה. המשתמש ינותק מכל המכשירים');
             }}
           >
             <TextField
               label="סיסמה חדשה"
-              hint="לפחות 6 תווים. המשתמש ינותק מכל המכשירים."
+              hint={`לפחות ${PASSWORD_MIN} תווים. המשתמש ינותק מכל המכשירים.`}
               className="min-w-0 flex-1"
               dir="ltr"
               autoComplete="new-password"
-              minLength={6}
+              minLength={PASSWORD_MIN}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
-            <Button type="submit" variant="secondary" className="mb-7 min-h-12" loading={busy === 'password'} disabled={password.length < 6}>
+            <Button type="submit" variant="secondary" className="mb-7 min-h-12" loading={busy === 'password'} disabled={password.length < PASSWORD_MIN}>
               איפוס
             </Button>
           </form>
