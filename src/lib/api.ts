@@ -37,7 +37,7 @@ async function handleUnauthorized() {
   if (handling) return;
   handling = true;
   try {
-    await flushAll();
+    await flushAll({ expired: true });
   } finally {
     handling = false;
   }
