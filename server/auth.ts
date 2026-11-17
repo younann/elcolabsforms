@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { and, eq, gt } from 'drizzle-orm';
 import { getDb, schema } from './db/client';
-import { HttpError } from './http';
+import { HttpError, setPendingCookie } from './http';
 import type { User } from './db/schema';
 
 export * from './auth-core';
@@ -50,10 +50,10 @@ export async function requireUser(req: Request, role?: 'admin'): Promise<User> {
   const row = rows[0];
   if (!row || !row.user.active) throw new HttpError(401, 'נדרשת התחברות');
   if (row.expiresAt.getTime() - Date.now() < 15 * DAY) {
-    await db
-      .update(schema.sessions)
-      .set({ expiresAt: new Date(Date.now() + SESSION_DAYS * DAY) })
-      .where(eq(schema.sessions.id, sid));
+    const expiresAt = new Date(Date.now() + SESSION_DAYS * DAY);
+    await db.update(schema.sessions).set({ expiresAt }).where(eq(schema.sessions.id, sid));
+    // cookie expiry follows the session
+    setPendingCookie(req, sessionCookie(sid, expiresAt));
   }
   if (role && row.user.role !== role) throw new HttpError(403, 'אין הרשאה');
   return row.user;

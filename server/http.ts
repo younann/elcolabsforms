@@ -13,12 +13,32 @@ export function json(data: unknown, status = 200, headers: Record<string, string
   });
 }
 
+// cookies to add to the response for a request
+const pendingCookies = new WeakMap<Request, string>();
+export function setPendingCookie(req: Request, cookie: string) {
+  pendingCookies.set(req, cookie);
+}
+
+function withPending(req: Request, res: Response): Response {
+  const c = pendingCookies.get(req);
+  if (!c || res.headers.has('set-cookie')) return res;
+  try {
+    res.headers.append('set-cookie', c);
+    return res;
+  } catch {
+    // immutable headers
+    const h = new Headers(res.headers);
+    h.append('set-cookie', c);
+    return new Response(res.body, { status: res.status, statusText: res.statusText, headers: h });
+  }
+}
+
 export function handle(fn: (req: Request, ctx: any) => Promise<Response>) {
   return async (req: Request, ctx: any) => {
     try {
-      return await fn(req, ctx);
+      return withPending(req, await fn(req, ctx));
     } catch (e) {
-      if (e instanceof HttpError) return json({ error: e.message, ...e.body }, e.status);
+      if (e instanceof HttpError) return withPending(req, json({ error: e.message, ...e.body }, e.status));
       console.error(e);
       return json({ error: 'שגיאת שרת' }, 500);
     }
