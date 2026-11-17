@@ -78,6 +78,25 @@ describe('FormFiller', () => {
     expect(img.getAttribute('src')).toBe('/api/files/new');
   });
 
+  test('a refused save (403) asks to reload instead of retrying', async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ error: 'אין הרשאה' }), { status: 403 }));
+    vi.stubGlobal('fetch', fetchMock);
+    const reload = vi.fn();
+    const loc = window.location;
+    Object.defineProperty(window, 'location', { configurable: true, value: { ...loc, reload } });
+    try {
+      const def = FORMS.find((f) => f.id === 'aerosol')!;
+      render(<FormFiller def={def} submission={row('aerosol')} initialData={{ c1: { answer: 'כן' } }} unsaved attachments={[]} />);
+      const status = await screen.findByText('הטופס כבר הוגש – טען מחדש', undefined, { timeout: 4000 });
+      fireEvent.click(status.closest('button')!);
+      expect(reload).toHaveBeenCalledOnce();
+      expect(fetchMock).toHaveBeenCalledOnce();
+    } finally {
+      Object.defineProperty(window, 'location', { configurable: true, value: loc });
+      vi.unstubAllGlobals();
+    }
+  });
+
   test('approver signature is not editable by the inspector', () => {
     const def = FORMS.find((f) => f.id === 'aerosol')!;
     render(<FormFiller def={def} submission={row('aerosol')} initialData={{}} attachments={[]} />);

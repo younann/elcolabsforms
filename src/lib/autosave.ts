@@ -16,7 +16,8 @@ export async function flushAll(opts: FlushOptions = {}): Promise<void> {
   await Promise.allSettled([...flushers].map((fn) => fn(opts)));
 }
 
-export type SaveStatus = 'saved' | 'saving' | 'offline' | 'error' | 'conflict';
+/** `locked`: server refuses edits, e.g. already submitted. */
+export type SaveStatus = 'saved' | 'saving' | 'offline' | 'error' | 'conflict' | 'locked';
 
 /** `base`: server updatedAt the edits started from; `sent`: hashes of payloads sent since. */
 export type LocalCopy<T> = { data: T; at: number; base?: string; sent?: string[] };
@@ -201,7 +202,7 @@ export function createAutosave<T>({ save, storageKey, delay = 1500, base, fetchS
     timer = setTimeout(() => void run(), ms);
   };
 
-  const blocked = () => expired || current === 'conflict';
+  const blocked = () => expired || current === 'conflict' || current === 'locked';
 
   function run(): Promise<void> {
     clearTimeout(timer);
@@ -258,6 +259,10 @@ export function createAutosave<T>({ save, storageKey, delay = 1500, base, fetchS
             set(statusOf(fe) === 0 ? 'offline' : 'error');
             schedule(BACKOFF[Math.min(attempt++, BACKOFF.length - 1)]);
           }
+        } else if (statusOf(e) === 403) {
+          // form left the editable state
+          persist();
+          set('locked');
         } else {
           const offline = statusOf(e) === 0 || (typeof navigator !== 'undefined' && navigator.onLine === false);
           set(offline ? 'offline' : 'error');

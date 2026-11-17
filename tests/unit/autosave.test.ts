@@ -82,6 +82,23 @@ describe('createAutosave', () => {
     a.dispose();
   });
 
+  test('403 (form no longer editable) reports locked and stops saving', async () => {
+    const err = Object.assign(new Error('אין הרשאה'), { status: 403 });
+    const save = vi.fn<(d: unknown) => Promise<{ updatedAt: string }>>().mockRejectedValue(err);
+    const a = createAutosave({ save, storageKey: KEY, delay: 10 });
+    const seen: SaveStatus[] = [];
+    a.subscribe((s) => seen.push(s));
+    a.update({ x: 1 });
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(a.status()).toBe('locked');
+    a.update({ x: 2 });
+    await a.flush();
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(save).toHaveBeenCalledOnce();
+    expect(seen).toContain('locked');
+    a.dispose();
+  });
+
   test('keeps the local copy when edits arrive mid-save', async () => {
     let release!: () => void;
     const save = vi.fn(() => new Promise<{ updatedAt: string }>((r) => (release = () => r({ updatedAt: 'x' }))));

@@ -72,6 +72,7 @@ function SaveIndicator({ status, onRetry }: { status: SaveStatus; onRetry(): voi
     offline: { Icon: CloudSlash, text: 'אין חיבור, נשמר במכשיר', cls: 'text-warning' },
     error: { Icon: WarningCircle, text: 'השמירה נכשלה, נסה שוב', cls: 'text-danger' },
     conflict: { Icon: WarningCircle, text: 'הטופס השתנה במכשיר אחר', cls: 'text-danger' },
+    locked: { Icon: WarningCircle, text: 'הטופס כבר הוגש – טען מחדש', cls: 'text-danger' },
   }[status];
   const body = (
     <>
@@ -80,8 +81,14 @@ function SaveIndicator({ status, onRetry }: { status: SaveStatus; onRetry(): voi
     </>
   );
   const cls = cx('inline-flex min-h-11 min-w-0 items-center gap-1.5 text-[14px] font-medium', map.cls);
-  return status === 'error' ? (
-    <button type="button" onClick={onRetry} className={cx(cls, 'press rounded-ctl px-1')} data-testid="save-status" data-status={status}>
+  return status === 'error' || status === 'locked' ? (
+    <button
+      type="button"
+      onClick={status === 'locked' ? () => window.location.reload() : onRetry}
+      className={cx(cls, 'press rounded-ctl px-1')}
+      data-testid="save-status"
+      data-status={status}
+    >
       {body}
     </button>
   ) : (
