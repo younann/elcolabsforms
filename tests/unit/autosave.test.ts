@@ -2,9 +2,12 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { createAutosave, flushAll, preferLocal, readLocal, sameData, type SaveStatus } from '../../src/lib/autosave';
 
-const KEY = 'draft:test';
+// fresh key per test: per-key state is module wide
+let KEY = 'draft:test';
+let seq = 0;
 
 beforeEach(() => {
+  KEY = `draft:test-${++seq}`;
   localStorage.clear();
   vi.useFakeTimers();
 });
@@ -32,7 +35,7 @@ describe('createAutosave', () => {
     expect(save).not.toHaveBeenCalled();
     await vi.advanceTimersByTimeAsync(200);
     expect(save).toHaveBeenCalledOnce();
-    expect(save).toHaveBeenCalledWith({ a: 2 });
+    expect(save).toHaveBeenCalledWith({ a: 2 }, undefined);
     a.dispose();
   });
 
@@ -163,55 +166,86 @@ describe('local copy base', () => {
   });
 });
 
+// fake server: PATCH needs the current version, like the real API
+function fakeServer(start = '2026-11-17T10:00:00.000Z') {
+  let n = 0;
+  const srv = { data: {} as Record<string, unknown>, updatedAt: start, patches: [] as string[] };
+  const next = () => new Date(Date.parse(start) + ++n * 1000).toISOString();
+  const save = vi.fn(async (d: Record<string, unknown>, base?: string) => {
+    srv.patches.push(base ?? '');
+    if (base !== srv.updatedAt) throw Object.assign(new Error('stale'), { status: 409 });
+    srv.data = structuredClone(d);
+    srv.updatedAt = next();
+    return { updatedAt: srv.updatedAt };
+  });
+  const fetchServer = vi.fn(async () => ({ data: structuredClone(srv.data), updatedAt: srv.updatedAt }));
+  return { srv, save, fetchServer };
+}
+
 describe('conflicts', () => {
   const conflictErr = () => Object.assign(new Error('stale'), { status: 409 });
 
-  test('lost response then 409 with equal server data ends saved', async () => {
-    let updatedAt = 'v0';
-    const sent: string[] = [];
+  test('lost response then 409 with our data on the server ends saved', async () => {
+    const { srv, save, fetchServer } = fakeServer();
     // first PATCH commits but its reply is lost
-    const save = vi
-      .fn<(d: Record<string, unknown>) => Promise<{ updatedAt: string }>>()
-      .mockImplementationOnce(async () => {
-        sent.push(updatedAt);
-        throw Object.assign(new Error('net'), { status: 0 });
-      })
-      .mockImplementationOnce(async () => {
-        sent.push(updatedAt);
-        throw conflictErr();
-      })
-      .mockImplementation(async () => {
-        sent.push(updatedAt);
-        return { updatedAt: 'v2' };
-      });
-    const onConflict = vi.fn(async (d: Record<string, unknown>) => {
-      expect(d).toEqual({ x: 1 });
-      updatedAt = 'v1';
-      return { resolved: true as const, updatedAt: 'v1' };
+    save.mockImplementationOnce(async (d) => {
+      srv.data = structuredClone(d);
+      srv.updatedAt = '2026-11-17T10:00:05.000Z';
+      throw Object.assign(new Error('net'), { status: 0 });
     });
-    const a = createAutosave({ save, storageKey: KEY, delay: 10, base: 'v0', onConflict });
-    const seen: SaveStatus[] = [];
-    a.subscribe((s) => seen.push(s));
+    const onConflict = vi.fn();
+    const a = createAutosave({ save, storageKey: KEY, delay: 10, base: srv.updatedAt, fetchServer, onConflict });
     a.update({ x: 1 });
     await vi.advanceTimersByTimeAsync(60_000);
-    expect(onConflict).toHaveBeenCalledOnce();
-    expect(seen.at(-1)).toBe('saved');
+    expect(onConflict).not.toHaveBeenCalled();
+    expect(a.status()).toBe('saved');
     expect(localStorage.getItem(KEY)).toBeNull();
-    // later edits save against the adopted version
     a.update({ x: 2 });
     await vi.advanceTimersByTimeAsync(100);
-    expect(sent.at(-1)).toBe('v1');
-    expect(seen.at(-1)).toBe('saved');
+    expect(a.status()).toBe('saved');
+    expect(srv.data).toEqual({ x: 2 });
     a.dispose();
   });
 
-  test('409 with different server data enters conflict and keeps the local copy', async () => {
-    const save = vi.fn<(d: unknown) => Promise<{ updatedAt: string }>>().mockRejectedValue(conflictErr());
-    const onConflict = vi.fn(async () => ({ resolved: false as const }));
-    const a = createAutosave({ save, storageKey: KEY, delay: 10, onConflict });
+  test('two instances on one key (remount while a slow save runs) do not conflict', async () => {
+    const { srv, save, fetchServer } = fakeServer();
+    const base = srv.updatedAt;
+    save.mockImplementationOnce(async (d, b) => {
+      await new Promise((r) => setTimeout(r, 3000));
+      srv.patches.push(b ?? '');
+      srv.data = structuredClone(d);
+      srv.updatedAt = '2026-11-17T10:00:09.000Z';
+      return { updatedAt: srv.updatedAt };
+    });
+    const onConflict = vi.fn();
+    const first = createAutosave({ save, storageKey: KEY, delay: 1500, base, fetchServer, onConflict });
+    first.update({ siteName: 'א' });
+    // unmount: flush starts the slow save, new instance mounts with the stale base
+    const flushing = first.flush();
+    first.dispose();
+    const second = createAutosave({ save, storageKey: KEY, delay: 1500, base, fetchServer, onConflict });
+    second.update({ siteName: 'א' });
+    await vi.advanceTimersByTimeAsync(1600);
+    second.update({ siteName: 'א', siteAddress: 'ב' });
+    await vi.advanceTimersByTimeAsync(10_000);
+    await flushing;
+    expect(onConflict).not.toHaveBeenCalled();
+    expect(second.status()).toBe('saved');
+    expect(srv.data).toEqual({ siteName: 'א', siteAddress: 'ב' });
+    second.dispose();
+  });
+
+  test('409 with someone else\'s data enters conflict and keeps the local copy', async () => {
+    const { srv, save, fetchServer } = fakeServer();
+    const base = srv.updatedAt;
+    srv.data = { x: 'other device' };
+    srv.updatedAt = '2026-11-17T11:00:00.000Z';
+    const onConflict = vi.fn();
+    const a = createAutosave({ save, storageKey: KEY, delay: 10, base, fetchServer, onConflict });
     a.update({ x: 1 });
     await vi.advanceTimersByTimeAsync(60_000);
     expect(a.status()).toBe('conflict');
+    expect(onConflict).toHaveBeenCalledWith({ data: { x: 'other device' }, updatedAt: '2026-11-17T11:00:00.000Z' });
     expect(save).toHaveBeenCalledOnce();
     expect(readLocal(KEY)?.data).toEqual({ x: 1 });
     a.dispose();
@@ -219,24 +253,30 @@ describe('conflicts', () => {
 
   test('keepMine re-saves local data on the server version', async () => {
     const save = vi
-      .fn<(d: unknown) => Promise<{ updatedAt: string }>>()
+      .fn<(d: unknown, base?: string) => Promise<{ updatedAt: string }>>()
       .mockRejectedValueOnce(conflictErr())
       .mockResolvedValue({ updatedAt: 'v9' });
-    const a = createAutosave({ save, storageKey: KEY, delay: 10, onConflict: async () => ({ resolved: false as const }) });
+    const fetchServer = async () => ({ data: { x: 'other' } as Record<string, unknown>, updatedAt: 'v8' });
+    const a = createAutosave<Record<string, unknown>>({ save, storageKey: KEY, delay: 10, fetchServer });
     a.update({ x: 1 });
     await vi.advanceTimersByTimeAsync(100);
     expect(a.status()).toBe('conflict');
     a.keepMine('v8');
     expect(readLocal(KEY)?.base).toBe('v8');
     await vi.advanceTimersByTimeAsync(100);
-    expect(save).toHaveBeenLastCalledWith({ x: 1 });
+    expect(save).toHaveBeenLastCalledWith({ x: 1 }, 'v8');
     expect(a.status()).toBe('saved');
     a.dispose();
   });
 
   test('takeServer drops the local copy', async () => {
     const save = vi.fn<(d: unknown) => Promise<{ updatedAt: string }>>().mockRejectedValue(conflictErr());
-    const a = createAutosave({ save, storageKey: KEY, delay: 10, onConflict: async () => ({ resolved: false as const }) });
+    const a = createAutosave<Record<string, unknown>>({
+      save,
+      storageKey: KEY,
+      delay: 10,
+      fetchServer: async () => ({ data: { y: 1 }, updatedAt: 'v5' }),
+    });
     a.update({ x: 1 });
     await vi.advanceTimersByTimeAsync(100);
     a.takeServer('v5');
@@ -273,6 +313,26 @@ describe('preferLocal with a different base', () => {
       fromLocal: false,
     });
     expect(localStorage.getItem(KEY)).toBeNull();
+  });
+
+  test('reload after a save whose reply was lost keeps the newer local edits', async () => {
+    // page 1: save of {a} reaches the server, reply lost; then {a,b} typed
+    const { srv, save } = fakeServer();
+    const base = srv.updatedAt;
+    save.mockImplementationOnce(async (d) => {
+      srv.data = structuredClone(d);
+      srv.updatedAt = '2026-11-17T10:00:07.000Z';
+      return new Promise(() => {});
+    });
+    const a = createAutosave({ save, storageKey: KEY, delay: 10, base });
+    a.update({ siteName: 'א' });
+    await vi.advanceTimersByTimeAsync(20);
+    a.update({ siteName: 'א', siteAddress: 'ב' });
+    a.dispose();
+    // page 2 loads the server copy
+    const r = preferLocal(KEY, srv.data, srv.updatedAt);
+    expect(r).toEqual({ data: { siteName: 'א', siteAddress: 'ב' }, fromLocal: true });
+    expect(readLocal(KEY)?.base).toBe(srv.updatedAt);
   });
 
   test('sameData ignores key order and undefined', () => {

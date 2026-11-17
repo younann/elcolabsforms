@@ -18,8 +18,8 @@ export async function flushAll(opts: FlushOptions = {}): Promise<void> {
 
 export type SaveStatus = 'saved' | 'saving' | 'offline' | 'error' | 'conflict';
 
-/** `base`: server updatedAt the edits started from. */
-export type LocalCopy<T> = { data: T; at: number; base?: string };
+/** `base`: server updatedAt the edits started from; `sent`: hashes of payloads sent since. */
+export type LocalCopy<T> = { data: T; at: number; base?: string; sent?: string[] };
 
 export function readLocal<T = Record<string, unknown>>(key: string): LocalCopy<T> | null {
   try {
@@ -32,9 +32,9 @@ export function readLocal<T = Record<string, unknown>>(key: string): LocalCopy<T
   }
 }
 
-function writeLocal(key: string, data: unknown, base?: string) {
+function writeLocal(key: string, data: unknown, base?: string, sent?: string[]) {
   try {
-    localStorage.setItem(key, JSON.stringify({ data, at: Date.now(), base }));
+    localStorage.setItem(key, JSON.stringify({ data, at: Date.now(), base, sent: sent?.length ? sent : undefined }));
   } catch {
     // storage full or blocked
   }
@@ -63,28 +63,48 @@ function canon(v: unknown): unknown {
   return v;
 }
 
+const canonJson = (v: unknown) => JSON.stringify(canon(v ?? null));
+
 /** Deep equality as the server stores it (key order ignored). */
 export function sameData(a: unknown, b: unknown): boolean {
-  return JSON.stringify(canon(a ?? null)) === JSON.stringify(canon(b ?? null));
+  return canonJson(a) === canonJson(b);
 }
+
+/** Short content hash (FNV-1a) of the canonical JSON. */
+export function dataHash(v: unknown): string {
+  const s = canonJson(v);
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return `${(h >>> 0).toString(16)}:${s.length}`;
+}
+
+const sameTime = (a?: string, b?: string) => !!a && !!b && Date.parse(a) === Date.parse(b);
 
 export type Picked<T> = { data: T; fromLocal: boolean; conflict?: T };
 
 /**
- * Local copy wins when based on the current server version.
- * A copy based on another version is kept and reported as a conflict unless it equals the server.
+ * Decides between the device copy and the server copy.
+ * A server version written by this device's own saves is not a conflict.
  */
 export function preferLocal<T>(key: string, server: T, serverUpdatedAt: string): Picked<T> {
   const local = readLocal<T>(key);
   if (!local) return { data: server, fromLocal: false };
-  const serverAt = Date.parse(serverUpdatedAt);
-  if (local.base && Date.parse(local.base) === serverAt) return { data: local.data, fromLocal: true };
+  if (sameTime(local.base, serverUpdatedAt)) return { data: local.data, fromLocal: true };
   if (sameData(local.data, server)) {
     clearLocal(key);
     return { data: server, fromLocal: false };
   }
+  // our own save landed but its reply never came back
+  if (local.sent?.includes(dataHash(server))) {
+    writeLocal(key, local.data, serverUpdatedAt);
+    return { data: local.data, fromLocal: true };
+  }
   // older copies carry no base
   if (!local.base) {
+    const serverAt = Date.parse(serverUpdatedAt);
     if (Number.isNaN(serverAt) || local.at > serverAt) return { data: local.data, fromLocal: true };
     clearLocal(key);
     return { data: server, fromLocal: false };
@@ -92,14 +112,19 @@ export function preferLocal<T>(key: string, server: T, serverUpdatedAt: string):
   return { data: server, fromLocal: false, conflict: local.data };
 }
 
+export type ServerCopy<T> = { data: T; updatedAt: string };
+
 export type AutosaveOptions<T> = {
-  save: (data: T) => Promise<{ updatedAt: string }>;
+  /** Saves `data` over server version `base`; rejects with status 409 when stale. */
+  save: (data: T, base?: string) => Promise<{ updatedAt: string }>;
   storageKey: string;
   delay?: number;
   /** Server updatedAt of the loaded data. */
   base?: string;
-  /** On 409: resolved when the server already holds the sent data. */
-  onConflict?: (sent: T) => Promise<{ resolved: true; updatedAt: string } | { resolved: false }>;
+  /** Reads the server copy after a 409. */
+  fetchServer?: () => Promise<ServerCopy<T>>;
+  /** Server holds someone else's changes. */
+  onConflict?: (server: ServerCopy<T>) => void;
 };
 
 export type Autosave<T> = {
@@ -115,6 +140,7 @@ export type Autosave<T> = {
 };
 
 const BACKOFF = [1000, 2000, 4000, 8000, 15000, 30000];
+const MAX_SENT = 20;
 
 const statusOf = (e: unknown): number | undefined =>
   e && typeof e === 'object' && typeof (e as { status?: unknown }).status === 'number' ? (e as { status: number }).status : undefined;
@@ -125,7 +151,29 @@ function retryable(e: unknown) {
   return s === undefined || s === 0 || s === 408 || s === 429 || s >= 500;
 }
 
-export function createAutosave<T>({ save, storageKey, delay = 1500, base, onConflict }: AutosaveOptions<T>): Autosave<T> {
+// shared by every instance on one key, so remounts never race
+type KeyState = { base?: string; sent: string[]; lock: Promise<void> | null; refs: number };
+const keyStates = new Map<string, KeyState>();
+
+function acquire(key: string, base?: string): KeyState {
+  let k = keyStates.get(key);
+  if (!k) {
+    k = { base, sent: readLocal(key)?.sent ?? [], lock: null, refs: 0 };
+    keyStates.set(key, k);
+  } else if (base && (!k.base || Date.parse(base) > Date.parse(k.base))) {
+    // server versions only move forward
+    k.base = base;
+  }
+  k.refs++;
+  return k;
+}
+
+function release(key: string, k: KeyState) {
+  if (k.refs <= 0 && !k.lock && keyStates.get(key) === k) keyStates.delete(key);
+}
+
+export function createAutosave<T>({ save, storageKey, delay = 1500, base, fetchServer, onConflict }: AutosaveOptions<T>): Autosave<T> {
+  const ks = acquire(storageKey, base);
   let latest: { data: T } | null = null;
   let version = 0;
   let savedVersion = 0;
@@ -143,53 +191,86 @@ export function createAutosave<T>({ save, storageKey, delay = 1500, base, onConf
     listeners.forEach((l) => l(s));
   };
 
+  const persist = () => {
+    if (latest) writeLocal(storageKey, latest.data, ks.base, ks.sent);
+  };
+
   const schedule = (ms: number) => {
     clearTimeout(timer);
     if (stopped) return;
     timer = setTimeout(() => void run(), ms);
   };
 
+  const blocked = () => expired || current === 'conflict';
+
   function run(): Promise<void> {
     clearTimeout(timer);
     timer = undefined;
     if (inFlight) return inFlight;
-    if (stopped || expired || current === 'conflict') return Promise.resolve();
-    if (!latest || savedVersion === version) return Promise.resolve();
-    const v = version;
-    const data = latest.data;
+    if (blocked() || !latest || savedVersion === version) return Promise.resolve();
     set('saving');
     inFlight = (async () => {
+      // one save per key at a time
+      while (ks.lock) await ks.lock;
+      if (blocked() || !latest || savedVersion === version) {
+        inFlight = null;
+        if (!blocked() && savedVersion === version) set('saved');
+        return;
+      }
+      const v = version;
+      const data = latest.data;
+      ks.sent = [...ks.sent.filter((h) => h !== dataHash(data)), dataHash(data)].slice(-MAX_SENT);
+      persist();
+      let done!: () => void;
+      ks.lock = new Promise<void>((r) => (done = r));
+      let again = false;
       try {
-        const r = await save(data).catch(async (e) => {
-          if (statusOf(e) !== 409 || !onConflict) throw e;
-          const c = await onConflict(data);
-          if (c.resolved) return { updatedAt: c.updatedAt };
-          throw Object.assign(new Error('conflict'), { conflict: true });
-        });
-        if (r?.updatedAt) base = r.updatedAt;
+        const r = await save(data, ks.base);
+        ks.base = r.updatedAt;
+        ks.sent = [];
         attempt = 0;
         savedVersion = Math.max(savedVersion, v);
         if (version === v) {
           clearLocal(storageKey);
           set('saved');
-        } else if (latest) {
+        } else {
           // newer edits now sit on the new server version
-          writeLocal(storageKey, latest.data, base);
+          persist();
+          again = true;
         }
       } catch (e) {
-        if (e && typeof e === 'object' && (e as { conflict?: boolean }).conflict) {
-          set('conflict');
-          return;
+        if (statusOf(e) === 409 && fetchServer) {
+          try {
+            const srv = await fetchServer();
+            if (ks.sent.includes(dataHash(srv.data))) {
+              // server holds one of our own saves: move on from it
+              ks.base = srv.updatedAt;
+              ks.sent = [];
+              persist();
+              attempt = 0;
+              again = true;
+            } else {
+              persist();
+              set('conflict');
+              onConflict?.(srv);
+            }
+          } catch (fe) {
+            set(statusOf(fe) === 0 ? 'offline' : 'error');
+            schedule(BACKOFF[Math.min(attempt++, BACKOFF.length - 1)]);
+          }
+        } else {
+          const offline = statusOf(e) === 0 || (typeof navigator !== 'undefined' && navigator.onLine === false);
+          set(offline ? 'offline' : 'error');
+          if (retryable(e)) schedule(BACKOFF[Math.min(attempt++, BACKOFF.length - 1)]);
         }
-        const offline = statusOf(e) === 0 || (typeof navigator !== 'undefined' && navigator.onLine === false);
-        set(offline ? 'offline' : 'error');
-        if (retryable(e)) schedule(BACKOFF[Math.min(attempt++, BACKOFF.length - 1)]);
-        return;
       } finally {
+        ks.lock = null;
+        done();
         inFlight = null;
+        if (stopped) release(storageKey, ks);
       }
-      // edits made during the save
-      if (version !== savedVersion) schedule(delay);
+      if (again && !stopped) await run();
+      else if (again) schedule(0);
     })();
     return inFlight;
   }
@@ -223,7 +304,7 @@ export function createAutosave<T>({ save, storageKey, delay = 1500, base, onConf
     update(data: T) {
       latest = { data };
       version++;
-      writeLocal(storageKey, data, base);
+      persist();
       attempt = 0;
       if (!inFlight) schedule(delay);
     },
@@ -236,17 +317,19 @@ export function createAutosave<T>({ save, storageKey, delay = 1500, base, onConf
     },
     status: () => current,
     keepMine(serverUpdatedAt: string, data?: T) {
-      base = serverUpdatedAt;
+      ks.base = serverUpdatedAt;
+      ks.sent = [];
       if (data !== undefined) latest = { data };
       if (!latest) return;
       version++;
-      writeLocal(storageKey, latest.data, base);
+      persist();
       attempt = 0;
       set('saving');
       void run();
     },
     takeServer(serverUpdatedAt: string) {
-      base = serverUpdatedAt;
+      ks.base = serverUpdatedAt;
+      ks.sent = [];
       clearTimeout(timer);
       latest = null;
       savedVersion = version;
@@ -254,11 +337,14 @@ export function createAutosave<T>({ save, storageKey, delay = 1500, base, onConf
       set('saved');
     },
     dispose() {
+      if (stopped) return;
       stopped = true;
+      ks.refs--;
       clearTimeout(timer);
       unregister();
       listeners.clear();
       if (typeof window !== 'undefined') window.removeEventListener('online', onOnline);
+      release(storageKey, ks);
     },
   };
 }

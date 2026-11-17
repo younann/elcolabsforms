@@ -2,7 +2,7 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type React
 import { CheckCircle, CircleNotch, CloudSlash, Checks, ListBullets, PaperPlaneTilt, WarningCircle } from '@phosphor-icons/react';
 import { Banner, Button, Sheet, StatusBadge, cx, toast, type SubmissionStatus } from '../ui';
 import { api, ApiError } from '../lib/api';
-import { clearLocal, createAutosave, readLocal, sameData, type Autosave, type SaveStatus } from '../lib/autosave';
+import { clearLocal, createAutosave, dataHash, readLocal, sameData, type Autosave, type SaveStatus } from '../lib/autosave';
 import type { AttachmentRef, Field, FormData, FormDef, Section } from '../../shared/forms/types';
 import { markSectionNA, validateForSubmit, type Missing } from '../../shared/forms/validate';
 import { FillContext, fieldDomId, sectionDomId, type Attachment, type FillCtx, type FillMode } from './context';
@@ -38,7 +38,7 @@ export type FormFillerProps = {
 
 export const draftKey = (id: string) => `draft:${id}`;
 
-type Conflict = { server: FormData; serverUpdatedAt: string; mine: FormData };
+type Conflict = { server: FormData; serverUpdatedAt: string; mine?: FormData };
 
 const SIMPLE = new Set<Field['type']>(['text', 'number', 'date', 'time', 'choice']);
 
@@ -108,7 +108,7 @@ export function FormFiller({
     if (readOnly || unsaved) return null;
     const local = readLocal<FormData>(draftKey(submission.id));
     if (!local?.base || Date.parse(local.base) === Date.parse(submission.updatedAt)) return null;
-    if (sameData(local.data, initialData)) return null;
+    if (sameData(local.data, initialData) || local.sent?.includes(dataHash(initialData))) return null;
     return { server: initialData, serverUpdatedAt: submission.updatedAt, mine: local.data };
   });
   const [data, setData] = useState<FormData>(() => conflict?.mine ?? initialData);
@@ -119,7 +119,6 @@ export function FormFiller({
   const [showMissing, setShowMissing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [current, setCurrent] = useState<string | undefined>(def.sections[0]?.id);
-  const updatedAt = useRef(submission.updatedAt);
   const saver = useRef<Autosave<FormData> | null>(null);
   const initial = useRef(data);
   const locked = readOnly || !!conflict;
@@ -134,25 +133,19 @@ export function FormFiller({
     const a = createAutosave<FormData>({
       storageKey: draftKey(submission.id),
       base: submission.updatedAt,
-      save: async (d) => {
+      save: async (d, base) => {
         const r = await api<{ submission: SubmissionRow }>(`/api/submissions/${submission.id}`, {
           method: 'PATCH',
-          json: { data: d, updatedAt: updatedAt.current },
+          json: { data: d, updatedAt: base ?? submission.updatedAt },
         });
-        updatedAt.current = r.submission.updatedAt;
         return { updatedAt: r.submission.updatedAt };
       },
-      // 409: maybe our earlier save landed but its reply was lost
-      onConflict: async (sent) => {
+      // after a 409; autosave tells our own saves from other devices
+      fetchServer: async () => {
         const r = await api<{ submission: SubmissionRow }>(`/api/submissions/${submission.id}`);
-        const server = r.submission.data ?? {};
-        if (sameData(server, sent)) {
-          updatedAt.current = r.submission.updatedAt;
-          return { resolved: true, updatedAt: r.submission.updatedAt };
-        }
-        setConflict({ server, serverUpdatedAt: r.submission.updatedAt, mine: sent });
-        return { resolved: false };
+        return { data: r.submission.data ?? {}, updatedAt: r.submission.updatedAt };
       },
+      onConflict: (srv) => setConflict({ server: srv.data, serverUpdatedAt: srv.updatedAt }),
     });
     saver.current = a;
     const off = a.subscribe(setStatus);
@@ -174,7 +167,6 @@ export function FormFiller({
   }, [data, readOnly]);
 
   function takeServer(c: Conflict) {
-    updatedAt.current = c.serverUpdatedAt;
     saver.current?.takeServer(c.serverUpdatedAt);
     clearLocal(draftKey(submission.id));
     initial.current = c.server;
@@ -183,7 +175,6 @@ export function FormFiller({
   }
 
   function keepMine(c: Conflict) {
-    updatedAt.current = c.serverUpdatedAt;
     saver.current?.keepMine(c.serverUpdatedAt, data);
     setConflict(null);
   }
