@@ -49,8 +49,25 @@ describe('form specifics', () => {
   it('gas has 2 drawings', () => {
     expect(count(getForm('gas'), 'drawing')).toBe(2);
   });
-  it('f536 has a scenarioMatrix', () => {
+  it('f536 has a scenarioMatrix with device columns and 14 actions', () => {
     expect(count(getForm('f536'), 'scenarioMatrix')).toBe(1);
+    const m = all(getForm('f536')).find((f) => f.type === 'scenarioMatrix');
+    if (m?.type !== 'scenarioMatrix') throw new Error('missing');
+    expect(m.columns).toEqual(['גלאי ראשון', 'גלאי שני', 'לחצן', 'רגש זרימה', 'גלאי ראשון בלוח חשמל', 'גלאי שני בלוח חשמל']);
+    expect(m.actions).toHaveLength(14);
+    expect(m.actions.slice(11)).toEqual(['', '', '']);
+    expect(m.tableFields.map((t) => t.label)).toEqual(['טבלה מס', 'מיקום הבדיקה', 'פירוט הבדיקה', 'כתובת התקנים']);
+  });
+  it('no check text starts with its own clause', () => {
+    for (const d of FORMS)
+      for (const f of all(d)) if (f.type === 'check' && f.clause) expect(f.text.startsWith(f.clause)).toBe(false);
+  });
+  it('every check has clause and topic', () => {
+    for (const d of FORMS)
+      for (const f of all(d)) if (f.type === 'check') {
+        expect(f.clause, `${d.id} ${f.id}`).toBeTruthy();
+        expect(f.topic, `${d.id} ${f.id}`).toBeTruthy();
+      }
   });
   it('detectors has the apartments table', () => {
     const t = all(getForm('detectors')).find((f) => f.type === 'repeatTable');

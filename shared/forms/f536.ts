@@ -95,6 +95,7 @@ export const f536: FormDef = {
           (t, i): Field => ({
             id: `doc${i + 1}`,
             type: 'check',
+            clause: '2',
             topic: 'רשימת מסמכים',
             text: t,
             answers: 'fitNotfitNA',
@@ -157,32 +158,39 @@ export const f536: FormDef = {
       id: 'firePanel',
       title: 'בעמדת כבאים מותקנים',
       fields: panelItems.map(
-        (t, i): Field => ({ id: `panel${i + 1}`, type: 'check', topic: 'בעמדת כבאים מותקנים', text: t, answers: 'existsActive' }),
+        (t, i): Field => ({ id: `panel${i + 1}`, type: 'check', clause: '7', topic: 'בעמדת כבאים מותקנים', text: t, answers: 'existsActive' }),
       ),
     },
     {
       id: 'panelActions',
       title: 'פעולות לביצוע בפנל כבאים',
       fields: panelActions.map(
-        (t, i): Field => ({ id: `action${i + 1}`, type: 'check', clause: '7.1', text: t, answers: 'fitNotfitNA' }),
+        (t, i): Field => ({ id: `action${i + 1}`, type: 'check', clause: '7.1', topic: 'פעולות לביצוע בפנל כבאים', text: t, answers: 'fitNotfitNA' }),
       ),
     },
     {
       id: 'scenarios',
       title: 'בדיקת משטר הפעלות',
       fields: [
-        { id: 'scenarioTableNo', type: 'text', label: 'טבלה מס' },
-        { id: 'scenarioLocation', type: 'text', label: 'מיקום הבדיקה' },
-        { id: 'scenarioDetail', type: 'text', label: 'פירוט הבדיקה' },
-        { id: 'scenarioAddresses', type: 'text', label: 'כתובת התקנים' },
-        { id: 'scenarioDevice', type: 'choice', label: 'התקני התרעה / פעולות המערכת', options: ['גלאי ראשון', 'גלאי שני', 'לחצן', 'רגש זרימה', 'גלאי ראשון בלוח חשמל', 'גלאי שני בלוח חשמל'] },
-        { id: 'scenarios', type: 'scenarioMatrix', actions: scenarioActions, values: ['+', 'למ', '-', 'לח'] },
+        {
+          id: 'scenarios',
+          type: 'scenarioMatrix',
+          actions: [...scenarioActions, '', '', ''],
+          columns: ['גלאי ראשון', 'גלאי שני', 'לחצן', 'רגש זרימה', 'גלאי ראשון בלוח חשמל', 'גלאי שני בלוח חשמל'],
+          values: ['+', 'למ', '-', 'לח'],
+          tableFields: [
+            { id: 'tableNo', label: 'טבלה מס' },
+            { id: 'location', label: 'מיקום הבדיקה' },
+            { id: 'detail', label: 'פירוט הבדיקה' },
+            { id: 'addresses', label: 'כתובת התקנים' },
+          ],
+        },
       ],
     },
     {
       id: 'preTest',
       title: 'טרום בדיקה',
-      fields: preTest.map((t, i): Field => ({ id: `pre${i + 1}`, type: 'check', topic: 'טרום בדיקה', text: t, answers: 'yesNoNA' })),
+      fields: preTest.map((t, i): Field => ({ id: `pre${i + 1}`, type: 'check', clause: '8', topic: 'טרום בדיקה', text: t, answers: 'yesNoNA' })),
     },
     {
       id: 'planConclusion',
@@ -191,6 +199,7 @@ export const f536: FormDef = {
         {
           id: 'planConclusion',
           type: 'check',
+          clause: '9',
           topic: 'מסקנה להתאמת מכ"ר 500 הוראה 536',
           text: 'תוצאות בדיקת התכנון: תכנון המערכת מתאים/ לא מתאים .',
           answers: 'conclusion',

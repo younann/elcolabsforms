@@ -34,9 +34,9 @@ export const protectedSpacesTable = (): Field => ({
   ],
 });
 
-export const siteDescriptionFields = (): Field[] => [
-  { id: 'buildingArea', type: 'number', label: 'שטח המבנה (מ"ר)' },
-  { id: 'buildingHeight', type: 'number', label: 'גובה המבנה (מטר)' },
-];
+export const withTopic =
+  (topic: string) =>
+  (f: Field): Field =>
+    f.type === 'check' ? { ...f, topic } : f;
 
 export const NOTICE_TITLE = 'אישור קבלת הודעה (ציין בעל תפקיד/ שירותי כבאות)';

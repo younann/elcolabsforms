@@ -1,6 +1,6 @@
 import type { Field, FormDef } from './types';
 import { headerSection } from './header';
-import { closingSections, protectedSpacesTable, NOTICE_TITLE } from './common';
+import { closingSections, protectedSpacesTable, withTopic, NOTICE_TITLE } from './common';
 
 const yn = (n: number, text: string, inline?: { id: string; label: string }[]): Field => ({
   id: `c${n}`,
@@ -125,16 +125,15 @@ export const gas: FormDef = {
         yn(27, 'מיקום הגלאי על פי התכנון'),
         yn(28, 'מפעילים ידניים נגישים בגובה לפחות 1.8 מטר'),
         yn(29, 'קיים מפסק ניתוק למניעת הפעלה שגויה של מערכת הכיבוי.\nבמידה ותוכננה לניתוק מערכות אחרות , האם הרכזת מאושרת לפעולת הניתוק'),
-      ],
+      ].map(withTopic("שלב א' - דרישות כלליות")),
     },
     {
       id: 'preCheck',
       title: 'בדיקת תקינות פעולות',
       fields: [
-        {
-          ...yn(30, 'הגלאים מתפקדים\nקוטביות (polarity) של מכשירי האזעקה הקוטביים מתקיימת.\nכל הנגדים נמצאים בקצה קווי של הגלאים (במידה וקיימים)\nהאם תגובת המעגלים  שבפיקוח תקינה'),
-          topic: 'בדיקה מוקדמת של תקינות פעולות המערכת',
-        } as Field,
+        withTopic('בדיקה מוקדמת של תקינות פעולות המערכת')(
+          yn(30, 'הגלאים מתפקדים\nקוטביות (polarity) של מכשירי האזעקה הקוטביים מתקיימת.\nכל הנגדים נמצאים בקצה קווי של הגלאים (במידה וקיימים)\nהאם תגובת המעגלים  שבפיקוח תקינה'),
+        ),
       ],
     },
     {
@@ -148,7 +147,7 @@ export const gas: FormDef = {
         yn(35, 'בצע הפעלה של המערכת ובדוק אם זמן ההשהיה מתאים לתכנון …', [{ id: 'delayMeasured', label: 'זמן ההשהיה' }]),
         yn(36, 'ניתוק חשמל'),
         yn(37, 'לאחר סיום הבדיקה וודה כי המכל חמוש מחדש'),
-      ],
+      ].map(withTopic("בדיקת תפקודי המערכת")),
     },
     {
       id: 'drawing1',

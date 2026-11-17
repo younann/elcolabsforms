@@ -36,7 +36,13 @@ export type Field =
   | (Base & { type: 'signature'; label: string; role: 'inspector' | 'approver' })
   | (Base & { type: 'photos'; label: string })
   | (Base & { type: 'drawing'; label: string })
-  | (Base & { type: 'scenarioMatrix'; actions: string[]; values: string[] })
+  | (Base & {
+      type: 'scenarioMatrix';
+      actions: string[];
+      columns: string[];
+      values: string[];
+      tableFields: { id: string; label: string }[];
+    })
   | (Base & { type: 'note'; text: string });
 
 export type FieldType = Field['type'];
@@ -63,3 +69,10 @@ export type FormData = Record<string, unknown>;
 
 // attachments are referenced by field id
 export type AttachmentRef = { id: string; fieldId: string; kind: 'photo' | 'signature' | 'drawing' };
+
+// scenarioMatrix data is ScenarioTable[] (min 1); cells[actionIdx][columnIdx] = value; actionLabels fills blank actions
+export type ScenarioTable = {
+  fields: Record<string, string>;
+  cells: Record<number, Record<number, string>>;
+  actionLabels?: Record<number, string>;
+};
