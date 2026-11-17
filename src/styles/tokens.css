@@ -1,0 +1,109 @@
+/* Design tokens. Radii: controls 10px, containers 14px, badges pill. */
+:root {
+  color-scheme: light;
+
+  --bg: #f3f4f5;
+  --surface: #fdfdfd;
+  --surface-2: #e9ebee;
+  --border: #d6dadf;
+  --border-strong: #b9bfc6;
+  --text: #15181c;
+  --text-muted: #565d66;
+  --ink: #1b1f24;
+  --ink-hover: #2c3239;
+  --ink-fg: #f7f8f9;
+
+  /* single accent: signal orange */
+  --accent: #c2410c;
+  --accent-hover: #a8380a;
+  --accent-soft: #fbeae2;
+  --accent-fg: #fffaf7;
+
+  --success: #17713a;
+  --success-soft: #e2f1e7;
+  --warning: #8a5300;
+  --warning-soft: #f8eed7;
+  --danger: #b42318;
+  --danger-soft: #fae6e4;
+  --info: #1d5592;
+  --info-soft: #e3ecf7;
+
+  --scrim: rgb(14 17 21 / 0.42);
+  --shadow-color: 215 20% 30%;
+  --shadow-sheet: 0 -1px 0 hsl(var(--shadow-color) / 0.06), 0 -12px 40px hsl(var(--shadow-color) / 0.14);
+  --shadow-pop: 0 1px 2px hsl(var(--shadow-color) / 0.08), 0 12px 32px hsl(var(--shadow-color) / 0.16);
+
+  --motion-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --motion-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --motion-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-x: max(env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+
+    --bg: #111315;
+    --surface: #191c1f;
+    --surface-2: #24282c;
+    --border: #31363c;
+    --border-strong: #464c54;
+    --text: #eceef0;
+    --text-muted: #9da4ac;
+    --ink: #e8eaed;
+    --ink-hover: #d4d8dc;
+    --ink-fg: #121416;
+
+    --accent: #f07a45;
+    --accent-hover: #f48d5e;
+    --accent-soft: #3a2117;
+    --accent-fg: #1a0f0a;
+
+    --success: #5cc788;
+    --success-soft: #16301f;
+    --warning: #e7b252;
+    --warning-soft: #33280f;
+    --danger: #f2756b;
+    --danger-soft: #3a1a17;
+    --info: #79aee8;
+    --info-soft: #172739;
+
+    --scrim: rgb(0 0 0 / 0.6);
+    --shadow-color: 220 30% 2%;
+  }
+}
+
+@theme inline {
+  --font-sans: 'IBM Plex Sans Hebrew', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-text: var(--text);
+  --color-muted: var(--text-muted);
+  --color-ink: var(--ink);
+  --color-ink-hover: var(--ink-hover);
+  --color-ink-fg: var(--ink-fg);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-fg: var(--accent-fg);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+
+  --radius-ctl: 10px;
+  --radius-box: 14px;
+  --ease-snap: var(--motion-out);
+  --ease-drawer: var(--motion-drawer);
+}

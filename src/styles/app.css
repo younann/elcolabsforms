@@ -1,1 +1,194 @@
 @import "tailwindcss";
+@import "./tokens.css";
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    overscroll-behavior: none;
+    background: var(--bg);
+  }
+
+  body {
+    min-height: 100dvh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior: none;
+  }
+
+  /* no iOS focus zoom */
+  input,
+  textarea,
+  select {
+    font-size: max(16px, 1em);
+  }
+
+  button,
+  a,
+  [role='button'],
+  [role='radio'],
+  [role='tab'] {
+    touch-action: manipulation;
+  }
+
+  button,
+  [role='button'],
+  [role='radio'],
+  [role='tab'] {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--accent-soft);
+  }
+}
+
+@utility safe-x {
+  padding-inline: max(1rem, var(--safe-x));
+}
+
+@utility safe-bottom {
+  padding-bottom: max(1rem, var(--safe-bottom));
+}
+
+/* Sheet: bottom sheet on phones, centered dialog from 768px */
+.sheet {
+  position: fixed;
+  inset: auto 0 0 0;
+  margin: 0;
+  width: 100%;
+  max-width: 100%;
+  max-height: calc(100dvh - var(--safe-top) - 1.5rem);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-box) var(--radius-box) 0 0;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-sheet);
+  overflow: hidden;
+  transform: translateY(0);
+  transition:
+    transform 420ms var(--motion-drawer),
+    overlay 420ms allow-discrete,
+    display 420ms allow-discrete;
+}
+
+.sheet:not([open]) {
+  transform: translateY(100%);
+  transition-duration: 240ms;
+}
+
+@starting-style {
+  .sheet[open] {
+    transform: translateY(100%);
+  }
+}
+
+.sheet::backdrop {
+  background: var(--scrim);
+  opacity: 1;
+  transition:
+    opacity 300ms ease,
+    overlay 300ms allow-discrete,
+    display 300ms allow-discrete;
+}
+
+.sheet:not([open])::backdrop {
+  opacity: 0;
+}
+
+@starting-style {
+  .sheet[open]::backdrop {
+    opacity: 0;
+  }
+}
+
+.sheet[data-dragging] {
+  transition: none;
+}
+
+@media (min-width: 768px) {
+  .sheet {
+    inset: 0;
+    margin: auto;
+    width: min(560px, 100% - 3rem);
+    height: fit-content;
+    max-height: min(85dvh, 760px);
+    border-radius: var(--radius-box);
+    box-shadow: var(--shadow-pop);
+    opacity: 1;
+    transform: scale(1);
+    transition:
+      opacity 200ms var(--motion-out),
+      transform 200ms var(--motion-out),
+      overlay 200ms allow-discrete,
+      display 200ms allow-discrete;
+  }
+
+  .sheet:not([open]) {
+    opacity: 0;
+    transform: scale(0.97);
+    transition-duration: 150ms;
+  }
+
+  @starting-style {
+    .sheet[open] {
+      opacity: 0;
+      transform: scale(0.97);
+    }
+  }
+}
+
+/* Toasts */
+.toast {
+  transition:
+    transform 320ms var(--motion-out),
+    opacity 320ms var(--motion-out);
+}
+
+@starting-style {
+  .toast {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+}
+
+.toast[data-leaving] {
+  opacity: 0;
+  transform: translateY(40%);
+  transition-duration: 180ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet,
+  .sheet:not([open]),
+  .toast,
+  .toast[data-leaving] {
+    transform: none;
+  }
+
+  @starting-style {
+    .sheet[open],
+    .toast {
+      transform: none;
+      opacity: 0;
+    }
+  }
+
+  .press:active {
+    transform: none !important;
+  }
+}
+
