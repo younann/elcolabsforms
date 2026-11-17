@@ -121,7 +121,7 @@ function StampCard({ hasStamp }: { hasStamp: boolean }) {
   return (
     <div className="mt-5 rounded-box border border-border bg-surface p-4 md:p-6">
       <h2 className="text-lg font-semibold">חותמת החברה</h2>
-      <p className="mt-1 text-[15px] text-muted">מוטבעת בתיבת המאשר בכל דוח. מומלץ PNG עם רקע שקוף.</p>
+      <p className="mt-1 text-[15px] text-muted">מוטבעת בסוף כל דוח, בתחתית העמוד האחרון. מומלץ PNG עם רקע שקוף.</p>
       <div className="mt-4 flex flex-wrap items-center gap-4">
         <div className="grid size-32 shrink-0 place-items-center overflow-hidden rounded-box border border-dashed border-border-strong bg-[#fdfdfd]">
           {shown ? (

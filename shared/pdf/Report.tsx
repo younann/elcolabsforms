@@ -261,7 +261,6 @@ function FieldView({ f, p }: { f: Field; p: ReportProps }) {
               </div>
               {p.approver.signature ? <Img src={p.approver.signature} /> : <div className="line" />}
             </div>
-            <Img src={p.settings.stamp} className="stamp" />
           </div>
         );
       }
@@ -390,6 +389,12 @@ export function Report(p: ReportProps) {
           ))}
         </section>
       ))}
+      {/* stamp closes the last page */}
+      {p.settings.stamp ? (
+        <div className="stamp-end">
+          <Img src={p.settings.stamp} className="stamp" />
+        </div>
+      ) : null}
     </>
   );
 }

@@ -59,6 +59,7 @@ td.c, th.c { text-align: center; }
 .scenario { margin-bottom: 3mm; }
 .approval { border: 1px solid #c9c9c9; padding: 3mm; display: flex; justify-content: space-between; align-items: center; break-inside: avoid; }
 .stamp { height: 32mm; max-width: 55mm; object-fit: contain; }
+.stamp-end { display: flex; justify-content: flex-end; margin-block-start: 6mm; break-inside: avoid; }
 .drawing img { display: block; max-height: 150mm; margin: 0 auto 2mm; border: 1px solid #ddd; }
 
 .photo-page { break-before: page; }

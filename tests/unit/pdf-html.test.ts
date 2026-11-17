@@ -94,6 +94,20 @@ describe('renderReportHtml', () => {
     expect(html).toContain(formatDate(fx.approver.date));
   });
 
+  it('puts the stamp at the end, after the photo appendix', () => {
+    const fx = load('gas');
+    const html = renderReportHtml({
+      ...fx,
+      def: getForm('gas'),
+      images: { photos: [PNG, PNG, PNG] },
+      settings: { ...fx.settings, stamp: 'data:image/png;base64,STAMP' },
+    });
+    const stampAt = html.indexOf('STAMP');
+    expect(stampAt).toBeGreaterThan(html.lastIndexOf('class="photo-page"'));
+    expect(html.slice(stampAt)).not.toContain('class="photo"');
+    expect(html.slice(html.indexOf('class="approval"'), stampAt)).toContain('class="photo-page"');
+  });
+
   it('uses the newest signature', () => {
     const fx = load('gas');
     const def = getForm('gas');
