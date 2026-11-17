@@ -31,6 +31,10 @@ export type DocxInput = {
 
 export const docxKey = (id: string, revision: number) => `docx/${id}-r${revision}.docx`;
 
+// gmail caps mail at 25MB after encoding
+export const MAIL_ATTACH_LIMIT = 20 * 1024 * 1024;
+export const fitsMail = (pdf: Uint8Array, docx: Uint8Array) => pdf.length + docx.length <= MAIL_ATTACH_LIMIT;
+
 const str = (v: unknown): string => (typeof v === 'string' || typeof v === 'number' ? String(v) : '');
 const blank = (v: unknown) => !str(v).trim();
 
@@ -207,6 +211,7 @@ class Filler {
   }
 
   private rowCursor = 0;
+  private claimed = new Set<Element>();
 
   // row holding the given text (exact cell first, then containing)
   row(text: string, scope?: Element): Element {
@@ -223,6 +228,9 @@ class Filler {
     for (const test of tests) {
       const r = order.find((tr) => kids(tr, 'w:tc').some((tc) => test(this.cellText(tc))));
       if (r) {
+        // two texts on one row means a wrong match
+        if (this.claimed.has(r)) throw new Error(`docx row claimed twice: ${text.slice(0, 40)}`);
+        this.claimed.add(r);
         if (!scope) this.rowCursor = rows.indexOf(r) + 1;
         return r;
       }

@@ -5,7 +5,7 @@ import { DOMParser, type Element } from '@xmldom/xmldom';
 import { FORMS, getForm } from '../../shared/forms';
 import type { CheckField, CheckValue, FormData } from '../../shared/forms/types';
 import { formatDate } from '../../shared/pdf/Report';
-import { renderReportDocx, docxKey, type DocxInput } from '../../server/docx';
+import { renderReportDocx, docxKey, fitsMail, type DocxInput } from '../../server/docx';
 import { bidiSegments } from '../../server/docx-xml';
 import { DOCX_TEMPLATES } from '../../server/docx-templates.gen';
 
@@ -127,6 +127,21 @@ describe('renderReportDocx', () => {
   it('has a template for every form', () => {
     for (const def of FORMS) expect(DOCX_TEMPLATES[`${def.id}:${def.version}`]).toBeTruthy();
     expect(docxKey('abc', 2)).toBe('docx/abc-r2.docx');
+  });
+
+  it('caps pdf plus docx at 20MB', () => {
+    const mb = (n: number) => new Uint8Array(n * 1024 * 1024);
+    expect(fitsMail(mb(15), mb(5))).toBe(true);
+    expect(fitsMail(mb(15), new Uint8Array(5 * 1024 * 1024 + 1))).toBe(false);
+  });
+
+  it('fails loudly when two checks match one row', async () => {
+    const def = getForm('detectors');
+    const dup = {
+      ...def,
+      sections: def.sections.map((s) => ({ ...s, fields: s.fields.map((f) => (f.id === 'c2' ? { ...f, text: (s.fields.find((x) => x.id === 'c1') as CheckField).text } : f)) })),
+    };
+    await expect(renderReportDocx({ ...input(load('detectors')), def: dup })).rejects.toThrow(/claimed twice/);
   });
 
   it('renders empty submissions without images', async () => {

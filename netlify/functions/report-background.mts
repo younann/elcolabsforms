@@ -3,7 +3,7 @@ import { getDb, schema } from '../../server/db/client';
 import { putBlob } from '../../server/blobs';
 import { sendMail } from '../../server/mail';
 import { htmlToPdf, internalKeyOk, pdfKey, renderReportHtml, reportSubject } from '../../server/pdf';
-import { docxKey } from '../../server/docx';
+import { docxKey, fitsMail } from '../../server/docx';
 import { DOCX_TYPE, loadReportAssets, renderDocxFor, toDataUrl } from '../../server/report-assets';
 import { auditSafe } from '../../server/submissions';
 import type { ReportImages } from '../../shared/pdf/Report';
@@ -63,6 +63,13 @@ async function run(id: string): Promise<boolean> {
     docx = null;
     console.error('docx failed, sending pdf only', id, e);
     if (sub.approvedBy) await auditSafe(id, sub.approvedBy, 'docx_failed', { note: (e instanceof Error ? e.message : String(e)).slice(0, 500) });
+  }
+  // keep the email under gmail's limit
+  if (docx && !fitsMail(pdf, docx)) {
+    const note = `attachments too large (${pdf.length + docx.length} bytes), sending pdf only`;
+    console.warn('docx skipped:', note, id);
+    if (sub.approvedBy) await auditSafe(id, sub.approvedBy, 'docx_failed', { note });
+    docx = null;
   }
 
   const siteName = sub.siteName ?? String(data.siteName ?? '');
