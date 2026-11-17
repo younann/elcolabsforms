@@ -1,6 +1,7 @@
 import { cx } from './cx';
+import type { Status } from '../../shared/status';
 
-export type SubmissionStatus = 'draft' | 'submitted' | 'returned' | 'approved' | 'sending' | 'emailed' | 'send_failed';
+export type SubmissionStatus = Status;
 
 const map: Record<SubmissionStatus, { label: string; cls: string }> = {
   draft: { label: 'טיוטה', cls: 'bg-surface-2 text-muted' },

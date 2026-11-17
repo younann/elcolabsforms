@@ -1,9 +1,10 @@
 import type { Config } from '@netlify/functions';
 import { z } from 'zod';
-import { and, asc, desc, eq, type SQL } from 'drizzle-orm';
+import { and, asc, desc, eq, isNotNull, sql, type SQL } from 'drizzle-orm';
 import { getDb, schema } from '../../server/db/client';
 import { handle, json, parseBody, HttpError } from '../../server/http';
 import { requireUser } from '../../server/auth';
+import { getBlob } from '../../server/blobs';
 import { FORMS, getForm } from '../../shared/forms';
 import { canTransition } from '../../shared/status';
 import {
@@ -46,9 +47,15 @@ export default handle(async (req) => {
           testNumber: schema.submissions.testNumber,
           siteName: schema.submissions.siteName,
           revision: schema.submissions.revision,
+          parentId: schema.submissions.parentId,
+          reviewNote: schema.submissions.reviewNote,
+          sendError: schema.submissions.sendError,
+          hasPdf: isNotNull(schema.submissions.pdfKey),
+          hasChild: sql<boolean>`exists (select 1 from ${schema.submissions} c where c.parent_id = ${schema.submissions.id})`,
           inspectorId: schema.submissions.inspectorId,
           inspectorName: schema.users.displayName,
           submittedAt: schema.submissions.submittedAt,
+          emailedAt: schema.submissions.emailedAt,
           createdAt: schema.submissions.createdAt,
           updatedAt: schema.submissions.updatedAt,
         })
@@ -92,6 +99,21 @@ export default handle(async (req) => {
       .returning();
     await audit(row.id, me.id, 'create', { note: `duplicate of ${s.id}` });
     return json({ submission: row }, 201);
+  }
+  if (sub === 'pdf') {
+    if (req.method !== 'GET') throw new HttpError(405, 'Method not allowed');
+    // owner only once emailed
+    if (me.role !== 'admin' && s.status !== 'emailed') throw new HttpError(403, 'אין הרשאה');
+    const b = s.pdfKey ? await getBlob(s.pdfKey) : null;
+    if (!b) throw new HttpError(404, 'הדוח לא נמצא');
+    const name = `${s.testNumber || s.id}${s.revision > 0 ? `-Rev${s.revision}` : ''}`.replace(/[\\/:*?"<>|\s]+/g, '_');
+    return new Response(b.data, {
+      headers: {
+        'content-type': 'application/pdf',
+        'content-disposition': `attachment; filename="report.pdf"; filename*=UTF-8''${encodeURIComponent(name)}.pdf`,
+        'cache-control': 'private, no-store',
+      },
+    });
   }
   if (sub) throw new HttpError(404, 'לא נמצא');
 
@@ -144,5 +166,5 @@ export default handle(async (req) => {
   throw new HttpError(405, 'Method not allowed');
 });
 
-export const config: Config = { path: ['/api/submissions', '/api/submissions/:id', '/api/submissions/:id/duplicate'] };
+export const config: Config = { path: ['/api/submissions', '/api/submissions/:id', '/api/submissions/:id/duplicate', '/api/submissions/:id/pdf'] };
 

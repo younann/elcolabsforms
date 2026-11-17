@@ -1,6 +1,8 @@
 export { Button, type ButtonProps } from './Button';
 export { Segmented, type SegmentOption, type SegmentedProps } from './Segmented';
 export { TextField, type TextFieldProps } from './TextField';
+export { TextArea, type TextAreaProps } from './TextArea';
+export { Select, type SelectProps } from './Select';
 export { Sheet, type SheetProps } from './Sheet';
 export { Banner, type BannerProps, type Tone } from './Banner';
 export { StatusBadge, statusLabel, type SubmissionStatus } from './StatusBadge';

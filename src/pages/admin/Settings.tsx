@@ -1,0 +1,147 @@
+import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { ImageSquare, UploadSimple, WarningOctagon } from '@phosphor-icons/react';
+import { api, ApiError } from '../../lib/api';
+import { useLoad } from '../../lib/useLoad';
+import { Button, EmptyState, TextArea, TextField, toast } from '../../ui';
+
+type S = { recipientEmail: string; companyName: string; companyDetails: string; hasStamp: boolean };
+
+export function Settings() {
+  const { data, error, reload } = useLoad(() => api<{ settings: S }>('/api/settings').then((r) => r.settings), 'settings');
+  if (error && !data) {
+    return (
+      <EmptyState icon={<WarningOctagon />} title="לא ניתן לטעון את ההגדרות" action={<Button onClick={reload}>נסה שוב</Button>}>
+        {error}
+      </EmptyState>
+    );
+  }
+  return (
+    <section className="max-w-2xl">
+      <h1 className="text-2xl font-semibold tracking-tight">הגדרות</h1>
+      {!data ? (
+        <div aria-busy="true" aria-label="טוען" className="mt-6 h-96 rounded-box border border-border bg-surface" />
+      ) : (
+        <>
+          <DetailsForm initial={data} />
+          <StampCard hasStamp={data.hasStamp} />
+        </>
+      )}
+    </section>
+  );
+}
+
+function DetailsForm({ initial }: { initial: S }) {
+  const [form, setForm] = useState({ recipientEmail: initial.recipientEmail, companyName: initial.companyName, companyDetails: initial.companyDetails });
+  const [saved, setSaved] = useState(form);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const dirty = JSON.stringify(form) !== JSON.stringify(saved);
+
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    if (busy) return;
+    setBusy(true);
+    setErr(null);
+    try {
+      await api('/api/settings', { method: 'PUT', json: form });
+      setSaved(form);
+      toast.success('ההגדרות נשמרו');
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 400) setErr('כתובת הדוא"ל לא תקינה');
+      else if (!(e instanceof ApiError && e.status === 401)) toast.error(e instanceof Error ? e.message : 'השמירה נכשלה');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form onSubmit={submit} className="mt-6 flex flex-col gap-5 rounded-box border border-border bg-surface p-4 md:p-6">
+      <h2 className="text-lg font-semibold">שליחת דוחות</h2>
+      <TextField
+        label='כתובת דוא"ל לקבלת דוחות'
+        hint="כל דוח שמאושר נשלח לכתובת הזו."
+        type="email"
+        dir="ltr"
+        inputMode="email"
+        autoCapitalize="none"
+        error={err}
+        value={form.recipientEmail}
+        onChange={(e) => setForm({ ...form, recipientEmail: e.target.value.trim() })}
+      />
+      <h2 className="mt-2 text-lg font-semibold">פרטי החברה בדוח</h2>
+      <TextField label="שם החברה" maxLength={120} value={form.companyName} onChange={(e) => setForm({ ...form, companyName: e.target.value })} />
+      <TextArea
+        label="פרטי החברה"
+        hint="כתובת, טלפון, מספר הסמכה. מופיע בכותרת הדוח."
+        maxLength={1000}
+        rows={4}
+        value={form.companyDetails}
+        onChange={(e) => setForm({ ...form, companyDetails: e.target.value })}
+      />
+      <div className="flex justify-end">
+        <Button type="submit" variant="primary" loading={busy} disabled={!dirty}>
+          שמירת שינויים
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+function StampCard({ hasStamp }: { hasStamp: boolean }) {
+  const input = useRef<HTMLInputElement>(null);
+  const [src, setSrc] = useState<string | null>(hasStamp ? `/api/settings/stamp?v=${Date.now()}` : null);
+  const [busy, setBusy] = useState(false);
+  const [preview, setPreview] = useState<string | null>(null);
+
+  useEffect(() => () => void (preview && URL.revokeObjectURL(preview)), [preview]);
+
+  async function upload(file: File) {
+    if (!/^image\/(png|jpeg|webp)$/.test(file.type)) {
+      toast.error('יש לבחור תמונה מסוג PNG, JPEG או WEBP');
+      return;
+    }
+    setBusy(true);
+    setPreview(URL.createObjectURL(file));
+    try {
+      const fd = new FormData();
+      fd.set('file', file, file.name);
+      await api('/api/settings/stamp', { method: 'PUT', body: fd });
+      setSrc(`/api/settings/stamp?v=${Date.now()}`);
+      toast.success('החותמת עודכנה');
+    } catch (e) {
+      if (!(e instanceof ApiError && e.status === 401)) toast.error(e instanceof Error ? e.message : 'ההעלאה נכשלה');
+    } finally {
+      setPreview(null);
+      setBusy(false);
+      if (input.current) input.current.value = '';
+    }
+  }
+
+  const shown = preview ?? src;
+  return (
+    <div className="mt-5 rounded-box border border-border bg-surface p-4 md:p-6">
+      <h2 className="text-lg font-semibold">חותמת החברה</h2>
+      <p className="mt-1 text-[15px] text-muted">מוטבעת בתיבת המאשר בכל דוח. מומלץ PNG עם רקע שקוף.</p>
+      <div className="mt-4 flex flex-wrap items-center gap-4">
+        <div className="grid size-32 shrink-0 place-items-center overflow-hidden rounded-box border border-dashed border-border-strong bg-[#fdfdfd]">
+          {shown ? (
+            <img src={shown} alt="החותמת הנוכחית" className="max-h-full max-w-full object-contain p-2" onError={() => setSrc(null)} />
+          ) : (
+            <ImageSquare className="size-8 text-[#8a9099]" aria-hidden />
+          )}
+        </div>
+        <input
+          ref={input}
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          className="sr-only"
+          data-testid="stamp-input"
+          onChange={(e) => e.target.files?.[0] && void upload(e.target.files[0])}
+        />
+        <Button variant="secondary" loading={busy} icon={<UploadSimple className="size-5" aria-hidden />} onClick={() => input.current?.click()}>
+          {src ? 'החלפת חותמת' : 'העלאת חותמת'}
+        </Button>
+      </div>
+    </div>
+  );
+}

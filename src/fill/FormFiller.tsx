@@ -343,7 +343,7 @@ export function FormFiller({
         </div>
       </div>
 
-      <div className="safe-x fixed inset-x-0 bottom-0 z-20 border-t border-border bg-bg/92 pt-2.5 pb-[max(0.625rem,var(--safe-bottom))] backdrop-blur-md">
+      <div className="safe-x fixed inset-x-0 bottom-0 z-20 lg:start-(--nav-w) border-t border-border bg-bg/92 pt-2.5 pb-[max(0.625rem,var(--safe-bottom))] backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl items-center gap-2">
           <Button variant="secondary" className="lg:hidden" icon={<ListBullets className="size-5" aria-hidden />} onClick={() => setNavOpen(true)}>
             <span className="tabular-nums" dir="ltr">
