@@ -192,3 +192,20 @@
   }
 }
 
+
+/* jump-to-field highlight */
+[data-flash] {
+  animation: field-flash 1.6s var(--motion-out);
+}
+
+@keyframes field-flash {
+  0%,
+  35% {
+    box-shadow: 0 0 0 3px var(--accent);
+    border-radius: var(--radius-ctl);
+  }
+  100% {
+    box-shadow: 0 0 0 3px transparent;
+    border-radius: var(--radius-ctl);
+  }
+}
