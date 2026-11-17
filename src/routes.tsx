@@ -35,7 +35,14 @@ export const router = createBrowserRouter([
         ),
         children: [
           { index: true, element: <Home /> },
-          { path: 'new', element: <NewForm /> },
+          {
+            path: 'new',
+            element: (
+              <RequireRole role="inspector">
+                <NewForm />
+              </RequireRole>
+            ),
+          },
           { path: 'fill/:id', element: <Fill /> },
           { path: 'submissions/:id', element: <SubmissionView /> },
           { path: 'profile', element: <Profile /> },

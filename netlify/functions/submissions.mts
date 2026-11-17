@@ -66,6 +66,8 @@ export default handle(async (req) => {
       return json({ submissions: rows });
     }
     if (req.method === 'POST') {
+      // admins review, they do not fill
+      if (me.role !== 'inspector') throw new HttpError(403, 'אין הרשאה');
       const b = await parseBody(req, Create);
       const def = getForm(b.formId);
       const [row] = await db
