@@ -21,6 +21,23 @@
     overscroll-behavior: none;
   }
 
+  /* iOS draws date/time natively and ignores width and height */
+  @supports (-webkit-touch-callout: none) {
+    input[type='date'],
+    input[type='time'],
+    input[type='datetime-local'] {
+      -webkit-appearance: none;
+      appearance: none;
+      min-width: 0;
+      max-width: 100%;
+    }
+
+    input::-webkit-date-and-time-value {
+      text-align: start;
+      min-height: 1.5em;
+    }
+  }
+
   /* no iOS focus zoom */
   input,
   textarea,

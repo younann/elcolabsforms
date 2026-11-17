@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { WarningOctagon } from '@phosphor-icons/react';
 import { api, ApiError } from '../lib/api';
+import { useAuth } from '../lib/auth';
+import { canTransition, type Role, type Status } from '../../shared/status';
 import { preferLocal } from '../lib/autosave';
 import { Button, EmptyState } from '../ui';
 import { getForm } from '../../shared/forms';
@@ -12,7 +14,11 @@ import { BackLink } from '../components/SubmissionDetail';
 
 type Loaded = { def: FormDef; submission: SubmissionRow; data: FormData; fromLocal: boolean; attachments: Attachment[] };
 
-const EDITABLE = ['draft', 'returned'];
+// same rule the server applies to saves
+function canEdit(s: SubmissionRow & { inspectorId?: string }, uid?: string, role?: Role) {
+  if (!uid || !role || !canTransition(s.status as Status, 'edit', role)) return false;
+  return role === 'admin' || s.inspectorId === uid;
+}
 
 function FillSkeleton() {
   return (
@@ -35,14 +41,17 @@ function FillSkeleton() {
 
 export function Fill() {
   const { id = '' } = useParams();
+  const { user } = useAuth();
+  const uid = user?.id;
+  const role = user?.role;
   const [state, setState] = useState<Loaded | { error: string } | null>(null);
 
   const load = useCallback(async () => {
     setState(null);
     try {
-      const r = await api<{ submission: SubmissionRow; attachments: Attachment[] }>(`/api/submissions/${id}`);
+      const r = await api<{ submission: SubmissionRow & { inspectorId?: string }; attachments: Attachment[] }>(`/api/submissions/${id}`);
       const def = getForm(r.submission.formId, r.submission.formVersion);
-      const editable = EDITABLE.includes(r.submission.status);
+      const editable = canEdit(r.submission, uid, role);
       const picked = editable
         ? preferLocal(draftKey(id), r.submission.data ?? {}, r.submission.updatedAt)
         : { data: r.submission.data ?? {}, fromLocal: false };
@@ -51,7 +60,7 @@ export function Fill() {
       if (e instanceof ApiError && e.status === 401) return;
       setState({ error: e instanceof Error ? e.message : 'טעינת הטופס נכשלה' });
     }
-  }, [id]);
+  }, [id, uid, role]);
 
   useEffect(() => {
     void load();
@@ -67,7 +76,7 @@ export function Fill() {
   }
 
   const s = state.submission;
-  const readOnly = !EDITABLE.includes(s.status);
+  const readOnly = !canEdit(s, uid, role);
   return (
     <>
       <BackLink to="/" label="לטפסים שלי" />
