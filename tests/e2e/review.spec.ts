@@ -17,7 +17,7 @@ let site = '';
 
 test.beforeAll(async ({ playwright, baseURL }) => {
   const admin = await playwright.request.newContext({ baseURL });
-  expect((await admin.post('/api/auth/login', { data: { username: ADMIN_USER, password: ADMIN_PASS } })).ok()).toBe(true);
+  await login(admin, ADMIN_USER, ADMIN_PASS);
   inspector = `review-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
   const r = await admin.post('/api/users', {
     data: { username: inspector, displayName: 'בודקת סקירה', password: INSPECTOR_PASS, role: 'inspector' },
@@ -28,8 +28,13 @@ test.beforeAll(async ({ playwright, baseURL }) => {
   await admin.dispose();
 });
 
+// parallel workers' in-flight logins count toward the limit briefly
 async function login(req: APIRequestContext, username: string, password: string) {
-  expect((await req.post('/api/auth/login', { data: { username, password } })).ok()).toBe(true);
+  for (let i = 0; ; i++) {
+    const r = await req.post('/api/auth/login', { data: { username, password } });
+    if (r.status() !== 429 || i === 4) return expect(r.ok()).toBe(true);
+    await new Promise((res) => setTimeout(res, 1000 + Math.random() * 1000));
+  }
 }
 
 // complete aerosol form through the API
@@ -120,7 +125,10 @@ test('return with note, resubmit, approve, emailed', async ({ page, browser }, i
   await expect
     .poll(async () => (await (await page.request.get(`/api/submissions/${id}`)).json()).submission.status, { timeout: 150_000, intervals: [2000] })
     .toBe('emailed');
-  await expect(page.getByText('הדוח נשלח')).toBeVisible({ timeout: 15_000 });
+  // log mail mode shows the test-mode notice instead
+  const logged = (await (await page.request.get(`/api/submissions/${id}`)).json()).submission.mailLogged as boolean;
+  await expect(page.getByText(logged ? 'מצב בדיקה – המייל לא נשלח בפועל' : 'הדוח נשלח')).toBeVisible({ timeout: 15_000 });
+  if (logged) await expect(page.getByText('מצב בדיקה: מיילים אינם נשלחים')).toBeVisible();
   await expect(page.getByTestId('pdf-link')).toBeVisible();
 
   // one approve only
@@ -133,4 +141,32 @@ test('return with note, resubmit, approve, emailed', async ({ page, browser }, i
   expect(pdf.headers()['content-type']).toBe('application/pdf');
   expect((await pdf.body()).subarray(0, 4).toString()).toBe('%PDF');
   await ctx.close();
+});
+
+test('parallel approve: one wins, one audit row, one report', async ({ playwright, baseURL }, info) => {
+  site = `אתר מקביל ${info.project.name.replace(/\W+/g, '')} ${Date.now() % 100000}`;
+  const insp = await playwright.request.newContext({ baseURL });
+  await login(insp, inspector, INSPECTOR_PASS);
+  const id = await readySubmission(insp);
+  expect((await insp.post(`/api/submissions/${id}/action`, { data: { action: 'submit' } })).ok()).toBe(true);
+
+  const admin = await playwright.request.newContext({ baseURL });
+  await login(admin, ADMIN_USER, ADMIN_PASS);
+  const results = await Promise.all([0, 1].map(() => admin.post(`/api/submissions/${id}/action`, { data: { action: 'approve' } })));
+  expect(results.map((r) => r.status()).sort()).toEqual([200, 409]);
+
+  const read = async () => (await (await admin.get(`/api/submissions/${id}`)).json()) as {
+    submission: { status: string; emailedAt: string | null };
+    audit: { action: string }[];
+  };
+  await expect.poll(async () => (await read()).submission.status, { timeout: 150_000, intervals: [2000] }).toBe('emailed');
+  const first = await read();
+  expect(first.audit.filter((a) => a.action === 'approve')).toHaveLength(1);
+  // no second report run lands later
+  await new Promise((r) => setTimeout(r, 5000));
+  const later = await read();
+  expect(later.submission.emailedAt).toBe(first.submission.emailedAt);
+  expect(later.audit.filter((a) => a.action === 'approve')).toHaveLength(1);
+  await insp.dispose();
+  await admin.dispose();
 });
