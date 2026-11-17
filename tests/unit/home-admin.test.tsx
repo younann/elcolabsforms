@@ -23,6 +23,7 @@ const sum = (over: Partial<Summary>): Summary => ({
   parentId: null,
   reviewNote: null,
   sendError: null,
+  mailLogged: false,
   hasPdf: false,
   hasChild: false,
   inspectorId: 'me',

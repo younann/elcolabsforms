@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { buildNotice, sendMail } from '../../server/mail';
+import { buildNotice, mailMode, sendMail } from '../../server/mail';
 import { getForm } from '../../shared/forms';
 
 const def = getForm('f1220');
@@ -19,8 +19,11 @@ describe('mail', () => {
   it('logs instead of sending in log mode', async () => {
     vi.stubEnv('MAIL_MODE', 'log');
     const log = vi.spyOn(console, 'log').mockImplementation(() => {});
-    await sendMail({ to: 'a@b.co', subject: 's', html: '<p>x</p>' });
+    expect(await sendMail({ to: 'a@b.co', subject: 's', html: '<p>x</p>' })).toEqual({ logged: true });
     expect(log).toHaveBeenCalled();
+    expect(mailMode()).toBe('log');
+    vi.stubEnv('MAIL_MODE', 'smtp');
+    expect(mailMode()).toBe('live');
     vi.unstubAllEnvs();
   });
 });

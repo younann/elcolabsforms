@@ -13,6 +13,7 @@ export type Summary = {
   parentId: string | null;
   reviewNote: string | null;
   sendError: string | null;
+  mailLogged: boolean;
   hasPdf: boolean;
   hasChild: boolean;
   inspectorId: string;

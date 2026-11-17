@@ -6,10 +6,14 @@ import type { Submission } from './db/schema';
 export type MailAttachment = { filename: string; content: Buffer };
 export type MailInput = { to: string; subject: string; html: string; attachments?: MailAttachment[] };
 
-export async function sendMail(m: MailInput): Promise<void> {
-  if (process.env.MAIL_MODE === 'log') {
+export type MailMode = 'log' | 'live';
+export const mailMode = (): MailMode => (process.env.MAIL_MODE === 'log' ? 'log' : 'live');
+
+/** `logged`: test mode, nothing was sent. */
+export async function sendMail(m: MailInput): Promise<{ logged: boolean }> {
+  if (mailMode() === 'log') {
     console.log('[mail:log]', JSON.stringify({ to: m.to, subject: m.subject, html: m.html, attachments: m.attachments?.map((a) => a.filename) }));
-    return;
+    return { logged: true };
   }
   const t = nodemailer.createTransport({
     service: 'gmail',
@@ -19,6 +23,7 @@ export async function sendMail(m: MailInput): Promise<void> {
     auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
   });
   await t.sendMail({ from: process.env.GMAIL_USER, ...m });
+  return { logged: false };
 }
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);

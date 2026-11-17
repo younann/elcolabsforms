@@ -83,7 +83,7 @@ async function run(id: string): Promise<boolean> {
   const testNumber = sub.testNumber ?? String(data.testNumber ?? '');
   const subject = reportSubject(def, siteName, testNumber, sub.revision);
   const fileBase = `${testNumber || id}${sub.revision > 0 ? `-Rev${sub.revision}` : ''}`.replace(/[\\/:*?"<>|\s]+/g, '_');
-  await sendMail({
+  const sent = await sendMail({
     to: settings.recipientEmail,
     subject,
     html: `<div dir="rtl" style="font-family:Arial,sans-serif"><p>מצורף דוח בדיקה מאושר.</p><p>${esc(subject)}</p></div>`,
@@ -92,7 +92,7 @@ async function run(id: string): Promise<boolean> {
 
   await db
     .update(schema.submissions)
-    .set({ status: 'emailed', pdfKey: key, emailedAt: new Date(), sendError: null, sendClaimedAt: null, updatedAt: new Date() })
+    .set({ status: 'emailed', pdfKey: key, emailedAt: new Date(), sendError: null, sendClaimedAt: null, mailLogged: sent.logged, updatedAt: new Date() })
     .where(and(eq(S.id, id), eq(S.status, 'sending')));
   return true;
 }

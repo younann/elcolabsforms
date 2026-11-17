@@ -27,7 +27,7 @@ export default handle(async (req, ctx) => {
   assertAccess(me, s);
   if (action !== 'submit' && me.role !== 'admin') throw new HttpError(403, 'אין הרשאה');
   const from = s.status as Status;
-  const to = canTransition(from, action, me.role, s.updatedAt);
+  const to = canTransition(from, action, me.role, s.updatedAt, Date.now(), s.mailLogged);
   if (!to) throw new HttpError(409, 'פעולה לא אפשרית במצב הנוכחי');
 
   const check = async () => {
@@ -64,6 +64,11 @@ export default handle(async (req, ctx) => {
   }
 
   if (action === 'retry') {
+    if (from === 'emailed') {
+      // a newer revision replaces this report
+      const [child] = await db.select({ id: schema.submissions.id }).from(schema.submissions).where(eq(schema.submissions.parentId, id));
+      if (child) throw new HttpError(409, 'כבר נפתחה גרסה חדשה');
+    }
     // stuck sending: also guard on updatedAt
     const row = await transition(id, from, { status: to, sendError: null }, from === 'sending' ? s.updatedAt : undefined);
     await triggerReport(req, id);

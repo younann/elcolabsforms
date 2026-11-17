@@ -6,6 +6,7 @@ import { useLoad } from '../../lib/useLoad';
 import { act, ilDay, isStuck, listSubmissions, pdfUrl, rowHref, type Summary } from '../../lib/submissions';
 import { Button, EmptyState, Select, Sheet, TextField, cx, statusLabel, toast } from '../../ui';
 import { ListSkeleton, SubmissionRow } from '../../components/SubmissionList';
+import { MailLoggedBadge, MailModeBanner, useMailMode } from '../../components/MailMode';
 import { FORMS } from '../../../shared/forms';
 import type { Status } from '../../../shared/status';
 
@@ -41,6 +42,7 @@ export function AllSubmissions() {
   const [limit, setLimit] = useState(PAGE);
   const [busy, setBusy] = useState<string | null>(null);
   const [reopen, setReopen] = useState<Summary | null>(null);
+  const mailMode = useMailMode();
 
   const users = useLoad(() => api<{ users: { id: string; displayName: string; role: string }[] }>('/api/users').then((r) => r.users), 'users');
   const list = useLoad(
@@ -117,6 +119,7 @@ export function AllSubmissions() {
   return (
     <section>
       <h1 className="text-2xl font-semibold tracking-tight">כל הטפסים</h1>
+      <MailModeBanner className="mt-4" />
 
       <div className="mt-5 flex gap-2">
         <div className="relative min-w-0 flex-1">
@@ -156,7 +159,9 @@ export function AllSubmissions() {
             </p>
             <ul className={cx('flex flex-col gap-2', list.loading && 'opacity-60 transition-opacity')} data-testid="all-list">
               {rows.slice(0, limit).map((s) => {
-                const retry = s.status === 'send_failed' || isStuck(s);
+                const logged = s.status === 'emailed' && s.mailLogged;
+                // logged-only mail can go out once sending is live
+                const retry = s.status === 'send_failed' || isStuck(s) || (logged && mailMode === 'live' && !s.hasChild);
                 const canReopen = s.status === 'emailed' && !s.hasChild;
                 const acts =
                   s.hasPdf || retry || canReopen ? (
@@ -182,6 +187,11 @@ export function AllSubmissions() {
                 return (
                   <SubmissionRow key={s.id} s={s} href={rowHref(s, 'admin')} showInspector actions={acts}>
                     {s.status === 'send_failed' && s.sendError && <p className="mx-4 mb-3 line-clamp-2 text-sm text-danger">{s.sendError}</p>}
+                    {logged && (
+                      <div className="mx-4 mb-3">
+                        <MailLoggedBadge />
+                      </div>
+                    )}
                   </SubmissionRow>
                 );
               })}

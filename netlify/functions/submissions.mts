@@ -50,6 +50,7 @@ export default handle(async (req) => {
           parentId: schema.submissions.parentId,
           reviewNote: schema.submissions.reviewNote,
           sendError: schema.submissions.sendError,
+          mailLogged: schema.submissions.mailLogged,
           hasPdf: isNotNull(schema.submissions.pdfKey),
           hasChild: sql<boolean>`exists (select 1 from ${schema.submissions} c where c.parent_id = ${schema.submissions.id})`,
           inspectorId: schema.submissions.inspectorId,

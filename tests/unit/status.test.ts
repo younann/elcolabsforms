@@ -26,4 +26,11 @@ describe('canTransition', () => {
     expect(canTransition('sending', 'retry', 'admin', new Date(now - 16 * 60_000), now)).toBe('sending');
     expect(canTransition('sending', 'retry', 'inspector', new Date(now - 16 * 60_000), now)).toBeNull();
   });
+  it('allows retry from emailed only when the mail was only logged', () => {
+    const now = Date.now();
+    expect(canTransition('emailed', 'retry', 'admin')).toBeNull();
+    expect(canTransition('emailed', 'retry', 'admin', new Date(now), now, false)).toBeNull();
+    expect(canTransition('emailed', 'retry', 'admin', new Date(now), now, true)).toBe('sending');
+    expect(canTransition('emailed', 'retry', 'inspector', new Date(now), now, true)).toBeNull();
+  });
 });

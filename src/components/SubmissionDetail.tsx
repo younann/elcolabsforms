@@ -15,6 +15,7 @@ export type FullSubmission = SubmissionRow & {
   inspectorId: string;
   pdfKey: string | null;
   sendError: string | null;
+  mailLogged?: boolean;
   parentId: string | null;
   approvedBy: string | null;
   emailedAt: string | null;

@@ -7,6 +7,7 @@ import { act, isStuck, pdfUrl } from '../lib/submissions';
 import { Banner, Button, Sheet, toast } from '../ui';
 import { FormFiller } from '../fill/FormFiller';
 import { DuplicateButton } from '../components/DuplicateButton';
+import { MailModeBanner, useMailMode } from '../components/MailMode';
 import { AuditButton, BackLink, DetailError, DetailSkeleton, useSubmission } from '../components/SubmissionDetail';
 
 const POLL_MS = 4000;
@@ -23,6 +24,7 @@ export function SubmissionView() {
   const [pending, setPending] = useState<'retry' | 'reopen' | null>(null);
   const [confirmReopen, setConfirmReopen] = useState(false);
   const status = state && 'submission' in state ? state.submission.status : null;
+  const mailMode = useMailMode();
 
   // follow the report until it is sent
   useEffect(() => {
@@ -60,7 +62,8 @@ export function SubmissionView() {
     }
   }
 
-  const canRetry = admin && (s.status === 'send_failed' || isStuck(s));
+  const logged = admin && s.status === 'emailed' && !!s.mailLogged;
+  const canRetry = admin && (s.status === 'send_failed' || isStuck(s) || (logged && mailMode === 'live'));
   const actions = (
     <div className="flex shrink-0 items-center gap-2">
       {admin && <AuditButton def={state.def} audit={state.audit} />}
@@ -82,6 +85,7 @@ export function SubmissionView() {
   return (
     <>
       <BackLink to={admin ? '/admin/submissions' : '/'} label={admin ? 'לכל הטפסים' : 'לטפסים שלי'} />
+      <MailModeBanner />
       {(s.status === 'sending' || s.status === 'approved') && (
         <Banner tone="info" title="הדוח בהכנה ובשליחה" className="mb-5" action={canRetry ? retryBtn() : undefined}>
           {isStuck(s) ? 'השליחה נתקעה. אפשר לנסות שוב.' : 'זה לוקח בדרך כלל פחות מדקה. הסטטוס יתעדכן כאן.'}
@@ -93,7 +97,13 @@ export function SubmissionView() {
           {!admin && ' מנהל יטפל בכך.'}
         </Banner>
       )}
-      {s.status === 'emailed' && (
+      {logged && (
+        <Banner tone="warning" title="מצב בדיקה – המייל לא נשלח בפועל" className="mb-5" action={canRetry ? retryBtn() : undefined}>
+          הדוח הופק ונשמר, אבל המייל רק נרשם ביומן השרת.
+          {mailMode === 'live' ? ' השליחה פעילה עכשיו, אפשר לשלוח שוב.' : ''}
+        </Banner>
+      )}
+      {s.status === 'emailed' && !logged && (
         <Banner tone="success" title="הדוח נשלח" className="mb-5">
           {s.emailedAt ? `נשלח ב-${new Date(s.emailedAt).toLocaleString('he-IL', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Jerusalem' })}` : null}
         </Banner>

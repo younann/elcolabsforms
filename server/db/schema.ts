@@ -27,7 +27,7 @@ export const loginAttempts = pgTable(
     ok: boolean('ok').notNull(),
     at: timestamp('at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [index('login_attempts_user_at').on(t.username, t.at)],
+  (t) => [index('login_attempts_user_at').on(t.username, t.at), index('login_attempts_ip_at').on(t.ip, t.at)],
 );
 
 export const settings = pgTable('settings', {
@@ -58,6 +58,8 @@ export const submissions = pgTable(
     emailedAt: timestamp('emailed_at', { withTimezone: true }),
     pdfKey: text('pdf_key'),
     sendError: text('send_error'),
+    // mail mode was log: nothing really sent
+    mailLogged: boolean('mail_logged').notNull().default(false),
     sendClaimedAt: timestamp('send_claimed_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

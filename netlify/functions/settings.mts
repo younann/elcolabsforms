@@ -7,6 +7,7 @@ import { requireUser } from '../../server/auth';
 import { getBlob, putBlob } from '../../server/blobs';
 import { readPngBody } from '../../server/upload';
 import { loadSettings } from '../../server/settings';
+import { mailMode } from '../../server/mail';
 
 const Put = z.object({
   recipientEmail: z.union([z.literal(''), z.email()]),
@@ -39,7 +40,7 @@ export default handle(async (req) => {
     const me = await requireUser(req);
     const s = await loadSettings();
     const base = { companyName: s.companyName, companyDetails: s.companyDetails, hasStamp: !!s.stampKey };
-    return json({ settings: me.role === 'admin' ? { ...base, recipientEmail: s.recipientEmail } : base });
+    return json({ settings: me.role === 'admin' ? { ...base, recipientEmail: s.recipientEmail, mailMode: mailMode() } : base });
   }
   if (req.method === 'PUT') {
     await requireUser(req, 'admin');

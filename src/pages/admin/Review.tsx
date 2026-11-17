@@ -7,6 +7,7 @@ import { useAuth } from '../../lib/auth';
 import { act } from '../../lib/submissions';
 import { Banner, Button, Sheet, TextArea, toast } from '../../ui';
 import { FormFiller, draftKey } from '../../fill/FormFiller';
+import { MailModeBanner } from '../../components/MailMode';
 import { AuditButton, BackLink, DetailError, DetailSkeleton, useSubmission } from '../../components/SubmissionDetail';
 
 // edits must reach the server before a status change
@@ -93,6 +94,7 @@ export function Review() {
   return (
     <>
       <BackLink to="/" label="לרשימת הממתינים" />
+      <MailModeBanner />
       {!user?.hasSignature && (
         <Banner
           tone="warning"
