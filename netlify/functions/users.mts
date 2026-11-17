@@ -1,6 +1,6 @@
 import type { Config } from '@netlify/functions';
 import { z } from 'zod';
-import { asc, eq } from 'drizzle-orm';
+import { and, asc, eq } from 'drizzle-orm';
 import { getDb, schema } from '../../server/db/client';
 import { handle, json, parseBody, HttpError } from '../../server/http';
 import { requireUser, hashPassword } from '../../server/auth';
@@ -32,6 +32,15 @@ export default handle(async (req, ctx) => {
   if (id !== undefined && !z.uuid().safeParse(id).success) throw new HttpError(404, 'משתמש לא נמצא');
 
   if (!id && req.method === 'GET') {
+    // light list for pickers
+    if (new URL(req.url).searchParams.get('inspectors') === '1') {
+      const list = await db
+        .select({ id: schema.users.id, displayName: schema.users.displayName, username: schema.users.username })
+        .from(schema.users)
+        .where(and(eq(schema.users.role, 'inspector'), eq(schema.users.active, true)))
+        .orderBy(asc(schema.users.displayName));
+      return json({ inspectors: list });
+    }
     const rows = await db.select().from(schema.users).orderBy(asc(schema.users.displayName));
     return json({ users: rows.map(view) });
   }

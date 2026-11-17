@@ -4,7 +4,7 @@ import { ArrowClockwise, ArrowsCounterClockwise, FileDoc, FilePdf, FunnelSimple,
 import { api, ApiError } from '../../lib/api';
 import { useLoad } from '../../lib/useLoad';
 import { act, docxUrl, ilDay, isStuck, listSubmissions, pdfUrl, rowHref, type Summary } from '../../lib/submissions';
-import { Button, EmptyState, Select, Sheet, TextField, cx, statusLabel, toast } from '../../ui';
+import { Button, EmptyState, InspectorPicker, Select, Sheet, TextField, cx, statusLabel, toast } from '../../ui';
 import { ListSkeleton, SubmissionRow } from '../../components/SubmissionList';
 import { MailLoggedBadge, MailModeBanner, useMailMode } from '../../components/MailMode';
 import { FORMS } from '../../../shared/forms';
@@ -44,7 +44,14 @@ export function AllSubmissions() {
   const [reopen, setReopen] = useState<Summary | null>(null);
   const mailMode = useMailMode();
 
-  const users = useLoad(() => api<{ users: { id: string; displayName: string; role: string }[] }>('/api/users').then((r) => r.users), 'users');
+  // former inspectors stay searchable here
+  const users = useLoad(
+    () =>
+      api<{ users: { id: string; displayName: string; username: string; role: string }[] }>('/api/users').then((r) =>
+        r.users.filter((u) => u.role === 'inspector').map(({ id, displayName, username }) => ({ id, displayName, username })),
+      ),
+    'users',
+  );
   const list = useLoad(
     () => listSubmissions({ formId: f.formId, inspectorId: f.inspectorId, status: f.status }),
     `${f.formId}|${f.inspectorId}|${f.status}`,
@@ -95,14 +102,15 @@ export function AllSubmissions() {
           </option>
         ))}
       </Select>
-      <Select label="בודק" value={f.inspectorId} onChange={(e) => set('inspector', e.target.value)}>
-        <option value="">כולם</option>
-        {(users.data ?? []).map((u) => (
-          <option key={u.id} value={u.id}>
-            {u.displayName}
-          </option>
-        ))}
-      </Select>
+      <InspectorPicker
+        label="בודק"
+        placeholder="כולם"
+        options={users.data ?? []}
+        loading={users.loading}
+        value={f.inspectorId}
+        clearable
+        onChange={(u) => set('inspector', u?.id ?? '')}
+      />
       <Select label="סטטוס" value={f.status} onChange={(e) => set('status', e.target.value)}>
         <option value="">הכול</option>
         {STATUSES.map((s) => (
