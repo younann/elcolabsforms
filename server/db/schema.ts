@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, boolean, timestamp, integer, jsonb, serial, index, uniqueIndex } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, boolean, timestamp, integer, jsonb, serial, date, index, uniqueIndex } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -8,6 +8,8 @@ export const users = pgTable('users', {
   role: text('role', { enum: ['admin', 'inspector'] }).notNull(),
   active: boolean('active').notNull().default(true),
   signatureKey: text('signature_key'),
+  email: text('email'),
+  phone: text('phone'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -38,6 +40,46 @@ export const settings = pgTable('settings', {
   stampKey: text('stamp_key'),
 });
 
+export const clients = pgTable('clients', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull(),
+  contactPerson: text('contact_person'),
+  phone: text('phone'),
+  email: text('email'),
+  active: boolean('active').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const clientSites = pgTable('client_sites', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  clientId: uuid('client_id').notNull().references(() => clients.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  address: text('address').notNull(),
+  active: boolean('active').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const jobs = pgTable('jobs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  clientId: uuid('client_id').notNull().references(() => clients.id),
+  siteId: uuid('site_id').notNull().references(() => clientSites.id),
+  inspectorId: uuid('inspector_id').notNull().references(() => users.id),
+  plannedDate: date('planned_date', { mode: 'string' }).notNull(),
+  note: text('note'),
+  createdBy: uuid('created_by').notNull().references(() => users.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  cancelledAt: timestamp('cancelled_at', { withTimezone: true }),
+});
+
+export const pushSubscriptions = pgTable('push_subscriptions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  endpoint: text('endpoint').notNull().unique(),
+  p256dh: text('p256dh').notNull(),
+  auth: text('auth').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const submissions = pgTable(
   'submissions',
   {
@@ -61,10 +103,13 @@ export const submissions = pgTable(
     // mail mode was log: nothing really sent
     mailLogged: boolean('mail_logged').notNull().default(false),
     sendClaimedAt: timestamp('send_claimed_at', { withTimezone: true }),
+    jobId: uuid('job_id').references(() => jobs.id),
+    touchedAt: timestamp('touched_at', { withTimezone: true }),
+    jobCopy: integer('job_copy'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [index('submissions_status').on(t.status), index('submissions_inspector').on(t.inspectorId), uniqueIndex('submissions_parent').on(t.parentId)],
+  (t) => [index('submissions_status').on(t.status), index('submissions_inspector').on(t.inspectorId), uniqueIndex('submissions_parent').on(t.parentId), index('submissions_job').on(t.jobId)],
 );
 
 export const attachments = pgTable('attachments', {
@@ -92,3 +137,6 @@ export type User = typeof users.$inferSelect;
 export type Submission = typeof submissions.$inferSelect;
 export type Attachment = typeof attachments.$inferSelect;
 export type Settings = typeof settings.$inferSelect;
+export type Client = typeof clients.$inferSelect;
+export type ClientSite = typeof clientSites.$inferSelect;
+export type Job = typeof jobs.$inferSelect;
