@@ -10,8 +10,8 @@
     "test": "vitest run",
     "e2e": "playwright test",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
-    "seed": "tsx scripts/seed-admin.ts"
+    "db:migrate": "DOTENV_CONFIG_PATH=local.env drizzle-kit migrate",
+    "seed": "DOTENV_CONFIG_PATH=local.env tsx scripts/seed-admin.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.2.1",
