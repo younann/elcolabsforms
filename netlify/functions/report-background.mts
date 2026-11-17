@@ -1,24 +1,14 @@
-import { and, asc, eq, isNull, lt, or, sql } from 'drizzle-orm';
+import { and, eq, isNull, lt, or, sql } from 'drizzle-orm';
 import { getDb, schema } from '../../server/db/client';
-import { getBlob, putBlob, dataUrl } from '../../server/blobs';
+import { putBlob } from '../../server/blobs';
 import { sendMail } from '../../server/mail';
 import { htmlToPdf, internalKeyOk, pdfKey, renderReportHtml, reportSubject } from '../../server/pdf';
-import { getForm } from '../../shared/forms';
-import type { FormData } from '../../shared/forms/types';
+import { docxKey } from '../../server/docx';
+import { DOCX_TYPE, loadReportAssets, renderDocxFor, toDataUrl } from '../../server/report-assets';
+import { auditSafe } from '../../server/submissions';
 import type { ReportImages } from '../../shared/pdf/Report';
-import { loadSettings } from '../../server/settings';
-
-const blobUrl = async (key: string | null | undefined) => {
-  if (!key) return undefined;
-  const b = await getBlob(key);
-  return b ? dataUrl(b) : undefined;
-};
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
-
-// israel date of approval
-const ilDate = (d: Date) =>
-  new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
 
 const CLAIM_MINUTES = 14;
 
@@ -42,35 +32,20 @@ async function run(id: string): Promise<boolean> {
     console.log('report skipped, not claimable', id);
     return false;
   }
-  const def = getForm(sub.formId, sub.formVersion);
-  const data = (sub.data ?? {}) as FormData;
-  const atts = await db
-    .select()
-    .from(schema.attachments)
-    .where(eq(schema.attachments.submissionId, id))
-    .orderBy(asc(schema.attachments.createdAt));
-  const images: ReportImages = {};
-  for (const a of atts) {
-    const src = await blobUrl(a.blobKey);
-    if (src) (images[a.fieldId] ??= []).push(src);
-  }
-  const [inspector] = await db.select().from(schema.users).where(eq(schema.users.id, sub.inspectorId));
-  const [approver] = sub.approvedBy ? await db.select().from(schema.users).where(eq(schema.users.id, sub.approvedBy)) : [];
-  const settings = await loadSettings();
+  const assets = await loadReportAssets(sub);
+  const { def, data, settings } = assets;
   if (!settings.recipientEmail) throw new Error('לא הוגדרה כתובת דוא"ל לשליחה');
+  const images: ReportImages = {};
+  for (const [fieldId, list] of Object.entries(assets.images)) images[fieldId] = list.map(toDataUrl);
 
   const html = renderReportHtml({
     def,
     data,
     images,
     revision: sub.revision,
-    inspectorName: inspector?.displayName,
-    settings: { companyName: settings.companyName, companyDetails: settings.companyDetails, stamp: await blobUrl(settings.stampKey) },
-    approver: {
-      name: approver?.displayName ?? '',
-      date: ilDate(sub.approvedAt ?? new Date()),
-      signature: await blobUrl(approver?.signatureKey),
-    },
+    inspectorName: assets.inspectorName,
+    settings: { companyName: settings.companyName, companyDetails: settings.companyDetails, stamp: assets.stamp && toDataUrl(assets.stamp) },
+    approver: { ...assets.approver, signature: assets.approver.signature && toDataUrl(assets.approver.signature) },
   });
   const footer = [settings.companyName, def.docNumber || def.shortTitle, sub.revision > 0 ? `Rev ${sub.revision}` : '']
     .filter(Boolean)
@@ -78,6 +53,17 @@ async function run(id: string): Promise<boolean> {
   const pdf = await htmlToPdf(html, { footerText: footer });
   const key = pdfKey(id, sub.revision);
   await putBlob(key, pdf, 'application/pdf');
+
+  // word copy is best effort; the pdf stays the record
+  let docx: Buffer | null = null;
+  try {
+    docx = await renderDocxFor(sub, assets);
+    await putBlob(docxKey(id, sub.revision), docx, DOCX_TYPE);
+  } catch (e) {
+    docx = null;
+    console.error('docx failed, sending pdf only', id, e);
+    if (sub.approvedBy) await auditSafe(id, sub.approvedBy, 'docx_failed', { note: (e instanceof Error ? e.message : String(e)).slice(0, 500) });
+  }
 
   const siteName = sub.siteName ?? String(data.siteName ?? '');
   const testNumber = sub.testNumber ?? String(data.testNumber ?? '');
@@ -87,7 +73,10 @@ async function run(id: string): Promise<boolean> {
     to: settings.recipientEmail,
     subject,
     html: `<div dir="rtl" style="font-family:Arial,sans-serif"><p>מצורף דוח בדיקה מאושר.</p><p>${esc(subject)}</p></div>`,
-    attachments: [{ filename: `${fileBase}.pdf`, content: pdf }],
+    attachments: [
+      { filename: `${fileBase}.pdf`, content: pdf },
+      ...(docx ? [{ filename: `${fileBase}.docx`, content: docx, contentType: DOCX_TYPE }] : []),
+    ],
   });
 
   await db

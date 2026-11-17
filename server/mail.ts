@@ -3,7 +3,7 @@ import { loadSettings } from './settings';
 import type { FormDef } from '../shared/forms/types';
 import type { Submission } from './db/schema';
 
-export type MailAttachment = { filename: string; content: Buffer };
+export type MailAttachment = { filename: string; content: Buffer; contentType?: string };
 export type MailInput = { to: string; subject: string; html: string; attachments?: MailAttachment[] };
 
 export async function sendMail(m: MailInput): Promise<void> {

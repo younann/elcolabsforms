@@ -102,6 +102,7 @@ const ACTIONS: Record<string, string> = {
   retry: 'שליחה חוזרת',
   reopen: 'נפתח כגרסה חדשה',
   edit: 'שינוי שדה',
+  docx_failed: 'קובץ Word לא הופק',
 };
 
 function fieldLabel(def: FormDef, id: string | null) {

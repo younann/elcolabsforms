@@ -4,7 +4,9 @@ import { and, asc, desc, eq, isNotNull, sql, type SQL } from 'drizzle-orm';
 import { getDb, schema } from '../../server/db/client';
 import { handle, json, parseBody, HttpError } from '../../server/http';
 import { requireUser } from '../../server/auth';
-import { getBlob } from '../../server/blobs';
+import { getBlob, putBlob } from '../../server/blobs';
+import { docxKey } from '../../server/docx';
+import { DOCX_TYPE, loadReportAssets, renderDocxFor, reportFileBase } from '../../server/report-assets';
 import { FORMS, getForm } from '../../shared/forms';
 import { canTransition } from '../../shared/status';
 import {
@@ -115,6 +117,28 @@ export default handle(async (req) => {
       },
     });
   }
+  if (sub === 'docx') {
+    if (req.method !== 'GET') throw new HttpError(405, 'Method not allowed');
+    // same rules as the pdf
+    if (me.role !== 'admin' && s.status !== 'emailed') throw new HttpError(403, 'אין הרשאה');
+    if (!s.pdfKey) throw new HttpError(404, 'הדוח לא נמצא');
+    const key = docxKey(s.id, s.revision);
+    const b = await getBlob(key);
+    let body: Buffer;
+    if (b) body = Buffer.from(b.data);
+    else {
+      // reports sent before word support, or a failed word build
+      body = await renderDocxFor(s, await loadReportAssets(s));
+      await putBlob(key, body, DOCX_TYPE).catch((e) => console.error('docx cache failed', s.id, e));
+    }
+    return new Response(new Uint8Array(body), {
+      headers: {
+        'content-type': DOCX_TYPE,
+        'content-disposition': `attachment; filename="report.docx"; filename*=UTF-8''${encodeURIComponent(reportFileBase(s))}.docx`,
+        'cache-control': 'private, no-store',
+      },
+    });
+  }
   if (sub) throw new HttpError(404, 'לא נמצא');
 
   if (req.method === 'GET') {
@@ -166,5 +190,5 @@ export default handle(async (req) => {
   throw new HttpError(405, 'Method not allowed');
 });
 
-export const config: Config = { path: ['/api/submissions', '/api/submissions/:id', '/api/submissions/:id/duplicate', '/api/submissions/:id/pdf'] };
+export const config: Config = { path: ['/api/submissions', '/api/submissions/:id', '/api/submissions/:id/duplicate', '/api/submissions/:id/pdf', '/api/submissions/:id/docx'] };
 

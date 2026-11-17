@@ -54,6 +54,7 @@ export function act(id: string, action: 'return' | 'approve' | 'reopen' | 'retry
 }
 
 export const pdfUrl = (id: string) => `/api/submissions/${id}/pdf`;
+export const docxUrl = (id: string) => `/api/submissions/${id}/docx`;
 
 export const formShort = (formId: string) => FORMS.find((f) => f.id === formId)?.shortTitle ?? formId;
 
