@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
-import { ArrowClockwise, ArrowsCounterClockwise, FilePdf } from '@phosphor-icons/react';
+import { ArrowClockwise, ArrowsCounterClockwise, FileDoc, FilePdf } from '@phosphor-icons/react';
 import { ApiError } from '../lib/api';
 import { useAuth } from '../lib/auth';
-import { act, isStuck, pdfUrl } from '../lib/submissions';
+import { act, docxUrl, isStuck, pdfUrl } from '../lib/submissions';
 import { Banner, Button, Sheet, toast } from '../ui';
 import { FormFiller } from '../fill/FormFiller';
 import { DuplicateButton } from '../components/DuplicateButton';
@@ -69,10 +69,16 @@ export function SubmissionView() {
       {admin && <AuditButton def={state.def} audit={state.audit} />}
       {owner && <DuplicateButton id={s.id} variant="secondary" />}
       {s.pdfKey && (admin || s.status === 'emailed') && (
-        <a href={pdfUrl(s.id)} download className={linkBtn} data-testid="pdf-link">
-          <FilePdf className="size-5" aria-hidden />
-          PDF
-        </a>
+        <>
+          <a href={pdfUrl(s.id)} download className={linkBtn} data-testid="pdf-link">
+            <FilePdf className="size-5" aria-hidden />
+            PDF
+          </a>
+          <a href={docxUrl(s.id)} download className={linkBtn} data-testid="docx-link">
+            <FileDoc className="size-5" aria-hidden />
+            Word
+          </a>
+        </>
       )}
       {admin && s.status === 'emailed' && (
         <Button variant="secondary" icon={<ArrowsCounterClockwise className="size-5" aria-hidden />} onClick={() => setConfirmReopen(true)}>

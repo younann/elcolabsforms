@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowClockwise, ArrowsCounterClockwise, FilePdf, FunnelSimple, MagnifyingGlass, WarningOctagon } from '@phosphor-icons/react';
+import { ArrowClockwise, ArrowsCounterClockwise, FileDoc, FilePdf, FunnelSimple, MagnifyingGlass, WarningOctagon } from '@phosphor-icons/react';
 import { api, ApiError } from '../../lib/api';
 import { useLoad } from '../../lib/useLoad';
-import { act, ilDay, isStuck, listSubmissions, pdfUrl, rowHref, type Summary } from '../../lib/submissions';
+import { act, docxUrl, ilDay, isStuck, listSubmissions, pdfUrl, rowHref, type Summary } from '../../lib/submissions';
 import { Button, EmptyState, Select, Sheet, TextField, cx, statusLabel, toast } from '../../ui';
 import { ListSkeleton, SubmissionRow } from '../../components/SubmissionList';
 import { MailLoggedBadge, MailModeBanner, useMailMode } from '../../components/MailMode';
@@ -167,10 +167,16 @@ export function AllSubmissions() {
                   s.hasPdf || retry || canReopen ? (
                     <>
                       {s.hasPdf && (
-                        <a href={pdfUrl(s.id)} download className={smallBtn}>
-                          <FilePdf className="size-5" aria-hidden />
-                          PDF
-                        </a>
+                        <>
+                          <a href={pdfUrl(s.id)} download className={smallBtn}>
+                            <FilePdf className="size-5" aria-hidden />
+                            PDF
+                          </a>
+                          <a href={docxUrl(s.id)} download className={smallBtn}>
+                            <FileDoc className="size-5" aria-hidden />
+                            Word
+                          </a>
+                        </>
                       )}
                       {retry && (
                         <Button variant="ghost" className="text-[15px]" loading={busy === `${s.id}:retry`} icon={<ArrowClockwise className="size-5" aria-hidden />} onClick={() => run(s, 'retry')}>
