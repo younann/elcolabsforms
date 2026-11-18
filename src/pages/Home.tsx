@@ -8,6 +8,7 @@ import { JobCard } from '../components/JobCard';
 import { listJobs } from '../lib/jobs';
 import { ListSkeleton, SubmissionRow } from '../components/SubmissionList';
 import { QueueList } from './admin/Queue';
+import { PushCard } from '../pwa/PushCard';
 
 const SENT_PREVIEW = 8;
 
@@ -54,6 +55,7 @@ function InspectorHome({ name }: { name: string }) {
   return (
     <div>
       <h1 className="text-2xl font-semibold tracking-tight">שלום, {name}</h1>
+      <PushCard />
 
       {openJobs.length > 0 && (
         <Group title="עבודות פתוחות" count={openJobs.length}>

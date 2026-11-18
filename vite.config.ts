@@ -9,6 +9,9 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'prompt',
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.ts',
       includeAssets: ['apple-touch-icon.png'],
       manifest: {
         name: 'אלקו מעבדות',
@@ -26,11 +29,8 @@ export default defineConfig({
           { src: '/icons/maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
-      workbox: {
-        navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/api\//, /^\/\.netlify\//],
+      injectManifest: {
         globPatterns: ['**/*.{js,css,html,png,svg,woff,woff2,webmanifest}'],
-        cleanupOutdatedCaches: true,
       },
     }),
   ],

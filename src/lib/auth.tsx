@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { api, ApiError, setUnauthorizedHandler } from './api';
+import { disablePush } from '../pwa/push';
 import { flushAll } from './autosave';
 import { ShellSkeleton } from '../ui/ShellSkeleton';
 
@@ -94,6 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     await flushAll();
+    await disablePush();
     try {
       await api('/api/auth/logout', { method: 'POST' });
     } catch {
