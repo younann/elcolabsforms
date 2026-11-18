@@ -3,6 +3,7 @@ import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { api, ApiError, setUnauthorizedHandler } from './api';
 import { disablePush } from '../pwa/push';
 import { flushAll } from './autosave';
+import { clearLoadCache } from './useLoad';
 import { ShellSkeleton } from '../ui/ShellSkeleton';
 
 export type Role = 'admin' | 'inspector';
@@ -37,6 +38,8 @@ function readCache(): User | null {
 }
 
 function writeCache(user: User | null) {
+  // another user must never see cached lists
+  if (!user || user.id !== readCache()?.id) clearLoadCache();
   try {
     if (user) localStorage.setItem(CACHE_KEY, JSON.stringify(user));
     else localStorage.removeItem(CACHE_KEY);

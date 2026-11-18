@@ -27,7 +27,7 @@ export function ReassignCard({ submissionId, status, inspectorId, inspectorName,
   const [choice, setChoice] = useState<Inspector | null>(null);
   const [busy, setBusy] = useState(false);
   const can = !jobId && REASSIGNABLE.includes(status);
-  const people = useLoad(() => (open ? listInspectors() : Promise.resolve(null)), open ? 'open' : 'closed');
+  const people = useLoad(() => (open ? listInspectors() : Promise.resolve(null)), open ? 'inspectors' : 'inspectors:off');
 
   function close() {
     if (busy) return;

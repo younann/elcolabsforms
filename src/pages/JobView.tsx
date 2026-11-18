@@ -212,7 +212,7 @@ function FormsSheet({ open, busy, onClose, onSave }: SheetBase & { onSave(q: Qty
 
 function InspectorSheet({ job, open, busy, onClose, onSave }: SheetBase & { job: JobView; onSave(id: string): void }) {
   const [pick, setPick] = useState('');
-  const people = useLoad(() => (open ? listInspectors() : Promise.resolve(null)), open ? 'open' : 'closed');
+  const people = useLoad(() => (open ? listInspectors() : Promise.resolve(null)), open ? 'inspectors' : 'inspectors:off');
   const moving = job.forms.filter((f) => f.status === 'draft' || f.status === 'returned').length;
   return (
     <Sheet

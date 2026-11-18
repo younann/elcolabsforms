@@ -50,11 +50,11 @@ export function AllSubmissions() {
       api<{ users: { id: string; displayName: string; username: string; role: string }[] }>('/api/users').then((r) =>
         r.users.filter((u) => u.role === 'inspector').map(({ id, displayName, username }) => ({ id, displayName, username })),
       ),
-    'users',
+    'users:inspectors',
   );
   const list = useLoad(
     () => listSubmissions({ formId: f.formId, inspectorId: f.inspectorId, status: f.status }),
-    `${f.formId}|${f.inspectorId}|${f.status}`,
+    `subs:${f.formId}|${f.inspectorId}|${f.status}`,
   );
 
   // date and text filters run locally
