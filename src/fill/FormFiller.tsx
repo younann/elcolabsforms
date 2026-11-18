@@ -10,6 +10,7 @@ import { FillContext, fieldDomId, sectionDomId, type Attachment, type FillCtx, t
 import { FieldRenderer } from './FieldRenderer';
 import { SectionNav, type SectionItem } from './SectionNav';
 import { naLabel, sectionProgress } from './progress';
+import { applyRules } from '../../shared/forms/rules';
 
 export type SubmissionRow = {
   id: string;
@@ -193,7 +194,7 @@ export function FormFiller({
     setConflict(null);
   }
 
-  const onChange = useCallback((id: string, v: unknown) => setData((d) => ({ ...d, [id]: v })), []);
+  const onChange = useCallback((id: string, v: unknown) => setData((d) => applyRules(def, d, { ...d, [id]: v })), [def]);
 
   const upload = useCallback<FillCtx['upload']>(
     async (fieldId, kind, blob, name = 'file') => {

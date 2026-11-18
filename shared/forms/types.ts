@@ -62,7 +62,8 @@ export type FormDef = {
 };
 
 // value shapes stored in submission.data, keyed by field id
-export type CheckValue = { answer?: string; active?: string; note?: string; inline?: Record<string, string> };
+// auto: set by a form rule, cleared when the inspector answers
+export type CheckValue = { answer?: string; active?: string; note?: string; inline?: Record<string, string>; auto?: boolean };
 export type EquipmentRow = { manufacturer?: string; model?: string; qty?: string };
 export type ContactAckValue = { name?: string; role?: string; phone?: string; time?: string };
 export type FormData = Record<string, unknown>;

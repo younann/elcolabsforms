@@ -55,7 +55,7 @@ export const CheckField = memo(function CheckField({ field: f, value, onChange, 
           label={f.clause ? `סעיף ${f.clause}` : f.text}
           value={v.answer ?? null}
           disabled={disabled}
-          onChange={(a) => set(exists && a === 'לא קיים' ? { answer: toggle(v.answer, a), active: undefined } : { answer: toggle(v.answer, a) })}
+          onChange={(a) => set(exists && a === 'לא קיים' ? { answer: toggle(v.answer, a), active: undefined, auto: undefined } : { answer: toggle(v.answer, a), auto: undefined })}
           options={toOptions(exists ? EXISTS_OPTIONS : ANSWER_OPTIONS[f.answers as keyof typeof ANSWER_OPTIONS])}
         />
         {exists && v.answer === 'קיים' && (
