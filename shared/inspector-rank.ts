@@ -1,4 +1,4 @@
-export type Inspector = { id: string; displayName: string; username: string };
+export type Inspector = { id: string; displayName: string; username: string; phone?: string | null };
 
 const FINALS: Record<string, string> = { ך: 'כ', ם: 'מ', ן: 'נ', ף: 'פ', ץ: 'צ' };
 

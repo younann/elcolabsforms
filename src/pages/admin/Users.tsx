@@ -7,7 +7,7 @@ import { Banner, Button, EmptyState, Segmented, Sheet, TextField, cx, toast } fr
 import { ListSkeleton } from '../../components/SubmissionList';
 import { PASSWORD_MIN } from '../../../shared/password';
 
-type U = { id: string; username: string; displayName: string; role: Role; active: boolean };
+type U = { id: string; username: string; displayName: string; role: Role; active: boolean; email: string | null; phone: string | null };
 
 const ROLE_OPTIONS = [
   { value: 'inspector' as const, label: 'בודק' },
@@ -114,7 +114,7 @@ export function Users() {
 }
 
 function CreateSheet({ open, onClose, onCreated }: { open: boolean; onClose(): void; onCreated(): void }) {
-  const [form, setForm] = useState({ displayName: '', username: '', password: '', role: 'inspector' as Role });
+  const [form, setForm] = useState({ displayName: '', username: '', password: '', role: 'inspector' as Role, email: '', phone: '' });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -126,7 +126,7 @@ function CreateSheet({ open, onClose, onCreated }: { open: boolean; onClose(): v
     try {
       await api('/api/users', { method: 'POST', json: form });
       toast.success(`המשתמש ${form.displayName} נוצר`);
-      setForm({ displayName: '', username: '', password: '', role: 'inspector' });
+      setForm({ displayName: '', username: '', password: '', role: 'inspector', email: '', phone: '' });
       onCreated();
     } catch (e) {
       if (!(e instanceof ApiError && e.status === 401)) setErr(errText(e));
@@ -161,6 +161,8 @@ function CreateSheet({ open, onClose, onCreated }: { open: boolean; onClose(): v
           value={form.username}
           onChange={(e) => setForm({ ...form, username: e.target.value })}
         />
+        <TextField label="דוא״ל" type="email" dir="ltr" autoCapitalize="none" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+        <TextField label="טלפון" type="tel" inputMode="tel" dir="ltr" maxLength={30} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
         <TextField
           label="סיסמה"
           hint={`לפחות ${PASSWORD_MIN} תווים`}
@@ -183,6 +185,8 @@ function CreateSheet({ open, onClose, onCreated }: { open: boolean; onClose(): v
 function EditSheet({ user, self, onClose, onSaved }: { user: U | null; self: boolean; onClose(): void; onSaved(u: U): void }) {
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [lastId, setLastId] = useState<string | null>(null);
@@ -192,10 +196,12 @@ function EditSheet({ user, self, onClose, onSaved }: { user: U | null; self: boo
     setLastId(user.id);
     setName(user.displayName);
     setPassword('');
+    setEmail(user.email ?? '');
+    setPhone(user.phone ?? '');
     setErr(null);
   }
 
-  async function patch(kind: string, body: Partial<{ displayName: string; role: Role; active: boolean; password: string }>, done: string) {
+  async function patch(kind: string, body: Partial<{ displayName: string; role: Role; active: boolean; password: string; email: string; phone: string }>, done: string) {
     if (!user || busy) return;
     setBusy(kind);
     setErr(null);
@@ -230,6 +236,26 @@ function EditSheet({ user, self, onClose, onSaved }: { user: U | null; self: boo
             <TextField label="שם מלא" className="min-w-0 flex-1" maxLength={80} value={name} onChange={(e) => setName(e.target.value)} />
             <Button type="submit" variant="secondary" className="min-h-12" loading={busy === 'name'} disabled={!name.trim() || name.trim() === user.displayName}>
               שמירה
+            </Button>
+          </form>
+
+          <form
+            className="flex flex-col gap-3"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void patch('contact', { email: email.trim(), phone: phone.trim() }, 'פרטי הקשר עודכנו');
+            }}
+          >
+            <TextField label="דוא״ל" type="email" dir="ltr" autoCapitalize="none" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <TextField label="טלפון" type="tel" inputMode="tel" dir="ltr" maxLength={30} value={phone} onChange={(e) => setPhone(e.target.value)} />
+            <Button
+              type="submit"
+              variant="secondary"
+              className="min-h-12"
+              loading={busy === 'contact'}
+              disabled={email.trim() === (user.email ?? '') && phone.trim() === (user.phone ?? '')}
+            >
+              שמירת פרטי קשר
             </Button>
           </form>
 
