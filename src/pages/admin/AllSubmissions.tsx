@@ -126,7 +126,7 @@ export function AllSubmissions() {
 
   return (
     <section>
-      <h1 className="text-2xl font-semibold tracking-tight">כל הטפסים</h1>
+      <h1 className="text-[28px] leading-tight font-bold sm:text-[32px]">כל הטפסים</h1>
       <MailModeBanner className="mt-4" />
 
       <div className="mt-5 flex gap-2">
@@ -143,11 +143,11 @@ export function AllSubmissions() {
         </div>
         <Button variant="secondary" className="min-h-12 lg:hidden" icon={<FunnelSimple className="size-5" aria-hidden />} onClick={() => setFiltersOpen(true)}>
           סינון
-          {active > 0 && <span className="grid size-6 place-items-center rounded-full bg-accent text-[13px] text-accent-fg tabular-nums">{active}</span>}
+          {active > 0 && <span className="grid size-6 place-items-center rounded-full bg-accent-fill text-[13px] text-accent-fg tabular-nums">{active}</span>}
         </Button>
       </div>
 
-      <div className="mt-4 hidden rounded-box border border-border bg-surface p-4 lg:block">{filterFields}</div>
+      <div className="mt-4 hidden rounded-box bg-surface shadow-[var(--shadow-card)] p-4 lg:block">{filterFields}</div>
 
       <div className="mt-5">
         {list.error && !list.data ? (
@@ -165,7 +165,7 @@ export function AllSubmissions() {
             <p className="mb-2 text-sm text-muted tabular-nums" aria-live="polite">
               {rows.length} טפסים
             </p>
-            <ul className={cx('flex flex-col gap-2', list.loading && 'opacity-60 transition-opacity')} data-testid="all-list">
+            <ul className={cx('group-list', list.loading && 'opacity-60 transition-opacity')} data-testid="all-list">
               {rows.slice(0, limit).map((s) => {
                 const logged = s.status === 'emailed' && s.mailLogged;
                 // logged-only mail can go out once sending is live

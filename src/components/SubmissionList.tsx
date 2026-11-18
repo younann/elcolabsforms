@@ -6,9 +6,9 @@ import { fmtDay, formShort, type Summary } from '../lib/submissions';
 
 export function ListSkeleton({ rows = 3 }: { rows?: number }) {
   return (
-    <ul aria-busy="true" aria-label="טוען" className="flex flex-col gap-2">
+    <ul aria-busy="true" aria-label="טוען" className="group-list">
       {Array.from({ length: rows }, (_, i) => (
-        <li key={i} className="flex min-h-[4.75rem] items-center gap-3 rounded-box border border-border bg-surface px-4">
+        <li key={i} className="flex min-h-[4.75rem] items-center gap-3 rounded-box bg-surface shadow-[var(--shadow-card)] px-4">
           <div className="flex-1">
             <div className="h-4 w-40 rounded-full bg-surface-2" />
             <div className="mt-2.5 h-3.5 w-24 rounded-full bg-surface-2" />
@@ -35,7 +35,7 @@ const dateOf = (s: Summary) => s.emailedAt ?? s.submittedAt ?? s.updatedAt;
 export function SubmissionRow({ s, href, showInspector, actions, children }: RowProps) {
   const title = s.siteName || 'ללא שם אתר';
   return (
-    <li className="rounded-box border border-border bg-surface transition-[border-color] duration-150 hover:border-border-strong" data-testid="submission-row" data-id={s.id}>
+    <li className="rounded-box bg-surface shadow-[var(--shadow-card)] transition-[border-color] duration-150 hover:border-border-strong" data-testid="submission-row" data-id={s.id}>
       <div className="flex items-stretch">
         <Link
           to={href}

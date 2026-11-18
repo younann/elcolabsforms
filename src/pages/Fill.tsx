@@ -26,7 +26,7 @@ function FillSkeleton() {
       <div className="h-5 w-24 rounded-full bg-surface-2" />
       <div className="h-7 w-3/4 rounded-full bg-surface-2" />
       {[0, 1].map((i) => (
-        <div key={i} className="rounded-box border border-border bg-surface p-5">
+        <div key={i} className="rounded-box bg-surface shadow-[var(--shadow-card)] p-5">
           <div className="h-5 w-40 rounded-full bg-surface-2" />
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             <div className="h-12 rounded-ctl bg-surface-2" />

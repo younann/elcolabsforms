@@ -19,7 +19,7 @@ export function Clients() {
   return (
     <section>
       <div className="flex items-center gap-3">
-        <h1 className="min-w-0 flex-1 text-2xl font-semibold tracking-tight">לקוחות</h1>
+        <h1 className="min-w-0 flex-1 text-[28px] leading-tight font-bold sm:text-[32px]">לקוחות</h1>
         <Button variant="accent" icon={<Plus className="size-5" weight="bold" aria-hidden />} onClick={() => setCreating(true)}>
           לקוח חדש
         </Button>
@@ -47,13 +47,13 @@ export function Clients() {
         ) : shown.length === 0 ? (
           <EmptyState icon={<AddressBook />} title={q ? 'לא נמצאו לקוחות' : 'אין לקוחות עדיין'} />
         ) : (
-          <ul className="flex flex-col gap-2" data-testid="clients-list">
+          <ul className="group-list" data-testid="clients-list">
             {shown.map((c) => (
               <li key={c.id}>
                 <Link
                   to={`/admin/clients/${c.id}`}
                   className={cx(
-                    'press flex min-h-[4.25rem] w-full items-center gap-3 rounded-box border border-border bg-surface px-4 py-3 transition-[transform,border-color] duration-150 ease-snap hover:border-border-strong active:scale-[0.99]',
+                    'press flex min-h-[4.25rem] w-full items-center gap-3 rounded-box bg-surface shadow-[var(--shadow-card)] px-4 py-3 transition-[transform,border-color] duration-150 ease-snap hover:border-border-strong active:scale-[0.99]',
                     !c.active && 'bg-surface-2/50',
                   )}
                 >

@@ -69,7 +69,7 @@ export const RepeatTableField = memo(function RepeatTableField({ field: f, value
       </div>
       <ol className="flex flex-col gap-3">
         {rows.map((r, i) => (
-          <li key={i} className="rounded-box border border-border bg-surface p-3.5 pt-2">
+          <li key={i} className="rounded-box bg-surface shadow-[var(--shadow-card)] p-3.5 pt-2">
             <div className="mb-1 flex items-center justify-between">
               <span className="text-sm font-semibold text-muted tabular-nums">שורה {i + 1}</span>
               {!disabled && <RemoveButton label={`מחיקת שורה ${i + 1}`} onClick={() => set(rows.filter((_, j) => j !== i))} />}
@@ -194,7 +194,7 @@ export const ScenarioMatrixField = memo(function ScenarioMatrixField({ field: f,
     <div id={fieldDomId(f.id)} tabIndex={-1} className="scroll-mt-36 flex flex-col gap-4 outline-none">
       <p className="text-sm text-muted">מקרא: {f.values.join(' / ')}</p>
       {tables.map((t, ti) => (
-        <section key={ti} className="rounded-box border border-border bg-surface p-3.5" aria-label={`טבלה ${ti + 1}`}>
+        <section key={ti} className="rounded-box bg-surface shadow-[var(--shadow-card)] p-3.5" aria-label={`טבלה ${ti + 1}`}>
           <div className="mb-2 flex items-center justify-between">
             <h4 className="font-semibold tabular-nums">טבלה {ti + 1}</h4>
             {!disabled && tables.length > 1 && (

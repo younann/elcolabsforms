@@ -8,7 +8,7 @@ export { Banner, type BannerProps, type Tone } from './Banner';
 export { StatusBadge, statusLabel, type SubmissionStatus } from './StatusBadge';
 export { EmptyState, type EmptyStateProps } from './EmptyState';
 export { toast, dismissToast, Toaster } from './toast';
-export { Brand, APP_NAME } from './Brand';
+export { Brand, LogoMark, APP_NAME, TAGLINE } from './Brand';
 export { cx } from './cx';
 export { InspectorPicker, type InspectorPickerProps, type Inspector } from './InspectorPicker';
 export { BackGuard, useBackCloses, useGoBack } from './back';

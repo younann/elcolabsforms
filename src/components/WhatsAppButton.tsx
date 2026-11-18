@@ -3,8 +3,9 @@ import type { JobView } from '../lib/jobs';
 import { jobMessage, normalizeIlPhone, waLink } from '../../shared/whatsapp';
 import { cx } from '../ui';
 
+// tinted action tile, icon over label
 const base =
-  'press inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-ctl px-4 text-[17px] font-semibold transition-[transform,opacity] duration-150 active:scale-[0.98]';
+  'press flex min-h-[3.5rem] w-full flex-col items-center justify-center gap-0.5 rounded-ctl px-3 py-2 text-[13px] font-semibold transition-[transform,opacity] duration-150 active:opacity-60';
 
 /** Opens WhatsApp with the job message to the inspector. */
 export function WhatsAppButton({ job }: { job: JobView }) {
@@ -12,9 +13,9 @@ export function WhatsAppButton({ job }: { job: JobView }) {
   if (!phone) {
     return (
       <div>
-        <button type="button" disabled className={cx(base, 'bg-surface-2 text-muted')} data-testid="whatsapp">
+        <button type="button" disabled aria-label="שליחה בוואטסאפ" className={cx(base, 'bg-surface text-muted')} data-testid="whatsapp">
           <WhatsappLogo className="size-6" aria-hidden />
-          שליחה בוואטסאפ
+          וואטסאפ
         </button>
         <p className="mt-1.5 text-sm text-muted">חסר טלפון לבודק. הוסף אותו במשתמשים</p>
       </div>
@@ -33,9 +34,16 @@ export function WhatsAppButton({ job }: { job: JobView }) {
     link: `${location.origin}/jobs/${job.id}`,
   });
   return (
-    <a href={waLink(phone, text)} target="_blank" rel="noopener" className={cx(base, 'bg-[#1fa855] text-white')} data-testid="whatsapp">
+    <a
+      href={waLink(phone, text)}
+      target="_blank"
+      rel="noopener"
+      aria-label={`שליחה בוואטסאפ ל${job.inspector.displayName}`}
+      className={cx(base, 'bg-surface text-success shadow-[var(--shadow-card)]')}
+      data-testid="whatsapp"
+    >
       <WhatsappLogo className="size-6" weight="fill" aria-hidden />
-      שליחה בוואטסאפ ל{job.inspector.displayName}
+      וואטסאפ לבודק
     </a>
   );
 }

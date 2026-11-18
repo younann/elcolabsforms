@@ -54,7 +54,7 @@ export function ReassignCard({ submissionId, status, inspectorId, inspectorName,
   }
 
   return (
-    <div className={cx('mb-5 flex items-center gap-3 rounded-box border border-border bg-surface ps-4 pe-2 py-2', className)} data-testid="reassign-card">
+    <div className={cx('mb-5 flex items-center gap-3 rounded-box bg-surface shadow-[var(--shadow-card)] ps-4 pe-2 py-2', className)} data-testid="reassign-card">
       <UserSwitch className="size-5 shrink-0 text-muted" aria-hidden />
       <p className="min-w-0 flex-1 text-[15px] leading-snug">
         <span className="text-muted">שייך לבודק </span>

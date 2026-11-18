@@ -60,7 +60,7 @@ export function JobNew() {
 
   return (
     <section className="max-w-xl">
-      <h1 className="text-2xl font-semibold tracking-tight">עבודה חדשה</h1>
+      <h1 className="text-[28px] leading-tight font-bold sm:text-[32px]">עבודה חדשה</h1>
       <form onSubmit={submit} className="mt-5 flex flex-col gap-5">
         <InspectorPicker
           label="לקוח"
@@ -89,7 +89,7 @@ export function JobNew() {
           </Select>
         )}
         {effectiveSite === NEW_SITE && (
-          <div className="flex flex-col gap-4 rounded-box border border-border bg-surface p-4">
+          <div className="flex flex-col gap-4 rounded-box bg-surface shadow-[var(--shadow-card)] p-4">
             <TextField label="שם האתר" required maxLength={120} value={newSite.name} onChange={(e) => setNewSite({ ...newSite, name: e.target.value })} />
             <TextField label="כתובת" required maxLength={200} value={newSite.address} onChange={(e) => setNewSite({ ...newSite, address: e.target.value })} />
           </div>

@@ -83,7 +83,7 @@ function Toast({ item }: { item: ToastItem }) {
       <button
         type="button"
         onClick={() => dismissToast(item.id)}
-        className="flex min-h-12 w-full items-center gap-3 rounded-box border border-border bg-surface px-4 py-3 text-start text-[15px] font-medium text-text shadow-[var(--shadow-pop)]"
+        className="flex min-h-12 w-full items-center gap-3 rounded-box bg-surface shadow-[var(--shadow-card)] px-4 py-3 text-start text-[15px] font-medium text-text shadow-[var(--shadow-pop)]"
       >
         <Icon className={cx('size-5 shrink-0', iconCls[item.tone])} weight="fill" aria-hidden />
         <span className="min-w-0 flex-1">{item.message}</span>

@@ -359,7 +359,7 @@ export function FormFiller({
         </div>
       </div>
 
-      <div className="safe-x fixed inset-x-0 bottom-0 z-20 lg:start-(--nav-w) border-t border-border bg-bg/92 pt-2.5 pb-[max(0.625rem,var(--safe-bottom))] backdrop-blur-md">
+      <div className="safe-x fixed inset-x-0 bottom-0 z-20 lg:start-(--nav-w) material border-t-[0.5px] border-separator pt-2.5 pb-[max(0.625rem,var(--safe-bottom))]">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-2">
           <Button variant="secondary" className="lg:hidden" icon={<ListBullets className="size-5" aria-hidden />} onClick={() => setNavOpen(true)}>
             <span className="tabular-nums" dir="ltr">
@@ -373,8 +373,8 @@ export function FormFiller({
             </div>
           )}
           {actions ? (
-            // own full-width row on phones
-            <div className="flex min-w-0 max-sm:basis-full">{actions}</div>
+            // several actions get their own row on phones; a lone icon stays inline
+            <div className="flex min-w-0 max-sm:[&:has(>*>:is(a,button)~:is(a,button))]:basis-full">{actions}</div>
           ) : (
             !readOnly &&
             mode === 'inspector' && (
@@ -441,7 +441,7 @@ function SectionCard({ section: s, item, data, onChange, readOnly, missingIds, o
   const complete = item.total > 0 && item.done === item.total;
   let topic: string | undefined;
   return (
-    <section id={sectionDomId(s.id)} aria-labelledby={`${sectionDomId(s.id)}-h`} className="scroll-mt-20 rounded-box border border-border bg-surface px-4 py-4 md:px-6 md:py-5">
+    <section id={sectionDomId(s.id)} aria-labelledby={`${sectionDomId(s.id)}-h`} className="scroll-mt-20 rounded-box bg-surface shadow-[var(--shadow-card)] px-4 py-4 md:px-6 md:py-5">
       <div className="mb-3 flex items-center gap-3">
         <h2 id={`${sectionDomId(s.id)}-h`} className="min-w-0 flex-1 text-lg leading-snug font-semibold">
           {s.title}

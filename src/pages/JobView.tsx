@@ -57,7 +57,7 @@ export function JobPage() {
     <section className="max-w-2xl">
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
-          <h1 className="text-2xl font-semibold tracking-tight">{job.client.name}</h1>
+          <h1 className="text-[28px] leading-tight font-bold sm:text-[32px]">{job.client.name}</h1>
           <p className="mt-0.5 text-[15px] text-muted">{job.site.name}</p>
         </div>
         <span
@@ -70,12 +70,12 @@ export function JobPage() {
         </span>
       </div>
 
-      <div className="mt-5 grid gap-2 sm:grid-cols-2">
+      <div className="mt-5 grid grid-cols-2 gap-2 sm:max-w-sm">
         {admin && live && <WhatsAppButton job={job} />}
         <WazeButton address={job.site.address} />
       </div>
 
-      <dl className="mt-5 grid gap-3 rounded-box border border-border bg-surface p-4 text-[15px]">
+      <dl className="mt-5 grid gap-3 rounded-box bg-surface shadow-[var(--shadow-card)] p-4 text-[15px]">
         <Line icon={<MapPin />}>
           <a href={wazeLink(job.site.address)} target="_blank" rel="noopener" className="font-medium text-accent underline-offset-2 hover:underline">
             {job.site.address}
@@ -97,12 +97,12 @@ export function JobPage() {
       </dl>
 
       <h2 className="mt-7 mb-3 text-lg font-semibold">טפסים</h2>
-      <ul className="flex flex-col gap-2" data-testid="job-forms">
+      <ul className="group-list" data-testid="job-forms">
         {job.forms.map((f) => (
           <li key={f.id}>
             <Link
               to={rowHref(f, user?.role ?? 'inspector')}
-              className="press flex min-h-14 items-center gap-3 rounded-box border border-border bg-surface px-4 py-3 transition-[transform,border-color] duration-150 hover:border-border-strong active:scale-[0.99]"
+              className="press flex min-h-14 items-center gap-3 rounded-box bg-surface shadow-[var(--shadow-card)] px-4 py-3 transition-[transform,border-color] duration-150 hover:border-border-strong active:scale-[0.99]"
             >
               <span className="min-w-0 flex-1 truncate font-semibold">{f.label}</span>
               <StatusBadge status={f.status} />

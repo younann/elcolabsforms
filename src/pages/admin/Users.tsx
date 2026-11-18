@@ -23,7 +23,7 @@ export function Users() {
   return (
     <section>
       <div className="flex items-center gap-3">
-        <h1 className="min-w-0 flex-1 text-2xl font-semibold tracking-tight">משתמשים</h1>
+        <h1 className="min-w-0 flex-1 text-[28px] leading-tight font-bold sm:text-[32px]">משתמשים</h1>
         <Button variant="accent" icon={<Plus className="size-5" weight="bold" aria-hidden />} onClick={() => setCreating(true)}>
           משתמש חדש
         </Button>
@@ -39,14 +39,14 @@ export function Users() {
         ) : data.length === 0 ? (
           <EmptyState icon={<UsersThree />} title="אין משתמשים" />
         ) : (
-          <ul className="flex flex-col gap-2" data-testid="users-list">
+          <ul className="group-list" data-testid="users-list">
             {data.map((u) => (
               <li key={u.id}>
                 <button
                   type="button"
                   onClick={() => setEditing(u)}
                   className={cx(
-                    'press flex min-h-[4.25rem] w-full items-center gap-3 rounded-box border border-border bg-surface px-4 py-3 text-start transition-[transform,border-color] duration-150 ease-snap hover:border-border-strong active:scale-[0.99]',
+                    'press flex min-h-[4.25rem] w-full items-center gap-3 rounded-box bg-surface shadow-[var(--shadow-card)] px-4 py-3 text-start transition-[transform,border-color] duration-150 ease-snap hover:border-border-strong active:scale-[0.99]',
                     !u.active && 'bg-surface-2/50',
                   )}
                 >

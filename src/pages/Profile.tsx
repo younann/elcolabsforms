@@ -29,9 +29,9 @@ export function Profile() {
   const admin = user.role === 'admin';
   return (
     <section className="max-w-2xl">
-      <h1 className="text-2xl font-semibold tracking-tight">פרופיל</h1>
+      <h1 className="text-[28px] leading-tight font-bold sm:text-[32px]">פרופיל</h1>
 
-      <dl className="mt-6 grid gap-x-6 gap-y-3 rounded-box border border-border bg-surface p-4 sm:grid-cols-2 md:p-6">
+      <dl className="mt-6 grid gap-x-6 gap-y-3 rounded-box bg-surface shadow-[var(--shadow-card)] p-4 sm:grid-cols-2 md:p-6">
         <div>
           <dt className="text-sm text-muted">שם</dt>
           <dd className="text-[17px] font-semibold">{user.displayName}</dd>
@@ -48,7 +48,7 @@ export function Profile() {
         </div>
       </dl>
 
-      <div className="mt-5 rounded-box border border-border bg-surface p-4 md:p-6">
+      <div className="mt-5 rounded-box bg-surface shadow-[var(--shadow-card)] p-4 md:p-6">
         <h2 className="text-lg font-semibold">החתימה השמורה שלי</h2>
         <p className="mt-1 text-[15px] text-muted">
           {admin ? 'החתימה מוטבעת בתיבת המאשר בכל דוח שתאשר.' : 'אפשר להוסיף אותה לטופס בהקשה אחת במקום לחתום מחדש.'}

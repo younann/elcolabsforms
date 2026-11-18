@@ -26,7 +26,7 @@ export function QueueList() {
     );
   }
   return (
-    <ul className="flex flex-col gap-2" data-testid="queue-list">
+    <ul className="group-list" data-testid="queue-list">
       {data.map((s) => (
         <SubmissionRow key={s.id} s={s} href={rowHref(s, 'admin')} showInspector />
       ))}

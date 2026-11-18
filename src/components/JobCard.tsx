@@ -9,7 +9,7 @@ import { WazeButton } from './WazeButton';
 /** Inspector home: one open job with its forms. */
 export function JobCard({ job }: { job: JobSummary }) {
   return (
-    <article className="rounded-box border border-border bg-surface" data-testid="job-card">
+    <article className="rounded-box bg-surface shadow-[var(--shadow-card)]" data-testid="job-card">
       <div className="px-4 pt-4 pb-3">
         <div className="flex items-start gap-2">
           <Link to={`/jobs/${job.id}`} className="min-w-0 flex-1 text-[17px] font-semibold leading-snug hover:underline">

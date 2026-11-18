@@ -9,13 +9,14 @@ export function WazeButton({ address, compact }: { address: string; compact?: bo
       href={wazeLink(address)}
       target="_blank"
       rel="noopener"
+      aria-label="ניווט עם Waze"
       data-testid="waze"
       className={cx(
-        'press inline-flex w-full items-center justify-center gap-2 rounded-ctl bg-[#33ccff] px-4 font-semibold text-[#0b2a3a] transition-[transform,opacity] duration-150 active:scale-[0.98]',
-        compact ? 'min-h-11 text-[16px]' : 'min-h-12 text-[17px]',
+        'press w-full items-center justify-center rounded-ctl font-semibold text-info transition-[transform,opacity] duration-150 active:opacity-60',
+        compact ? 'inline-flex min-h-11 gap-2 bg-info-soft text-[16px]' : 'flex min-h-[3.5rem] flex-col gap-0.5 bg-surface px-3 py-2 text-[13px] shadow-[var(--shadow-card)]',
       )}
     >
-      <NavigationArrow className="size-5 -scale-x-100" weight="fill" aria-hidden />
+      <NavigationArrow className={compact ? "size-5 -scale-x-100" : "size-6 -scale-x-100"} weight="fill" aria-hidden />
       ניווט עם Waze
     </a>
   );

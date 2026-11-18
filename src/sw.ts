@@ -21,7 +21,7 @@ self.addEventListener('push', (e) => {
     p = { body: e.data?.text() };
   }
   e.waitUntil(
-    self.registration.showNotification(p.title ?? 'אלקו מעבדות', {
+    self.registration.showNotification(p.title ?? 'ELCO', {
       body: p.body,
       data: { url: p.url ?? '/' },
       icon: '/icons/icon-192.png',

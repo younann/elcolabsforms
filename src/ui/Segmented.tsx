@@ -26,7 +26,7 @@ const selected: Record<SegmentTone, string> = {
   success: 'bg-success text-surface',
   danger: 'bg-danger text-surface',
   warning: 'bg-warning text-surface',
-  accent: 'bg-accent text-accent-fg',
+  accent: 'bg-accent-fill text-accent-fg',
 };
 
 export function Segmented<T extends string>({

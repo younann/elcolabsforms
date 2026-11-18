@@ -18,9 +18,9 @@ export function Settings() {
   }
   return (
     <section className="max-w-2xl">
-      <h1 className="text-2xl font-semibold tracking-tight">הגדרות</h1>
+      <h1 className="text-[28px] leading-tight font-bold sm:text-[32px]">הגדרות</h1>
       {!data ? (
-        <div aria-busy="true" aria-label="טוען" className="mt-6 h-96 rounded-box border border-border bg-surface" />
+        <div aria-busy="true" aria-label="טוען" className="mt-6 h-96 rounded-box bg-surface shadow-[var(--shadow-card)]" />
       ) : (
         <>
           <DetailsForm initial={data} />
@@ -56,7 +56,7 @@ function DetailsForm({ initial }: { initial: S }) {
   }
 
   return (
-    <form onSubmit={submit} className="mt-6 flex flex-col gap-5 rounded-box border border-border bg-surface p-4 md:p-6">
+    <form onSubmit={submit} className="mt-6 flex flex-col gap-5 rounded-box bg-surface shadow-[var(--shadow-card)] p-4 md:p-6">
       <h2 className="text-lg font-semibold">שליחת דוחות</h2>
       <TextField
         label='כתובת דוא"ל לקבלת דוחות'
@@ -122,7 +122,7 @@ function StampCard({ hasStamp }: { hasStamp: boolean }) {
 
   const shown = preview ?? src;
   return (
-    <div className="mt-5 rounded-box border border-border bg-surface p-4 md:p-6">
+    <div className="mt-5 rounded-box bg-surface shadow-[var(--shadow-card)] p-4 md:p-6">
       <h2 className="text-lg font-semibold">חותמת החברה</h2>
       <p className="mt-1 text-[15px] text-muted">מוטבעת בסוף כל דוח, בתחתית העמוד האחרון. מומלץ PNG עם רקע שקוף.</p>
       <div className="mt-4 flex flex-wrap items-center gap-4">

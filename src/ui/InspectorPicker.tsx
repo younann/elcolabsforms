@@ -188,7 +188,7 @@ export function InspectorPicker({
             inline
               ? 'mt-2 flex flex-col gap-0.5'
               : cx(
-                  'absolute inset-x-0 top-full z-30 mt-1.5 max-h-72 overflow-y-auto rounded-box border border-border bg-surface p-1 shadow-[var(--shadow-pop)]',
+                  'absolute inset-x-0 top-full z-30 mt-1.5 max-h-72 overflow-y-auto rounded-box bg-surface shadow-[var(--shadow-card)] p-1 shadow-[var(--shadow-pop)]',
                   'origin-top transition-[opacity,transform] duration-150 ease-snap starting:-translate-y-1 starting:opacity-0 motion-reduce:transition-none',
                 ),
           )}

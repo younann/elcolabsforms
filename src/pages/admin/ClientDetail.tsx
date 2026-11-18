@@ -60,7 +60,7 @@ export function ClientDetail() {
       {back}
       <div className="mt-2 flex items-start gap-3">
         <div className="min-w-0 flex-1">
-          <h1 className={cx('text-2xl font-semibold tracking-tight', !client.active && 'text-muted')}>{client.name}</h1>
+          <h1 className={cx('text-[28px] leading-tight font-bold sm:text-[32px]', !client.active && 'text-muted')}>{client.name}</h1>
           {!client.active && <p className="mt-1 text-sm text-muted">מוסתר. לא יופיע בבחירת לקוח לעבודה חדשה.</p>}
         </div>
         <Button variant="secondary" icon={<PencilSimple className="size-5" aria-hidden />} onClick={() => setEditing(true)}>
@@ -68,7 +68,7 @@ export function ClientDetail() {
         </Button>
       </div>
 
-      <dl className="mt-4 grid gap-2 rounded-box border border-border bg-surface p-4 text-[15px]">
+      <dl className="mt-4 grid gap-2 rounded-box bg-surface shadow-[var(--shadow-card)] p-4 text-[15px]">
         <Row label="איש קשר">{client.contactPerson}</Row>
         <Row label="טלפון">
           {client.phone && (
@@ -90,14 +90,14 @@ export function ClientDetail() {
         {sites.length === 0 ? (
           <EmptyState icon={<MapPin />} title="אין אתרים עדיין" />
         ) : (
-          <ul className="flex flex-col gap-2" data-testid="sites-list">
+          <ul className="group-list" data-testid="sites-list">
             {sites.map((s) => (
               <li key={s.id}>
                 <button
                   type="button"
                   onClick={() => setSite(s)}
                   className={cx(
-                    'press flex min-h-14 w-full items-center gap-3 rounded-box border border-border bg-surface px-4 py-3 text-start transition-[transform,border-color] duration-150 hover:border-border-strong active:scale-[0.99]',
+                    'press flex min-h-14 w-full items-center gap-3 rounded-box bg-surface shadow-[var(--shadow-card)] px-4 py-3 text-start transition-[transform,border-color] duration-150 hover:border-border-strong active:scale-[0.99]',
                     !s.active && 'bg-surface-2/50',
                   )}
                 >

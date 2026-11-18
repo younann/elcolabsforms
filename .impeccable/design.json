@@ -1,0 +1,391 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-18T19:24:15.322Z",
+  "title": "Design System: ELCO",
+  "extensions": {
+    "colorMeta": {
+      "crimson": {
+        "role": "primary",
+        "displayName": "ELCO Crimson (tint)",
+        "canonical": "#c8102e",
+        "tonalRamp": [
+          "#500612",
+          "#780a1c",
+          "#a00d25",
+          "#c8102e",
+          "#d34058",
+          "#de7082",
+          "#e99fab",
+          "#f4cfd5"
+        ]
+      },
+      "crimson-fill": {
+        "role": "primary",
+        "displayName": "Crimson Fill (white-label surfaces)",
+        "canonical": "#c8102e",
+        "tonalRamp": [
+          "#500612",
+          "#780a1c",
+          "#a00d25",
+          "#c8102e",
+          "#d34058",
+          "#de7082",
+          "#e99fab",
+          "#f4cfd5"
+        ]
+      },
+      "gold": {
+        "role": "secondary",
+        "displayName": "Shield Gold (mark only)",
+        "canonical": "#8f6c0e",
+        "tonalRamp": [
+          "#392b06",
+          "#564108",
+          "#72560b",
+          "#8f6c0e",
+          "#a5893e",
+          "#bca76e",
+          "#d2c49f",
+          "#e9e2cf"
+        ]
+      },
+      "ground": {
+        "role": "neutral",
+        "displayName": "Grouped Ground",
+        "canonical": "#f2f2f7",
+        "tonalRamp": [
+          "#616163",
+          "#919194",
+          "#c2c2c6",
+          "#f2f2f7",
+          "#f5f5f9",
+          "#f7f7fa",
+          "#fafafc",
+          "#fcfcfd"
+        ]
+      },
+      "group": {
+        "role": "neutral",
+        "displayName": "Group White",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#666666",
+          "#999999",
+          "#cccccc",
+          "#ffffff",
+          "#ffffff",
+          "#ffffff",
+          "#ffffff",
+          "#ffffff"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#0b0b0d",
+        "tonalRamp": [
+          "#040405",
+          "#070708",
+          "#09090a",
+          "#0b0b0d",
+          "#3c3c3d",
+          "#6d6d6e",
+          "#9d9d9e",
+          "#cececf"
+        ]
+      },
+      "ground-dark": {
+        "role": "neutral",
+        "displayName": "True Black Ground",
+        "canonical": "#000000",
+        "tonalRamp": [
+          "#000000",
+          "#000000",
+          "#000000",
+          "#000000",
+          "#333333",
+          "#666666",
+          "#999999",
+          "#cccccc"
+        ]
+      },
+      "group-dark": {
+        "role": "neutral",
+        "displayName": "Dark Group",
+        "canonical": "#1c1c1e",
+        "tonalRamp": [
+          "#0b0b0c",
+          "#111112",
+          "#161618",
+          "#1c1c1e",
+          "#49494b",
+          "#777778",
+          "#a4a4a5",
+          "#d2d2d2"
+        ]
+      },
+      "success": {
+        "role": "status",
+        "displayName": "Success",
+        "canonical": "#1e7b3c",
+        "tonalRamp": [
+          "#0c3118",
+          "#124a24",
+          "#186230",
+          "#1e7b3c",
+          "#4b9563",
+          "#78b08a",
+          "#a5cab1",
+          "#d2e5d8"
+        ]
+      },
+      "warning": {
+        "role": "status",
+        "displayName": "Warning",
+        "canonical": "#9a5b00",
+        "tonalRamp": [
+          "#3e2400",
+          "#5c3700",
+          "#7b4900",
+          "#9a5b00",
+          "#ae7c33",
+          "#c29d66",
+          "#d7bd99",
+          "#ebdecc"
+        ]
+      },
+      "info": {
+        "role": "status",
+        "displayName": "Info",
+        "canonical": "#0a5bc4",
+        "tonalRamp": [
+          "#04244e",
+          "#063776",
+          "#08499d",
+          "#0a5bc4",
+          "#3b7cd0",
+          "#6c9ddc",
+          "#9dbde7",
+          "#cedef3"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "large-title": {
+        "displayName": "Large title",
+        "purpose": "Page title, 28px/32px bold."
+      },
+      "row": {
+        "displayName": "Row",
+        "purpose": "List rows and large buttons, 17px."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Default text, 16px; inputs never smaller."
+      },
+      "callout": {
+        "displayName": "Callout",
+        "purpose": "Nav items, banners, counts, 15px."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Badges and action-tile captions, 13px."
+      },
+      "tab-label": {
+        "displayName": "Tab label",
+        "purpose": "Bottom bar, 11-12px."
+      }
+    },
+    "shadows": [
+      {
+        "name": "card",
+        "value": "0 1px 2px hsl(240 10% 20% / .06), 0 6px 20px -8px hsl(240 10% 20% / .14)",
+        "purpose": "Group lists and action tiles; dark mode uses a 0.5px white 6% ring."
+      },
+      {
+        "name": "sheet",
+        "value": "0 -1px 0 hsl(240 10% 20% / .05), 0 -16px 48px hsl(240 10% 20% / .16)",
+        "purpose": "Bottom sheet."
+      },
+      {
+        "name": "pop",
+        "value": "0 1px 2px hsl(240 10% 20% / .08), 0 16px 40px hsl(240 10% 20% / .18)",
+        "purpose": "Centered dialog from 768px."
+      }
+    ],
+    "material": {
+      "light": "rgb(249 249 252 / 0.78)",
+      "dark": "rgb(22 22 24 / 0.74)",
+      "filter": "saturate(180%) blur(20px)",
+      "purpose": "Nav and tab bars."
+    },
+    "motion": [
+      {
+        "name": "motion-out",
+        "value": "cubic-bezier(0.23, 1, 0.32, 1)",
+        "purpose": "Press, route-tab (260ms), route-push (380ms), toast, field flash."
+      },
+      {
+        "name": "motion-drawer",
+        "value": "cubic-bezier(0.32, 0.72, 0, 1)",
+        "purpose": "Bottom sheet, 420ms open / 240ms close."
+      },
+      {
+        "name": "motion-in-out",
+        "value": "cubic-bezier(0.77, 0, 0.175, 1)",
+        "purpose": "Symmetric moves."
+      },
+      {
+        "name": "route-push",
+        "value": "380ms, from opacity .6 translateX(-28%)",
+        "purpose": "Task pages slide in from the leading side."
+      },
+      {
+        "name": "route-tab",
+        "value": "260ms, from opacity .4 translateY(6px)",
+        "purpose": "Tab pages settle in place."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md (sheet becomes dialog)",
+        "value": "768px"
+      },
+      {
+        "name": "lg (sidebar replaces bars)",
+        "value": "1024px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Filled crimson, white label.",
+      "html": "<button class=\"ds-btn ds-btn-primary\">שמירה</button>",
+      "css": ".ds-btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 16px;border:0;border-radius:12px;font:600 16px -apple-system,system-ui,sans-serif;cursor:pointer;transition:transform 150ms cubic-bezier(.23,1,.32,1),opacity 150ms}.ds-btn:active{transform:scale(.97)}.ds-btn:focus-visible{outline:2px solid #c8102e;outline-offset:2px}.ds-btn-primary{background:#c8102e;color:#fff}.ds-btn-primary:hover{opacity:.9}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Grey fill, ink label.",
+      "html": "<button class=\"ds-btn ds-btn-sec\">ביטול</button>",
+      "css": ".ds-btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 16px;border:0;border-radius:12px;font:600 16px -apple-system,system-ui,sans-serif;cursor:pointer;transition:transform 150ms cubic-bezier(.23,1,.32,1),opacity 150ms}.ds-btn:active{transform:scale(.97)}.ds-btn:focus-visible{outline:2px solid #c8102e;outline-offset:2px}.ds-btn-sec{background:#e9e9ef;color:#0b0b0d}.ds-btn-sec:hover{background:#d8d8de}"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Crimson text on transparent.",
+      "html": "<button class=\"ds-btn ds-btn-ghost\">עוד</button>",
+      "css": ".ds-btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 16px;border:0;border-radius:12px;font:600 16px -apple-system,system-ui,sans-serif;cursor:pointer;transition:transform 150ms cubic-bezier(.23,1,.32,1),opacity 150ms}.ds-btn:active{transform:scale(.97)}.ds-btn:focus-visible{outline:2px solid #c8102e;outline-offset:2px}.ds-btn-ghost{background:transparent;color:#c8102e}.ds-btn-ghost:hover{background:#fbe6ea}"
+    },
+    {
+      "name": "Group List",
+      "kind": "card",
+      "refersTo": "group-list",
+      "description": "Inset grouped list with inset hairlines.",
+      "html": "<ul class=\"ds-group\"><li><a href=\"#\">עבודה ראשונה<span>3</span></a></li><li><a href=\"#\">עבודה שנייה<span>1</span></a></li></ul>",
+      "css": ".ds-group{list-style:none;margin:0;padding:0;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 2px hsl(240 10% 20%/.06),0 6px 20px -8px hsl(240 10% 20%/.14);font:17px -apple-system,system-ui,sans-serif}.ds-group li{position:relative}.ds-group li+li::before{content:'';position:absolute;inset-inline:16px 0;top:0;height:.5px;background:rgb(60 60 67/.2)}.ds-group a{display:flex;justify-content:space-between;padding:12px 16px;min-height:44px;box-sizing:border-box;align-items:center;color:#0b0b0d;text-decoration:none}.ds-group a:active{background:#e9e9ef}.ds-group a:focus-visible{outline:2px solid #c8102e;outline-offset:-2px}.ds-group span{color:#63636a;font-weight:600}"
+    },
+    {
+      "name": "Segmented Control",
+      "kind": "chip",
+      "refersTo": "segmented",
+      "description": "Equal cells in a grey track; selected is a filled 7px thumb.",
+      "html": "<div class=\"ds-seg\" role=\"radiogroup\"><button role=\"radio\" aria-checked=\"true\">תקין</button><button role=\"radio\" aria-checked=\"false\">לא תקין</button><button role=\"radio\" aria-checked=\"false\">ב\"י</button></div>",
+      "css": ".ds-seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;padding:4px;background:#e9e9ef;border-radius:12px;font:16px -apple-system,system-ui,sans-serif}.ds-seg button{min-height:44px;border:0;border-radius:7px;background:transparent;color:#0b0b0d;font:500 16px inherit;cursor:pointer;transition:transform 150ms cubic-bezier(.23,1,.32,1)}.ds-seg button:active{transform:scale(.97)}.ds-seg button[aria-checked=true]{background:#0b0b0d;color:#fff}.ds-seg button:focus-visible{outline:2px solid #c8102e;outline-offset:2px}"
+    },
+    {
+      "name": "Status Badge",
+      "kind": "chip",
+      "refersTo": "status-badge-submitted",
+      "description": "Soft pill with status colour text.",
+      "html": "<span class=\"ds-badge\">ממתין לאישור</span>",
+      "css": ".ds-badge{display:inline-flex;padding:2px 10px;border-radius:9999px;background:#e3eefc;color:#0a5bc4;font:600 13px -apple-system,system-ui,sans-serif;white-space:nowrap}"
+    },
+    {
+      "name": "Banner",
+      "kind": "custom",
+      "refersTo": "banner-warning",
+      "description": "Soft tinted box with filled icon.",
+      "html": "<div class=\"ds-banner\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 256 256\" fill=\"#9a5b00\" aria-hidden=\"true\"><path d=\"M236.8 188 148.9 36a24 24 0 0 0-41.8 0L19.2 188a24 24 0 0 0 20.9 36h175.8a24 24 0 0 0 20.9-36ZM120 104a8 8 0 0 1 16 0v40a8 8 0 0 1-16 0Zm8 88a12 12 0 1 1 12-12 12 12 0 0 1-12 12Z\"/></svg><p>הטופס הוחזר לתיקון</p></div>",
+      "css": ".ds-banner{display:flex;gap:12px;align-items:flex-start;padding:12px 16px;border:1px solid rgb(154 91 0/.25);border-radius:16px;background:#fdf0d9;color:#0b0b0d;font:15px/1.6 -apple-system,system-ui,sans-serif}.ds-banner p{margin:0}"
+    },
+    {
+      "name": "Action Tile (Waze)",
+      "kind": "custom",
+      "refersTo": "action-tile-waze",
+      "description": "56px tile, icon over label, info colour; press dims.",
+      "html": "<a class=\"ds-tile\" href=\"#\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 256 256\" fill=\"#0a5bc4\" aria-hidden=\"true\" style=\"transform:scaleX(-1)\"><path d=\"M229.3 26.7a8 8 0 0 0-8.5-1.8L28.9 96.5a8 8 0 0 0 .6 15.2l90.3 24.5 24.5 90.3a8 8 0 0 0 7.6 5.9h.2a8 8 0 0 0 7.5-5.4L231 35.2a8 8 0 0 0-1.7-8.5Z\"/></svg>ניווט עם Waze</a>",
+      "css": ".ds-tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:56px;padding:8px 12px;border-radius:12px;background:#fff;color:#0a5bc4;font:600 13px -apple-system,system-ui,sans-serif;text-decoration:none;box-shadow:0 1px 2px hsl(240 10% 20%/.06),0 6px 20px -8px hsl(240 10% 20%/.14);transition:opacity 150ms}.ds-tile:active{opacity:.6}.ds-tile:focus-visible{outline:2px solid #c8102e;outline-offset:2px}"
+    },
+    {
+      "name": "Frosted Bar",
+      "kind": "nav",
+      "refersTo": "group-list",
+      "description": "Material bar with 0.5px separator; use over scrolling content.",
+      "html": "<div class=\"ds-bar\"><span class=\"ds-mark\">ELCO</span></div>",
+      "css": ".ds-bar{display:flex;align-items:center;height:56px;padding:0 16px;background:rgb(249 249 252/.78);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);border-bottom:.5px solid rgb(60 60 67/.2)}.ds-mark{font:700 19px -apple-system,system-ui,sans-serif;letter-spacing:.08em;color:#8f6c0e}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Stock App",
+    "overview": "ELCO looks like an app Apple could have shipped, at the craft of Apple's own apps, Wolt and Linear. Grouped inset lists on the iOS grouped palette, frosted bars, push transitions and sheets. Crimson is the tint; gold lives only in the shield mark. Built for inspectors in sun and dim rooms, one-handed, Hebrew RTL.",
+    "keyCharacteristics": [
+      "System font stack only.",
+      "One rounded group per list section.",
+      "Crimson tint; gold only in the mark.",
+      "Frosted nav and tab bars, 0.5px separators.",
+      "Row highlight on press in lists, 0.97 scale on standalone controls."
+    ],
+    "rules": [
+      {
+        "name": "The Accent vs Accent-Fill Rule",
+        "body": "--accent is for text, icons and outlines and brightens in dark mode; --accent-fill is for any surface with a white label and stays #c8102e in dark mode.",
+        "section": "colors"
+      },
+      {
+        "name": "The Gold-Only-In-The-Mark Rule",
+        "body": "--gold is for the shield wordmark and login only.",
+        "section": "colors"
+      },
+      {
+        "name": "The Meaning-Only Status Rule",
+        "body": "Green, amber and blue appear only when they mean success, attention or info.",
+        "section": "colors"
+      },
+      {
+        "name": "The System Face Rule",
+        "body": "The system stack is the brand; no web fonts.",
+        "section": "typography"
+      },
+      {
+        "name": "The Frosted-Bars Rule",
+        "body": "Nav and tab bars always use .material, never an opaque flat fill.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do put list content in a .group-list with rows, not one bordered card per item.",
+      "Do use --accent-fill for any filled surface with a white label and --accent for tinted text and icons.",
+      "Do keep targets at 44px minimum and inputs at 16px minimum.",
+      "Do use logical properties for RTL.",
+      "Do use .material for bars, route-push for task pages and route-tab for tab pages.",
+      "Do keep dark mode on true black with #1c1c1e groups."
+    ],
+    "donts": [
+      "Don't reintroduce IBM Plex or any web font, signal-orange, or bordered stacked cards.",
+      "Don't use --gold outside the shield wordmark and login.",
+      "Don't scale whole rows or cards on press inside a group; highlight the row.",
+      "Don't use status colours decoratively.",
+      "Don't use an opaque flat header or tab bar."
+    ]
+  }
+}

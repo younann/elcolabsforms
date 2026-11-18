@@ -2,7 +2,7 @@ import { useState, type ComponentType } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   AddressBook,
-  ArrowRight,
+  CaretRight,
   Briefcase,
   DotsThreeOutline,
   Files,
@@ -96,7 +96,7 @@ export function AppShell() {
 
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:[--nav-w:15rem]">
-      <aside className="sticky top-0 hidden h-dvh flex-col border-e border-border bg-surface px-3 pt-[calc(var(--safe-top)+1rem)] pb-4 lg:flex">
+      <aside className="sticky top-0 hidden h-dvh flex-col border-e-[0.5px] border-separator bg-surface px-3 pt-[calc(var(--safe-top)+1rem)] pb-4 lg:flex">
         <NavLink to="/" className="press mb-6 flex min-h-11 items-center rounded-ctl px-2" aria-label="דף הבית">
           <Brand />
         </NavLink>
@@ -109,7 +109,7 @@ export function AppShell() {
               className={({ isActive }) =>
                 cx(
                   'press flex min-h-11 items-center gap-3 rounded-ctl px-3 text-[15px] font-medium transition-[transform,background-color,color] duration-150 active:scale-[0.98]',
-                  isActive ? 'bg-surface-2 text-text' : 'text-muted hover:bg-surface-2/60 hover:text-text',
+                  isActive ? 'bg-accent-soft text-accent' : 'text-text hover:bg-surface-2',
                 )
               }
             >
@@ -134,16 +134,16 @@ export function AppShell() {
       </aside>
 
       <div className="flex min-h-dvh min-w-0 flex-col">
-        <header className="safe-x sticky top-0 z-30 border-b border-border bg-bg/90 pt-[var(--safe-top)] backdrop-blur-md lg:hidden">
+        <header className="material safe-x sticky top-0 z-30 border-b-[0.5px] border-separator pt-[var(--safe-top)] lg:hidden">
           <div className="mx-auto flex h-14 max-w-5xl items-center gap-2">
             {task ? (
               <button
                 type="button"
                 onClick={goBack}
-                className="press -ms-2 inline-flex min-h-11 items-center gap-1.5 rounded-ctl px-2 text-[16px] font-medium transition-[transform,background-color] duration-150 hover:bg-surface-2 active:scale-[0.97]"
+                className="press -ms-2 inline-flex min-h-11 items-center gap-0.5 rounded-ctl px-1.5 text-[17px] text-accent transition-opacity duration-150 active:opacity-50"
                 data-testid="header-back"
               >
-                <ArrowRight className="size-5" aria-hidden />
+                <CaretRight className="size-6" weight="bold" aria-hidden />
                 חזרה
               </button>
             ) : (
@@ -159,19 +159,21 @@ export function AppShell() {
         </header>
         <main
           className={cx(
-            'safe-x mx-auto w-full max-w-5xl flex-1 pt-5 md:pt-8 lg:px-8 lg:pt-10',
+            'safe-x mx-auto w-full max-w-5xl flex-1 overflow-x-clip pt-5 md:pt-8 lg:px-8 lg:pt-10',
             task ? 'safe-bottom' : 'pb-[calc(5.5rem+var(--safe-bottom))] lg:pb-12',
           )}
         >
           {!task && <InstallBanner />}
-          <Outlet />
+          <div key={pathname} className={task ? 'route-push' : 'route-tab'}>
+            <Outlet />
+          </div>
         </main>
       </div>
 
       {!task && (
         <nav
           aria-label="ניווט ראשי"
-          className="safe-x fixed inset-x-0 bottom-0 z-30 border-t border-border bg-bg/92 pb-[var(--safe-bottom)] backdrop-blur-md lg:hidden"
+          className="material safe-x fixed inset-x-0 bottom-0 z-30 border-t-[0.5px] border-separator pb-[var(--safe-bottom)] lg:hidden"
         >
           <ul className="mx-auto grid max-w-lg auto-cols-fr grid-flow-col">
             {barTabs.map((t) => (

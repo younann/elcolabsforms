@@ -13,7 +13,7 @@ import {
 
 function Step({ n, icon, children }: { n: number; icon: ReactNode; children: ReactNode }) {
   return (
-    <li className="flex items-center gap-3 rounded-box border border-border bg-surface-2 px-4 py-3">
+    <li className="flex items-center gap-3 rounded-box bg-surface-2 px-4 py-3">
       <span className="grid size-7 shrink-0 place-items-center rounded-full bg-ink text-sm font-semibold text-ink-fg">
         {n}
       </span>

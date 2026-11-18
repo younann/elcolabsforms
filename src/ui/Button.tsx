@@ -14,16 +14,16 @@ export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const variants: Record<ButtonVariant, string> = {
-  primary: 'bg-ink text-ink-fg hover:bg-ink-hover',
-  accent: 'bg-accent text-accent-fg hover:bg-accent-hover',
-  secondary: 'bg-surface text-text border border-border-strong hover:bg-surface-2',
-  ghost: 'bg-transparent text-text hover:bg-surface-2',
-  danger: 'bg-danger text-surface hover:opacity-90',
+  primary: 'bg-accent-fill text-accent-fg hover:opacity-90',
+  accent: 'bg-accent-fill text-accent-fg hover:opacity-90',
+  secondary: 'bg-surface-2 text-text hover:bg-border',
+  ghost: 'bg-transparent text-accent hover:bg-accent-soft',
+  danger: 'bg-danger-fill text-white hover:opacity-90',
 };
 
 const sizes: Record<ButtonSize, string> = {
-  md: 'min-h-11 px-4 text-base gap-2',
-  lg: 'min-h-13 px-5 text-[17px] gap-2.5',
+  md: 'min-h-11 px-4 text-[16px] gap-2',
+  lg: 'min-h-[3.25rem] px-5 text-[17px] gap-2.5',
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
@@ -37,7 +37,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       disabled={disabled || loading}
       aria-busy={loading || undefined}
       className={cx(
-        'press inline-flex shrink-0 items-center justify-center rounded-ctl font-medium whitespace-nowrap',
+        'press inline-flex shrink-0 items-center justify-center rounded-ctl font-semibold whitespace-nowrap',
         'transition-[transform,background-color,opacity] duration-150 ease-snap active:scale-[0.97]',
         'disabled:cursor-not-allowed disabled:opacity-50',
         variants[variant],

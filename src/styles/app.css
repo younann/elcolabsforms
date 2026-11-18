@@ -68,9 +68,101 @@
   }
 
   ::selection {
-    background: var(--accent-soft);
+    background: color-mix(in srgb, var(--accent) 28%, transparent);
+  }
+
+  input,
+  textarea {
+    caret-color: var(--accent);
+  }
+
+  html {
+    scrollbar-color: var(--border-strong) transparent;
+  }
+
+  a {
+    text-underline-offset: 3px;
+  }
+
+  h1 {
+    letter-spacing: -0.02em;
   }
 }
+
+/* iOS inset grouped list: one rounded group, hairline separators inset from the leading edge */
+.group-list {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-box);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+/* rows keep their own markup; the group owns the frame */
+.group-list > li,
+.group-list > li > :is(a, button, div) {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.group-list > li {
+  position: relative;
+}
+
+.group-list > li + li::before {
+  content: '';
+  position: absolute;
+  inset-inline: 1rem 0;
+  top: 0;
+  height: 0.5px;
+  background: var(--separator);
+  z-index: 1;
+}
+
+/* rows highlight on press instead of scaling */
+.group-list .press:active {
+  transform: none;
+  background: var(--surface-2);
+}
+
+@media (hover: hover) {
+  .group-list > li > :is(a, button):hover {
+    background: color-mix(in srgb, var(--surface-2) 55%, var(--surface));
+  }
+}
+
+/* frosted bars over scrolling content */
+.material {
+  background: var(--material);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+}
+
+/* page entrance: tabs settle in place, task pages push in from the leading side */
+.route-tab {
+  animation: route-settle 260ms var(--motion-out) backwards;
+}
+
+.route-push {
+  animation: route-push 380ms var(--motion-out) backwards;
+}
+
+@keyframes route-settle {
+  from {
+    opacity: 0.4;
+    transform: translateY(6px);
+  }
+}
+
+@keyframes route-push {
+  from {
+    opacity: 0.6;
+    transform: translateX(-28%);
+  }
+}
+
 
 @utility safe-x {
   padding-inline: max(1rem, var(--safe-x));
@@ -219,6 +311,11 @@
 
   .press:active {
     transform: none !important;
+  }
+
+  .route-tab,
+  .route-push {
+    animation: none;
   }
 }
 

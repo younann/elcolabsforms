@@ -44,7 +44,7 @@ function InspectorHome({ name }: { name: string }) {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold tracking-tight">שלום, {name}</h1>
+      <h1 className="text-[28px] leading-tight font-bold sm:text-[32px]">שלום, {name}</h1>
       <PushCard />
 
       {openJobs.length > 0 && (
@@ -73,7 +73,7 @@ function InspectorHome({ name }: { name: string }) {
       ) : (
         returned.length > 0 && (
           <Group title="הוחזרו לתיקון" count={returned.length}>
-            <ul className="flex flex-col gap-2" data-testid="returned-list">
+            <ul className="group-list" data-testid="returned-list">
               {returned.map((s) => (
                 <SubmissionRow key={s.id} s={s} href={rowHref(s, 'inspector')}>
                   {s.reviewNote && (
@@ -93,7 +93,7 @@ function InspectorHome({ name }: { name: string }) {
         <>
           {drafts.length > 0 && (
             <Group title="טיוטות" count={drafts.length}>
-              <ul className="flex flex-col gap-2">
+              <ul className="group-list">
                 {drafts.map((s) => (
                   <SubmissionRow key={s.id} s={s} href={rowHref(s, 'inspector')} />
                 ))}
@@ -108,7 +108,7 @@ function InspectorHome({ name }: { name: string }) {
               </EmptyState>
             ) : (
               <>
-                <ul className="flex flex-col gap-2">
+                <ul className="group-list">
                   {shownSent.map((s) => (
                     <SubmissionRow key={s.id} s={s} href={rowHref(s, 'inspector')} />
                   ))}

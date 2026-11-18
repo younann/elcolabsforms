@@ -3,7 +3,7 @@ import { Navigate, useLocation, useNavigate, type Location } from 'react-router-
 import { Eye, EyeSlash } from '@phosphor-icons/react';
 import { useAuth } from '../lib/auth';
 import { ApiError } from '../lib/api';
-import { Banner, Brand, Button, TextField } from '../ui';
+import { APP_NAME, Banner, Button, LogoMark, TAGLINE, TextField } from '../ui';
 
 const fine = typeof window !== 'undefined' && window.matchMedia?.('(pointer: fine)').matches;
 
@@ -42,9 +42,14 @@ export function Login() {
   return (
     <div className="safe-x flex min-h-dvh flex-col pt-[max(2rem,var(--safe-top))] pb-[max(1.5rem,var(--safe-bottom))] md:items-center md:justify-center md:pb-[12vh]">
       <div className="mx-auto w-full max-w-[400px]">
-        <Brand size="lg" />
-        <h1 className="mt-10 text-[28px] leading-tight font-semibold tracking-tight md:mt-12">כניסה</h1>
-        <p className="mt-1.5 text-muted">טפסי בדיקה לבטיחות אש</p>
+        <div className="flex flex-col items-center pt-6 text-center md:pt-0">
+          <LogoMark className="size-24 drop-shadow-[0_10px_18px_rgb(143_108_14/0.35)]" />
+          <p className="mt-4 text-[34px] leading-none font-bold tracking-[0.12em] text-gold" dir="ltr">
+            {APP_NAME}
+          </p>
+          <p className="mt-2 text-[15px] font-medium text-muted">{TAGLINE}</p>
+        </div>
+        <h1 className="mt-12 text-[28px] leading-tight font-bold">כניסה</h1>
 
         <form noValidate onSubmit={onSubmit} className="mt-8 flex flex-col gap-5">
           <TextField
