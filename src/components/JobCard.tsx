@@ -4,6 +4,7 @@ import { jobDate, type JobSummary } from '../lib/jobs';
 import { rowHref } from '../lib/submissions';
 import { StatusBadge } from '../ui';
 import { wazeLink } from '../lib/waze';
+import { WazeButton } from './WazeButton';
 
 /** Inspector home: one open job with its forms. */
 export function JobCard({ job }: { job: JobSummary }) {
@@ -19,7 +20,7 @@ export function JobCard({ job }: { job: JobSummary }) {
         <div className="mt-2 flex flex-col gap-1.5 text-[15px] text-muted">
           <span className="flex items-center gap-2">
             <MapPin className="size-4 shrink-0" aria-hidden />
-            <a href={wazeLink(job.site.address)} target="_blank" rel="noopener" data-testid="waze" className="font-medium text-accent underline-offset-2 hover:underline">
+            <a href={wazeLink(job.site.address)} target="_blank" rel="noopener" className="font-medium text-accent underline-offset-2 hover:underline">
               {job.site.address}
             </a>
           </span>
@@ -40,6 +41,9 @@ export function JobCard({ job }: { job: JobSummary }) {
           )}
         </div>
         {job.note && <p className="mt-3 rounded-ctl bg-surface-2 px-3 py-2 text-[15px] leading-relaxed whitespace-pre-line">{job.note}</p>}
+        <div className="mt-3">
+          <WazeButton address={job.site.address} compact />
+        </div>
       </div>
       <ul className="border-t border-border">
         {job.forms.map((f) => (

@@ -10,6 +10,7 @@ import { wazeLink } from '../lib/waze';
 import { Banner, Button, EmptyState, InspectorPicker, QtyStepper, Sheet, StatusBadge, TextArea, TextField, cx, toast } from '../ui';
 import { ListSkeleton } from '../components/SubmissionList';
 import { WhatsAppButton } from '../components/WhatsAppButton';
+import { WazeButton } from '../components/WazeButton';
 import { FORMS } from '../../shared/forms';
 
 type Panel = 'edit' | 'forms' | 'inspector' | 'cancel' | null;
@@ -69,15 +70,14 @@ export function JobPage() {
         </span>
       </div>
 
-      {admin && live && (
-        <div className="mt-5">
-          <WhatsAppButton job={job} />
-        </div>
-      )}
+      <div className="mt-5 grid gap-2 sm:grid-cols-2">
+        {admin && live && <WhatsAppButton job={job} />}
+        <WazeButton address={job.site.address} />
+      </div>
 
       <dl className="mt-5 grid gap-3 rounded-box border border-border bg-surface p-4 text-[15px]">
         <Line icon={<MapPin />}>
-          <a href={wazeLink(job.site.address)} target="_blank" rel="noopener" data-testid="waze" className="font-medium text-accent underline-offset-2 hover:underline">
+          <a href={wazeLink(job.site.address)} target="_blank" rel="noopener" className="font-medium text-accent underline-offset-2 hover:underline">
             {job.site.address}
           </a>
         </Line>
