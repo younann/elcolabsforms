@@ -2,6 +2,7 @@ import { expect, test, type APIRequestContext, type Page } from '@playwright/tes
 import { getForm } from '../../shared/forms';
 import { markSectionNA, validateForSubmit } from '../../shared/forms/validate';
 import type { FormData } from '../../shared/forms/types';
+import { createJob } from './jobs-helper';
 
 const ADMIN_USER = process.env.E2E_USERNAME ?? process.env.SEED_ADMIN_USERNAME ?? '';
 const ADMIN_PASS = process.env.E2E_PASSWORD ?? process.env.SEED_ADMIN_PASSWORD ?? '';
@@ -13,6 +14,7 @@ test.skip(!ADMIN_USER || !ADMIN_PASS, 'seed credentials not set');
 test.setTimeout(180_000);
 
 let inspector = '';
+let inspectorId = '';
 let site = '';
 
 test.beforeAll(async ({ playwright, baseURL }) => {
@@ -23,6 +25,7 @@ test.beforeAll(async ({ playwright, baseURL }) => {
     data: { username: inspector, displayName: 'בודקת סקירה', password: INSPECTOR_PASS, role: 'inspector' },
   });
   expect(r.status()).toBe(201);
+  inspectorId = (await r.json()).user.id;
   const s = await (await admin.get('/api/settings')).json();
   expect(s.settings.recipientEmail, 'recipient email must be set in dev settings').not.toBe('');
   await admin.dispose();
@@ -40,8 +43,8 @@ async function login(req: APIRequestContext, username: string, password: string)
 // complete aerosol form through the API
 async function readySubmission(req: APIRequestContext) {
   const def = getForm('aerosol');
-  const created = await (await req.post('/api/submissions', { data: { formId: 'aerosol' } })).json();
-  const id: string = created.submission.id;
+  const id = (await createJob(inspectorId)).formIds[0];
+  const created = await (await req.get(`/api/submissions/${id}`)).json();
   let data: FormData = {};
   for (const s of def.sections) {
     data = markSectionNA(def, s.id, data);

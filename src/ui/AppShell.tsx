@@ -5,7 +5,6 @@ import {
   ArrowRight,
   Briefcase,
   DotsThreeOutline,
-  FilePlus,
   Files,
   GearSix,
   House,
@@ -34,8 +33,7 @@ type Tab = {
 
 const TABS: Record<Role, Tab[]> = {
   inspector: [
-    { to: '/', label: 'הטפסים שלי', Icon: House, end: true },
-    { to: '/new', label: 'טופס חדש', Icon: FilePlus },
+    { to: '/', label: 'הבית', Icon: House, end: true },
     { to: '/profile', label: 'פרופיל', Icon: UserCircle },
   ],
   admin: [

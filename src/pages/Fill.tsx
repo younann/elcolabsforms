@@ -12,7 +12,7 @@ import { FormFiller, draftKey, type SubmissionRow } from '../fill/FormFiller';
 import type { Attachment } from '../fill/context';
 import { BackLink } from '../components/SubmissionDetail';
 
-type Loaded = { def: FormDef; submission: SubmissionRow; data: FormData; fromLocal: boolean; attachments: Attachment[] };
+type Loaded = { def: FormDef; submission: SubmissionRow & { jobId?: string | null }; data: FormData; fromLocal: boolean; attachments: Attachment[] };
 
 // same rule the server applies to saves
 function canEdit(s: SubmissionRow & { inspectorId?: string }, uid?: string, role?: Role) {
@@ -49,7 +49,7 @@ export function Fill() {
   const load = useCallback(async () => {
     setState(null);
     try {
-      const r = await api<{ submission: SubmissionRow & { inspectorId?: string }; attachments: Attachment[] }>(`/api/submissions/${id}`);
+      const r = await api<{ submission: SubmissionRow & { inspectorId?: string; jobId?: string | null }; attachments: Attachment[] }>(`/api/submissions/${id}`);
       const def = getForm(r.submission.formId, r.submission.formVersion);
       const editable = canEdit(r.submission, uid, role);
       const picked = editable
@@ -90,6 +90,7 @@ export function Fill() {
       mode="inspector"
       readOnly={readOnly}
       onSubmitted={() => void load()}
+      context={s.jobId ? { jobId: s.jobId, text: [s.data.customerName, s.data.siteName].filter((v) => typeof v === 'string' && v).join(' · ') || 'לעבודה' } : undefined}
       />
     </>
   );

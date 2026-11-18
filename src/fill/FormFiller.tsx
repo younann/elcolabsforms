@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { CheckCircle, CircleNotch, CloudSlash, Checks, ListBullets, PaperPlaneTilt, WarningCircle } from '@phosphor-icons/react';
 import { Banner, Button, Sheet, StatusBadge, cx, toast, type SubmissionStatus } from '../ui';
@@ -34,6 +35,8 @@ export type FormFillerProps = {
   onSubmitted?: (s: SubmissionRow) => void;
   /** Replaces the submit button, e.g. admin actions. */
   actions?: ReactNode;
+  /** Line under the title linking to the job. */
+  context?: { jobId: string; text: string };
 };
 
 export const draftKey = (id: string) => `draft:${id}`;
@@ -109,6 +112,7 @@ export function FormFiller({
   readOnly = false,
   onSubmitted,
   actions,
+  context,
 }: FormFillerProps) {
   // device copy based on another server version
   const [conflict, setConflict] = useState<Conflict | null>(() => {
@@ -306,6 +310,11 @@ export function FormFiller({
               {def.docNumber && <span className="text-[13px] text-muted tabular-nums">{def.docNumber}</span>}
             </div>
             <h1 className="mt-2 text-[22px] leading-tight font-semibold tracking-tight text-balance md:text-2xl">{def.title}</h1>
+            {context && (
+              <Link to={`/jobs/${context.jobId}`} className="mt-1 inline-block text-[15px] font-medium text-accent underline-offset-2 hover:underline" data-testid="job-context">
+                {context.text}
+              </Link>
+            )}
           </header>
 
           {conflict && (

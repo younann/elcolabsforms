@@ -67,30 +67,52 @@ describe('submission helpers', () => {
 });
 
 describe('inspector home', () => {
-  test('groups returned with the note, drafts and sent, plus the five form cards', async () => {
-    fetchMock.mockResolvedValue(
-      reply({
-        submissions: [
-          sum({ status: 'returned', siteName: 'מגדל א', reviewNote: 'חסרה תמונה של הלוח' }),
-          sum({ status: 'draft', siteName: 'טיוטה ב' }),
-          sum({ status: 'emailed', siteName: 'נשלח ג', hasPdf: true }),
-        ],
-      }),
+  const job = {
+    id: 'j1',
+    client: { id: 'c', name: 'מגדלי הים', contactPerson: 'יוסי', phone: '0501112222' },
+    site: { id: 's', name: 'בניין A', address: 'הרצל 12' },
+    inspector: { id: 'me', displayName: 'דנה', phone: null },
+    plannedDate: '2026-11-24',
+    note: 'להביא סולם',
+    cancelledAt: null,
+    state: 'open',
+    forms: [
+      { id: 'g1', formId: 'gas', jobCopy: 1, status: 'draft', inspectorId: 'me', label: 'גז 1' },
+      { id: 'g2', formId: 'gas', jobCopy: 2, status: 'returned', inspectorId: 'me', label: 'גז 2' },
+    ],
+  };
+
+  test('job cards first, then returned and drafts outside jobs, then sent', async () => {
+    fetchMock.mockImplementation(async (url) =>
+      String(url).startsWith('/api/jobs')
+        ? reply({ jobs: [job, { ...job, id: 'j2', state: 'done' }] })
+        : reply({
+            submissions: [
+              sum({ status: 'returned', siteName: 'מגדל א', reviewNote: 'חסרה תמונה של הלוח' }),
+              sum({ id: 'g2', status: 'returned', siteName: 'בעבודה', jobId: 'j1', jobCopy: 2 }),
+              sum({ status: 'draft', siteName: 'טיוטה ב' }),
+              sum({ status: 'emailed', siteName: 'נשלח ג', hasPdf: true }),
+            ],
+          }),
     );
     render(
       <MemoryRouter>
         <Home />
       </MemoryRouter>,
     );
+    const cards = await screen.findAllByTestId('job-card');
+    expect(cards).toHaveLength(1);
+    expect(within(cards[0]).getByText('גז 1').closest('a')).toHaveAttribute('href', '/fill/g1');
+    expect(within(cards[0]).getByText('גז 2')).toBeInTheDocument();
+    expect(within(cards[0]).getByText('להביא סולם')).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'טופס חדש' })).toBeNull();
+
     const returned = await screen.findByTestId('returned-list');
     expect(within(returned).getByText('מגדל א')).toBeInTheDocument();
+    expect(within(returned).getByText('בעבודה')).toBeInTheDocument();
     expect(within(returned).getByTestId('review-note')).toHaveTextContent('חסרה תמונה של הלוח');
-    expect(within(returned).getByRole('link')).toHaveAttribute('href', expect.stringMatching(/^\/fill\//));
     expect(screen.getByRole('heading', { name: /טיוטות/ })).toBeInTheDocument();
     expect(screen.getByText('נשלח ג').closest('a')).toHaveAttribute('href', expect.stringMatching(/^\/submissions\//));
-    expect(screen.queryByRole('button', { name: 'שכפול' })).toBeNull();
-    expect(screen.getAllByRole('button', { name: /ארוסול|גז|גלאים|1220|536/ }).length).toBeGreaterThanOrEqual(5);
-    expect(fetchMock.mock.calls[0][0]).toBe('/api/submissions');
   });
 });
 

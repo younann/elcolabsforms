@@ -5,7 +5,6 @@ import { Toaster } from './ui/toast';
 import { BackGuard } from './ui/back';
 import { Login } from './pages/Login';
 import { Home } from './pages/Home';
-import { NewForm } from './pages/NewForm';
 import { Fill } from './pages/Fill';
 import { SubmissionView } from './pages/SubmissionView';
 import { Profile } from './pages/Profile';
@@ -42,14 +41,7 @@ export const router = createBrowserRouter([
         ),
         children: [
           { index: true, element: <Home /> },
-          {
-            path: 'new',
-            element: (
-              <RequireRole role="inspector">
-                <NewForm />
-              </RequireRole>
-            ),
-          },
+          { path: 'new', element: <Navigate to="/" replace /> },
           { path: 'fill/:id', element: <Fill /> },
           { path: 'submissions/:id', element: <SubmissionView /> },
           { path: 'profile', element: <Profile /> },

@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import path from 'node:path';
+import { createJob } from './jobs-helper';
 
 const ADMIN_USER = process.env.E2E_USERNAME ?? process.env.SEED_ADMIN_USERNAME ?? '';
 const ADMIN_PASS = process.env.E2E_PASSWORD ?? process.env.SEED_ADMIN_PASSWORD ?? '';
@@ -9,6 +10,7 @@ const INSPECTOR_PASS = 'fill-e2e-pass';
 test.skip(!ADMIN_USER || !ADMIN_PASS, 'seed credentials not set');
 
 let inspector = '';
+let inspectorId = '';
 
 test.beforeAll(async ({ playwright, baseURL }) => {
   const admin = await playwright.request.newContext({ baseURL });
@@ -19,6 +21,7 @@ test.beforeAll(async ({ playwright, baseURL }) => {
     data: { username: inspector, displayName: 'בודק בדיקות', password: INSPECTOR_PASS, role: 'inspector' },
   });
   expect(r.status()).toBe(201);
+  inspectorId = (await r.json()).user.id;
   await admin.dispose();
 });
 
@@ -31,9 +34,8 @@ async function signIn(page: Page) {
 }
 
 async function newAerosol(page: Page) {
-  await page.goto('/new');
-  await page.getByRole('button', { name: /כיבוי אש בארוסול/ }).click();
-  await expect(page).toHaveURL(/\/fill\/[0-9a-f-]{36}$/);
+  const { formIds } = await createJob(inspectorId);
+  await page.goto(`/fill/${formIds[0]}`);
   await expect(page.getByRole('heading', { level: 1 })).toContainText('ארוסול');
   return page.url().split('/').pop()!;
 }
@@ -100,6 +102,8 @@ test('missing items list jumps to the field', async ({ page }) => {
   await signIn(page);
   await newAerosol(page);
   await field(page, 'שם האתר').fill('אתר חלקי');
+  // job pre-fill set it
+  await field(page, 'שם המזמין').fill('');
   await page.getByRole('button', { name: 'שליחה לאישור' }).click();
   const list = page.getByTestId('missing-list');
   await expect(list).toBeVisible();
