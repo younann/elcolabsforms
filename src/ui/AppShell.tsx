@@ -1,7 +1,10 @@
 import { useState, type ComponentType } from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
+  AddressBook,
   ArrowRight,
+  Briefcase,
+  DotsThreeOutline,
   FilePlus,
   Files,
   GearSix,
@@ -20,7 +23,14 @@ import { Sheet } from './Sheet';
 import { useGoBack } from './back';
 import { cx } from './cx';
 
-type Tab = { to: string; label: string; /** Bottom bar label. */ short?: string; Icon: ComponentType<IconProps>; end?: boolean };
+type Tab = {
+  to: string;
+  label: string;
+  /** Bottom bar label. */ short?: string;
+  Icon: ComponentType<IconProps>;
+  end?: boolean;
+  /** Phones: under the more sheet. */ more?: boolean;
+};
 
 const TABS: Record<Role, Tab[]> = {
   inspector: [
@@ -30,19 +40,22 @@ const TABS: Record<Role, Tab[]> = {
   ],
   admin: [
     { to: '/', label: 'לאישור', Icon: Tray, end: true },
+    { to: '/admin/jobs', label: 'עבודות', Icon: Briefcase },
     { to: '/admin/submissions', label: 'כל הטפסים', short: 'טפסים', Icon: Files },
-    { to: '/admin/users', label: 'משתמשים', Icon: UsersThree },
-    { to: '/admin/settings', label: 'הגדרות', Icon: GearSix },
-    { to: '/profile', label: 'פרופיל', Icon: UserCircle },
+    { to: '/admin/clients', label: 'לקוחות', Icon: AddressBook },
+    { to: '/admin/users', label: 'משתמשים', Icon: UsersThree, more: true },
+    { to: '/admin/settings', label: 'הגדרות', Icon: GearSix, more: true },
+    { to: '/profile', label: 'פרופיל', Icon: UserCircle, more: true },
   ],
 };
 
 // full-screen task pages carry their own bottom bar
-const TASK = /^\/(fill|submissions|admin\/review)\//;
+const TASK = /^\/(fill|submissions|jobs|admin\/review)\/|^\/admin\/jobs\/new$/;
 
 // where back goes without in-app history
 function backTarget(pathname: string, role?: Role) {
   if (pathname.startsWith('/submissions/') && role === 'admin') return '/admin/submissions';
+  if ((pathname.startsWith('/jobs/') && role === 'admin') || pathname === '/admin/jobs/new') return '/admin/jobs';
   return '/';
 }
 
@@ -52,7 +65,12 @@ export function AppShell() {
   const { pathname } = useLocation();
   const [leaving, setLeaving] = useState(false);
   const [confirmOut, setConfirmOut] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const navigate = useNavigate();
   const tabs = TABS[user?.role ?? 'inspector'];
+  const barTabs = tabs.filter((t) => !t.more);
+  const moreTabs = tabs.filter((t) => t.more);
+  const moreActive = moreTabs.some((t) => pathname.startsWith(t.to));
   const task = TASK.test(pathname);
   const goBack = useGoBack(backTarget(pathname, user?.role));
 
@@ -159,7 +177,7 @@ export function AppShell() {
           className="safe-x fixed inset-x-0 bottom-0 z-30 border-t border-border bg-bg/92 pb-[var(--safe-bottom)] backdrop-blur-md lg:hidden"
         >
           <ul className="mx-auto grid max-w-lg auto-cols-fr grid-flow-col">
-            {tabs.map((t) => (
+            {barTabs.map((t) => (
               <li key={t.to}>
                 <NavLink
                   to={t.to}
@@ -169,7 +187,7 @@ export function AppShell() {
                     cx(
                       'press flex min-h-14 flex-col items-center justify-center gap-0.5 px-0.5 font-medium transition-[transform,color] duration-150 active:scale-[0.94]',
                       // five tabs need the smaller size at 320px
-                      tabs.length > 4 ? 'text-[11px]' : 'text-[12px]',
+                      barTabs.length + (moreTabs.length ? 1 : 0) > 4 ? 'text-[11px]' : 'text-[12px]',
                       isActive ? 'text-accent' : 'text-muted',
                     )
                   }
@@ -183,9 +201,44 @@ export function AppShell() {
                 </NavLink>
               </li>
             ))}
+            {moreTabs.length > 0 && (
+              <li>
+                <button
+                  type="button"
+                  onClick={() => setMoreOpen(true)}
+                  className={cx(
+                    'press flex min-h-14 w-full flex-col items-center justify-center gap-0.5 px-0.5 text-[11px] font-medium transition-[transform,color] duration-150 active:scale-[0.94]',
+                    moreActive ? 'text-accent' : 'text-muted',
+                  )}
+                >
+                  <DotsThreeOutline className="size-6" weight={moreActive ? 'fill' : 'regular'} aria-hidden />
+                  <span>עוד</span>
+                </button>
+              </li>
+            )}
           </ul>
         </nav>
       )}
+
+      <Sheet open={moreOpen} onClose={() => setMoreOpen(false)} title="עוד">
+        <ul className="flex flex-col gap-1">
+          {moreTabs.map((t) => (
+            <li key={t.to}>
+              <button
+                type="button"
+                onClick={() => {
+                  setMoreOpen(false);
+                  navigate(t.to);
+                }}
+                className="press flex min-h-13 w-full items-center gap-3 rounded-ctl px-3 text-[17px] font-medium transition-[transform,background-color] duration-150 hover:bg-surface-2 active:scale-[0.98]"
+              >
+                <t.Icon className="size-6 text-muted" aria-hidden />
+                {t.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </Sheet>
 
       <Sheet
         open={confirmOut}

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { UserSwitch } from '@phosphor-icons/react';
 import { ApiError } from '../lib/api';
 import { useLoad } from '../lib/useLoad';
@@ -12,6 +13,8 @@ type Props = {
   status: Status;
   inspectorId: string;
   inspectorName: string | null;
+  /** Job forms change inspector from the job. */
+  jobId?: string | null;
   /** Runs first; false cancels, e.g. unsaved edits. */
   before?: () => Promise<boolean>;
   onDone(): void;
@@ -19,11 +22,11 @@ type Props = {
 };
 
 /** Admin: who owns the form, and moving it to another inspector. */
-export function ReassignCard({ submissionId, status, inspectorId, inspectorName, before, onDone, className }: Props) {
+export function ReassignCard({ submissionId, status, inspectorId, inspectorName, jobId, before, onDone, className }: Props) {
   const [open, setOpen] = useState(false);
   const [choice, setChoice] = useState<Inspector | null>(null);
   const [busy, setBusy] = useState(false);
-  const can = REASSIGNABLE.includes(status);
+  const can = !jobId && REASSIGNABLE.includes(status);
   const people = useLoad(() => (open ? listInspectors() : Promise.resolve(null)), open ? 'open' : 'closed');
 
   function close() {
@@ -59,6 +62,11 @@ export function ReassignCard({ submissionId, status, inspectorId, inspectorName,
           {inspectorName ?? '—'}
         </span>
       </p>
+      {jobId && (
+        <Link to={`/jobs/${jobId}`} className="press inline-flex min-h-11 items-center rounded-ctl px-3 font-medium text-accent hover:bg-surface-2">
+          לעבודה
+        </Link>
+      )}
       {can && (
         <Button variant="ghost" onClick={() => setOpen(true)} data-testid="reassign-open">
           שינוי

@@ -16,6 +16,7 @@ export type FullSubmission = SubmissionRow & {
   sendError: string | null;
   mailLogged?: boolean;
   parentId: string | null;
+  jobId?: string | null;
   approvedBy: string | null;
   emailedAt: string | null;
 };

@@ -119,6 +119,7 @@ export function SubmissionView() {
           status={s.status}
           inspectorId={s.inspectorId}
           inspectorName={state.inspectorName}
+          jobId={s.jobId}
           onDone={() => void load(true)}
         />
       )}

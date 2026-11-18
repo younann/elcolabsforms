@@ -22,6 +22,8 @@ export type InspectorPickerProps = {
   autoFocus?: boolean;
   loading?: boolean;
   className?: string;
+  /** Words for what is picked, e.g. clients. */
+  noun?: { one: string; many: string };
 };
 
 const MAX = 50;
@@ -32,7 +34,8 @@ export function InspectorPicker({
   options,
   value,
   onChange,
-  placeholder = 'הקלד שם בודק',
+  noun = { one: 'בודק', many: 'בודקים' },
+  placeholder = `הקלד שם ${noun.one}`,
   inline = false,
   clearable = false,
   excludeId,
@@ -161,7 +164,7 @@ export function InspectorPicker({
           {clearable && value && (
             <button
               type="button"
-              aria-label="ניקוי הבודק"
+              aria-label={`ניקוי ה${noun.one}`}
               data-testid="picker-clear"
               // keep focus where it is
               onMouseDown={(e) => e.preventDefault()}
@@ -178,7 +181,7 @@ export function InspectorPicker({
         <ul
           id={listId}
           role="listbox"
-          aria-label="בודקים"
+          aria-label={noun.many}
           hidden={!shown}
           className={cx(
             'overscroll-contain',
@@ -193,7 +196,7 @@ export function InspectorPicker({
           {loading && !options.length ? (
             <li className="px-3 py-3 text-[15px] text-muted">טוען…</li>
           ) : matches.length === 0 ? (
-            <li className="px-3 py-3 text-[15px] text-muted">לא נמצא בודק</li>
+            <li className="px-3 py-3 text-[15px] text-muted">לא נמצא {noun.one}</li>
           ) : (
             matches.map((o, i) => (
               <li

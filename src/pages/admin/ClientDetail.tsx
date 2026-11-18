@@ -7,6 +7,7 @@ import { useLoad } from '../../lib/useLoad';
 import { Banner, Button, EmptyState, Sheet, TextField, cx, toast } from '../../ui';
 import { ListSkeleton } from '../../components/SubmissionList';
 import { ClientSheet } from './Clients';
+import { JobGroups } from './Jobs';
 
 export function ClientDetail() {
   const { id = '' } = useParams();
@@ -114,7 +115,7 @@ export function ClientDetail() {
 
       <h2 className="mt-8 text-lg font-semibold">עבודות</h2>
       <div className="mt-3">
-        <EmptyState icon={<Briefcase />} title="אין עבודות עדיין" />
+        {data.jobs.length ? <JobGroups jobs={data.jobs} /> : <EmptyState icon={<Briefcase />} title="אין עבודות עדיין" />}
       </div>
 
       <div className="mt-8 border-t border-border pt-5">

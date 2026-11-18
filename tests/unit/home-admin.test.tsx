@@ -108,8 +108,11 @@ describe('app shell', () => {
     auth.user.role = 'admin';
     shell('/');
     const navs = screen.getAllByRole('navigation', { name: 'ניווט ראשי', hidden: true });
-    const labels = within(navs[navs.length - 1]).getAllByRole('link').map((a) => a.getAttribute('aria-label') ?? a.textContent);
-    expect(labels).toEqual(['לאישור', 'כל הטפסים', 'משתמשים', 'הגדרות', 'פרופיל']);
+    const labels = within(navs[navs.length - 1]).getAllByRole('listitem').map((li) => li.textContent);
+    expect(labels).toEqual(['לאישור', 'עבודות', 'טפסים', 'לקוחות', 'עוד']);
+    // desktop side nav lists every item
+    const side = within(navs[0]).getAllByRole('link').map((a) => a.textContent);
+    expect(side).toEqual(['לאישור', 'עבודות', 'כל הטפסים', 'לקוחות', 'משתמשים', 'הגדרות', 'פרופיל']);
   });
 
   test('task pages hide the bottom tab bar', () => {

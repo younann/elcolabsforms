@@ -15,6 +15,9 @@ import { Users } from './pages/admin/Users';
 import { Settings } from './pages/admin/Settings';
 import { Clients } from './pages/admin/Clients';
 import { ClientDetail } from './pages/admin/ClientDetail';
+import { Jobs } from './pages/admin/Jobs';
+import { JobNew } from './pages/admin/JobNew';
+import { JobPage } from './pages/JobView';
 
 function Root() {
   return (
@@ -50,6 +53,7 @@ export const router = createBrowserRouter([
           { path: 'fill/:id', element: <Fill /> },
           { path: 'submissions/:id', element: <SubmissionView /> },
           { path: 'profile', element: <Profile /> },
+          { path: 'jobs/:id', element: <JobPage /> },
           {
             path: 'admin',
             element: <RequireRole role="admin" />,
@@ -61,6 +65,8 @@ export const router = createBrowserRouter([
               { path: 'settings', element: <Settings /> },
               { path: 'clients', element: <Clients /> },
               { path: 'clients/:id', element: <ClientDetail /> },
+              { path: 'jobs', element: <Jobs /> },
+              { path: 'jobs/new', element: <JobNew /> },
             ],
           },
         ],

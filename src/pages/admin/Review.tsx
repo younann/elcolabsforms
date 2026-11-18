@@ -115,6 +115,7 @@ export function Review() {
         status={s.status}
         inspectorId={s.inspectorId}
         inspectorName={state.inspectorName}
+        jobId={s.jobId}
         before={() => saved(id)}
         onDone={() => void load(true)}
       />
