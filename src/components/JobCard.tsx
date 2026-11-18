@@ -3,6 +3,7 @@ import { CalendarBlank, MapPin, Phone } from '@phosphor-icons/react';
 import { jobDate, type JobSummary } from '../lib/jobs';
 import { rowHref } from '../lib/submissions';
 import { StatusBadge } from '../ui';
+import { wazeLink } from '../lib/waze';
 
 /** Inspector home: one open job with its forms. */
 export function JobCard({ job }: { job: JobSummary }) {
@@ -18,7 +19,9 @@ export function JobCard({ job }: { job: JobSummary }) {
         <div className="mt-2 flex flex-col gap-1.5 text-[15px] text-muted">
           <span className="flex items-center gap-2">
             <MapPin className="size-4 shrink-0" aria-hidden />
-            {job.site.address}
+            <a href={wazeLink(job.site.address)} target="_blank" rel="noopener" data-testid="waze" className="font-medium text-accent underline-offset-2 hover:underline">
+              {job.site.address}
+            </a>
           </span>
           <span className="flex items-center gap-2">
             <CalendarBlank className="size-4 shrink-0" aria-hidden />

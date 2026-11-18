@@ -6,6 +6,7 @@ import { useAuth } from '../lib/auth';
 import { addJobForms, cancelJob, getJob, jobDate, patchJob, setJobInspector, type JobView, type Qty } from '../lib/jobs';
 import { listInspectors, rowHref } from '../lib/submissions';
 import { useLoad } from '../lib/useLoad';
+import { wazeLink } from '../lib/waze';
 import { Banner, Button, EmptyState, InspectorPicker, QtyStepper, Sheet, StatusBadge, TextArea, TextField, cx, toast } from '../ui';
 import { ListSkeleton } from '../components/SubmissionList';
 import { WhatsAppButton } from '../components/WhatsAppButton';
@@ -75,7 +76,11 @@ export function JobPage() {
       )}
 
       <dl className="mt-5 grid gap-3 rounded-box border border-border bg-surface p-4 text-[15px]">
-        <Line icon={<MapPin />}>{job.site.address}</Line>
+        <Line icon={<MapPin />}>
+          <a href={wazeLink(job.site.address)} target="_blank" rel="noopener" data-testid="waze" className="font-medium text-accent underline-offset-2 hover:underline">
+            {job.site.address}
+          </a>
+        </Line>
         <Line icon={<CalendarBlank />}>{jobDate(job.plannedDate)}</Line>
         <Line icon={<User />}>בודק: {job.inspector.displayName}</Line>
         {(job.client.contactPerson || job.client.phone) && (
