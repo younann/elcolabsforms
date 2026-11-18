@@ -91,6 +91,8 @@ export default handle(async (req, ctx) => {
         data: s.data,
         revision: s.revision + 1,
         parentId: s.id,
+        jobId: s.jobId,
+        jobCopy: s.jobCopy,
         testNumber: s.testNumber,
         siteName: s.siteName,
         updatedAt: new Date(),

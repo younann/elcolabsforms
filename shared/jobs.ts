@@ -1,3 +1,5 @@
+import { z } from 'zod';
+import { FORMS } from './forms';
 import type { FormData, FormDef } from './forms/types';
 import type { Status } from './status';
 
@@ -59,3 +61,29 @@ export function expandQuantities(
 export function isUntouched(s: { status: Status; touchedAt: Date | string | null }): boolean {
   return s.status === 'draft' && !s.touchedAt;
 }
+
+const formId = z.enum(FORMS.map((f) => f.id) as [string, ...string[]]);
+const qty = z.partialRecord(formId, z.number().int().min(0).max(JOB_QTY_MAX));
+const forms = qty.refine((q) => Object.values(q).some((n) => (n ?? 0) > 0), 'יש לבחור לפחות טופס אחד');
+const plannedDate = z.iso.date('תאריך לא תקין');
+const note = z.string().trim().max(1000).transform((v) => v || null).optional();
+
+export const JobCreate = z.object({ clientId: z.uuid(), siteId: z.uuid(), inspectorId: z.uuid(), plannedDate, note, forms });
+export const JobPatch = z.object({ plannedDate: plannedDate.optional(), note });
+export const JobAddForms = z.object({ forms });
+export const JobInspector = z.object({ inspectorId: z.uuid() });
+
+export type JobFormView = { id: string; formId: string; jobCopy: number | null; status: Status; inspectorId: string; label: string };
+export type JobView = {
+  id: string;
+  client: { id: string; name: string; contactPerson: string | null; phone: string | null };
+  site: { id: string; name: string; address: string };
+  inspector: { id: string; displayName: string; phone: string | null };
+  plannedDate: string;
+  note: string | null;
+  cancelledAt: string | null;
+  state: JobState;
+  forms: JobFormView[];
+};
+// list rows carry the same shape
+export type JobSummary = JobView;

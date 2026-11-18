@@ -16,6 +16,8 @@ const { AppShell } = await import('../../src/ui/AppShell');
 const sum = (over: Partial<Summary>): Summary => ({
   id: crypto.randomUUID(),
   formId: 'aerosol',
+  jobId: null,
+  jobCopy: null,
   status: 'draft',
   testNumber: null,
   siteName: 'אתר',
@@ -86,7 +88,7 @@ describe('inspector home', () => {
     expect(within(returned).getByRole('link')).toHaveAttribute('href', expect.stringMatching(/^\/fill\//));
     expect(screen.getByRole('heading', { name: /טיוטות/ })).toBeInTheDocument();
     expect(screen.getByText('נשלח ג').closest('a')).toHaveAttribute('href', expect.stringMatching(/^\/submissions\//));
-    expect(screen.getByRole('button', { name: 'שכפול' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'שכפול' })).toBeNull();
     expect(screen.getAllByRole('button', { name: /ארוסול|גז|גלאים|1220|536/ }).length).toBeGreaterThanOrEqual(5);
     expect(fetchMock.mock.calls[0][0]).toBe('/api/submissions');
   });

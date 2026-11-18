@@ -7,7 +7,6 @@ import { requireUser } from '../../server/auth';
 import { getBlob, putBlob } from '../../server/blobs';
 import { docxKey } from '../../server/docx';
 import { DOCX_TYPE, loadReportAssets, renderDocxFor, reportFileBase } from '../../server/report-assets';
-import { FORMS, getForm } from '../../shared/forms';
 import { canTransition, type Status } from '../../shared/status';
 import { reassignCheck } from '../../shared/reassign';
 import {
@@ -16,12 +15,10 @@ import {
   audit,
   auditSafe,
   changedFieldIds,
-  duplicateData,
   loadSubmission,
   mirror,
 } from '../../server/submissions';
 
-const Create = z.object({ formId: z.enum(FORMS.map((f) => f.id) as [string, ...string[]]) });
 const Patch = z.object({ data: z.record(z.string(), z.unknown()), updatedAt: z.string() });
 const Id = z.uuid();
 const Reassign = z.object({ inspectorId: z.uuid() });
@@ -53,6 +50,8 @@ export default handle(async (req) => {
           siteName: schema.submissions.siteName,
           revision: schema.submissions.revision,
           parentId: schema.submissions.parentId,
+          jobId: schema.submissions.jobId,
+          jobCopy: schema.submissions.jobCopy,
           reviewNote: schema.submissions.reviewNote,
           sendError: schema.submissions.sendError,
           mailLogged: schema.submissions.mailLogged,
@@ -71,18 +70,6 @@ export default handle(async (req) => {
         .orderBy(desc(schema.submissions.updatedAt));
       return json({ submissions: rows });
     }
-    if (req.method === 'POST') {
-      // admins review, they do not fill
-      if (me.role !== 'inspector') throw new HttpError(403, 'אין הרשאה');
-      const b = await parseBody(req, Create);
-      const def = getForm(b.formId);
-      const [row] = await db
-        .insert(schema.submissions)
-        .values({ formId: def.id, formVersion: def.version, inspectorId: me.id, updatedAt: new Date() })
-        .returning();
-      await audit(row.id, me.id, 'create');
-      return json({ submission: row }, 201);
-    }
     throw new HttpError(405, 'Method not allowed');
   }
 
@@ -90,24 +77,6 @@ export default handle(async (req) => {
   const s = await loadSubmission(id);
   assertAccess(me, s);
 
-  if (sub === 'duplicate') {
-    if (req.method !== 'POST') throw new HttpError(405, 'Method not allowed');
-    const def = getForm(s.formId, s.formVersion);
-    const data = duplicateData(def, asData(s.data));
-    const [row] = await db
-      .insert(schema.submissions)
-      .values({
-        formId: s.formId,
-        formVersion: s.formVersion,
-        inspectorId: s.inspectorId,
-        data,
-        ...mirror(data),
-        updatedAt: new Date(),
-      })
-      .returning();
-    await audit(row.id, me.id, 'create', { note: `duplicate of ${s.id}` });
-    return json({ submission: row }, 201);
-  }
   if (sub === 'pdf') {
     if (req.method !== 'GET') throw new HttpError(405, 'Method not allowed');
     // owner only once emailed
@@ -148,6 +117,7 @@ export default handle(async (req) => {
   if (sub === 'reassign') {
     if (req.method !== 'POST') throw new HttpError(405, 'Method not allowed');
     if (me.role !== 'admin') throw new HttpError(403, 'אין הרשאה');
+    if (s.jobId) throw new HttpError(409, 'הטופס שייך לעבודה. שנה בודק מתוך העבודה');
     const b = await parseBody(req, Reassign);
     const [target] = await db.select().from(schema.users).where(eq(schema.users.id, b.inspectorId));
     const ok = reassignCheck({ status: s.status as Status, fromId: s.inspectorId, target: target ?? null });
@@ -195,7 +165,7 @@ export default handle(async (req) => {
     }
     const rows = await db
       .update(schema.submissions)
-      .set({ data: b.data, ...mirror(b.data), updatedAt: new Date() })
+      .set({ data: b.data, ...mirror(b.data), updatedAt: new Date(), ...(owner && !s.touchedAt ? { touchedAt: new Date() } : {}) })
       .where(and(eq(schema.submissions.id, id), eq(schema.submissions.status, s.status), eq(schema.submissions.updatedAt, s.updatedAt)))
       .returning();
     if (!rows[0]) throw new HttpError(409, 'הטופס עודכן, רענן ונסה שוב');
@@ -220,5 +190,5 @@ export default handle(async (req) => {
   throw new HttpError(405, 'Method not allowed');
 });
 
-export const config: Config = { path: ['/api/submissions', '/api/submissions/:id', '/api/submissions/:id/duplicate', '/api/submissions/:id/pdf', '/api/submissions/:id/docx', '/api/submissions/:id/reassign'] };
+export const config: Config = { path: ['/api/submissions', '/api/submissions/:id', '/api/submissions/:id/pdf', '/api/submissions/:id/docx', '/api/submissions/:id/reassign'] };
 

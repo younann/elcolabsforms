@@ -2,7 +2,7 @@ import { and, eq } from 'drizzle-orm';
 import { getDb, schema } from './db/client';
 import { HttpError } from './http';
 import type { Submission, User } from './db/schema';
-import type { FormData, FormDef } from '../shared/forms/types';
+import type { FormData } from '../shared/forms/types';
 import type { Status } from '../shared/status';
 
 export async function loadSubmission(id: string): Promise<Submission> {
@@ -27,17 +27,6 @@ export function mirror(data: FormData) {
 export function changedFieldIds(oldData: FormData, newData: FormData): string[] {
   const ids = new Set([...Object.keys(oldData), ...Object.keys(newData)]);
   return [...ids].filter((k) => JSON.stringify(oldData[k] ?? null) !== JSON.stringify(newData[k] ?? null));
-}
-
-// drop testNumber, date, signatures, photos, drawings
-export function duplicateData(def: FormDef, data: FormData): FormData {
-  const drop = new Set(['testNumber', 'date']);
-  for (const s of def.sections) {
-    for (const f of s.fields) {
-      if (f.type === 'signature' || f.type === 'photos' || f.type === 'drawing') drop.add(f.id);
-    }
-  }
-  return Object.fromEntries(Object.entries(data).filter(([k]) => !drop.has(k)));
 }
 
 // atomic status change; no row means someone else got there first

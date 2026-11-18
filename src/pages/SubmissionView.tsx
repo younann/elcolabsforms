@@ -6,7 +6,6 @@ import { useAuth } from '../lib/auth';
 import { act, docxUrl, isStuck, pdfUrl } from '../lib/submissions';
 import { Banner, Button, Sheet, toast } from '../ui';
 import { FormFiller } from '../fill/FormFiller';
-import { DuplicateButton } from '../components/DuplicateButton';
 import { MailModeBanner, useMailMode } from '../components/MailMode';
 import { ReassignCard } from '../components/ReassignCard';
 import { AuditButton, BackLink, DetailError, DetailSkeleton, useSubmission } from '../components/SubmissionDetail';
@@ -68,7 +67,6 @@ export function SubmissionView() {
   const actions = (
     <div className="flex w-full flex-wrap items-center gap-2">
       {admin && <AuditButton def={state.def} audit={state.audit} />}
-      {owner && <DuplicateButton id={s.id} variant="secondary" className="max-sm:flex-1" />}
       {s.pdfKey && (admin || s.status === 'emailed') && (
         <>
           <a href={pdfUrl(s.id)} download className={linkBtn} data-testid="pdf-link">

@@ -11,6 +11,8 @@ export type Summary = {
   siteName: string | null;
   revision: number;
   parentId: string | null;
+  jobId: string | null;
+  jobCopy: number | null;
   reviewNote: string | null;
   sendError: string | null;
   mailLogged: boolean;
@@ -40,11 +42,6 @@ export function listSubmissions(q: Record<string, string | undefined> = {}) {
   for (const [k, v] of Object.entries(q)) if (v) p.set(k, v);
   const qs = p.toString();
   return api<{ submissions: Summary[] }>(`/api/submissions${qs ? `?${qs}` : ''}`).then((r) => r.submissions);
-}
-
-export async function duplicate(id: string) {
-  const r = await api<{ submission: { id: string } }>(`/api/submissions/${id}/duplicate`, { method: 'POST' });
-  return r.submission.id;
 }
 
 export function act(id: string, action: 'return' | 'approve' | 'reopen' | 'retry', note?: string) {

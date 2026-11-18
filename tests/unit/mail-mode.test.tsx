@@ -11,6 +11,8 @@ vi.mock('../../src/lib/auth', () => ({
 const row = (over: Partial<Summary>): Summary => ({
   id: crypto.randomUUID(),
   formId: 'aerosol',
+  jobId: null,
+  jobCopy: null,
   status: 'emailed',
   testNumber: 'T-1',
   siteName: 'אתר',

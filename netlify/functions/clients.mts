@@ -4,6 +4,7 @@ import { and, asc, desc, eq, ilike, sql } from 'drizzle-orm';
 import { getDb, schema } from '../../server/db/client';
 import { handle, json, parseBody, HttpError } from '../../server/http';
 import { requireUser } from '../../server/auth';
+import { loadJobs } from '../../server/jobs';
 import { ClientInput, ClientPatch, SiteInput, SitePatch } from '../../shared/clients';
 
 const { clients, clientSites, jobs } = schema;
@@ -22,7 +23,7 @@ const uuidOr404 = (v: string | undefined, what: string) => {
 };
 
 export default handle(async (req, ctx) => {
-  await requireUser(req, 'admin');
+  const me = await requireUser(req, 'admin');
   const db = getDb();
   const id = uuidOr404(ctx.params?.id, 'לקוח');
   const siteId = uuidOr404(ctx.params?.siteId, 'אתר');
@@ -55,8 +56,8 @@ export default handle(async (req, ctx) => {
       const [c] = await db.select().from(clients).where(eq(clients.id, id));
       if (!c) throw notFound('לקוח');
       const sites = await db.select().from(clientSites).where(eq(clientSites.clientId, id)).orderBy(desc(clientSites.active), asc(clientSites.name));
-      // jobs arrive with the jobs API
-      return json({ client: clientView(c), sites: sites.map(siteView), jobs: [] });
+      const list = await loadJobs(eq(jobs.clientId, id), me);
+      return json({ client: clientView(c), sites: sites.map(siteView), jobs: list });
     }
     if (req.method === 'PATCH') {
       const b = await parseBody(req, ClientPatch);

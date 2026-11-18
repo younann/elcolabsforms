@@ -6,7 +6,6 @@ import { listSubmissions, rowHref, type Summary } from '../lib/submissions';
 import { Button, EmptyState } from '../ui';
 import { FormPicker } from '../components/FormPicker';
 import { ListSkeleton, SubmissionRow } from '../components/SubmissionList';
-import { DuplicateButton } from '../components/DuplicateButton';
 import { QueueList } from './admin/Queue';
 
 const SENT_PREVIEW = 8;
@@ -103,7 +102,7 @@ function InspectorHome({ name }: { name: string }) {
               <>
                 <ul className="flex flex-col gap-2">
                   {shownSent.map((s) => (
-                    <SubmissionRow key={s.id} s={s} href={rowHref(s, 'inspector')} actions={<DuplicateButton id={s.id} />} />
+                    <SubmissionRow key={s.id} s={s} href={rowHref(s, 'inspector')} />
                   ))}
                 </ul>
                 {sent.length > SENT_PREVIEW && (

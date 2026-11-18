@@ -50,6 +50,8 @@ export default handle(async (req) => {
       .insert(schema.attachments)
       .values({ submissionId: s.id, fieldId: meta.data.fieldId, kind: meta.data.kind, blobKey: key })
       .returning();
+    // inspector work: keep on job cancel
+    if (!s.touchedAt) await db.update(schema.submissions).set({ touchedAt: new Date() }).where(eq(schema.submissions.id, s.id));
     return json({ id: row.id, url: `/api/files/${row.id}` }, 201);
   }
 
