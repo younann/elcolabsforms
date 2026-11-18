@@ -20,12 +20,22 @@ function mem() {
   return cache;
 }
 
+// one page's details, dropped first when space runs out
+const DETAIL = /^(job|client|sites):/;
+let gen = 0;
+
 function remember(key: string, value: unknown) {
   const m = mem();
   m.set(key, value);
   try {
-    const json = JSON.stringify(Object.fromEntries(m));
+    let json = JSON.stringify(Object.fromEntries(m));
+    if (json.length > MAX_CHARS) {
+      for (const k of [...m.keys()]) if (DETAIL.test(k) && k !== key) m.delete(k);
+      json = JSON.stringify(Object.fromEntries(m));
+    }
+    // never leave an older snapshot behind
     if (json.length <= MAX_CHARS) localStorage.setItem(STORE, json);
+    else localStorage.removeItem(STORE);
   } catch {
     // memory copy still works
   }
@@ -33,6 +43,7 @@ function remember(key: string, value: unknown) {
 
 /** Drops every cached result; call when the user changes. */
 export function clearLoadCache() {
+  gen++;
   cache = new Map();
   try {
     localStorage.removeItem(STORE);
@@ -54,9 +65,12 @@ export function useLoad<T>(fn: () => Promise<T>, key: string): Load<T> {
 
   const reload = useCallback(async () => {
     const n = ++seq.current;
+    const g = gen;
     setLoading(true);
     try {
       const r = await fnRef.current();
+      // user changed while loading
+      if (g !== gen) return;
       if (n !== seq.current) return;
       remember(keyRef.current, r);
       setData(r);

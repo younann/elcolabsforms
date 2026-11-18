@@ -46,4 +46,36 @@ describe('useLoad cache', () => {
     const { result } = renderHook(() => useLoad(() => Promise.resolve('ok'), 'k4'));
     await waitFor(() => expect(result.current.data).toBe('ok'));
   });
+
+  test('drops a response that lands after clearLoadCache', async () => {
+    let resolve!: (v: string) => void;
+    const first = renderHook(() => useLoad(() => new Promise<string>((r) => (resolve = r)), 'k5'));
+    first.unmount();
+    clearLoadCache();
+    resolve('old user');
+    await new Promise((r) => setTimeout(r, 0));
+    expect(localStorage.getItem('load-cache')).toBeNull();
+    const second = renderHook(() => useLoad(() => new Promise(() => {}), 'k5'));
+    expect(second.result.current.data).toBeNull();
+  });
+
+  test('over the size cap it never keeps an old snapshot', async () => {
+    const small = renderHook(() => useLoad(() => Promise.resolve('a'), 'k6'));
+    await waitFor(() => expect(localStorage.getItem('load-cache')).toContain('k6'));
+    small.unmount();
+    const big = renderHook(() => useLoad(() => Promise.resolve('x'.repeat(250_000)), 'k7'));
+    await waitFor(() => expect(big.result.current.data).toHaveLength(250_000));
+    expect(localStorage.getItem('load-cache')).toBeNull();
+  });
+
+  test('over the cap it drops detail pages first', async () => {
+    const detail = renderHook(() => useLoad(() => Promise.resolve('d'.repeat(150_000)), 'job:1'));
+    await waitFor(() => expect(detail.result.current.data).not.toBeNull());
+    detail.unmount();
+    const list = renderHook(() => useLoad(() => Promise.resolve('l'.repeat(100_000)), 'jobs::'));
+    await waitFor(() => expect(list.result.current.data).not.toBeNull());
+    const stored = localStorage.getItem('load-cache') ?? '';
+    expect(stored).toContain('jobs::');
+    expect(stored).not.toContain('job:1');
+  });
 });
