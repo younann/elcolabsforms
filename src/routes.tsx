@@ -13,6 +13,8 @@ import { Review } from './pages/admin/Review';
 import { AllSubmissions } from './pages/admin/AllSubmissions';
 import { Users } from './pages/admin/Users';
 import { Settings } from './pages/admin/Settings';
+import { Clients } from './pages/admin/Clients';
+import { ClientDetail } from './pages/admin/ClientDetail';
 
 function Root() {
   return (
@@ -57,6 +59,8 @@ export const router = createBrowserRouter([
               { path: 'submissions', element: <AllSubmissions /> },
               { path: 'users', element: <Users /> },
               { path: 'settings', element: <Settings /> },
+              { path: 'clients', element: <Clients /> },
+              { path: 'clients/:id', element: <ClientDetail /> },
             ],
           },
         ],

@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { CaretLeft, Plus, UsersThree, WarningOctagon } from '@phosphor-icons/react';
-import { api, ApiError } from '../../lib/api';
+import { api, ApiError, errText } from '../../lib/api';
 import { useAuth, type Role } from '../../lib/auth';
 import { useLoad } from '../../lib/useLoad';
 import { Banner, Button, EmptyState, Segmented, Sheet, TextField, cx, toast } from '../../ui';
@@ -13,14 +13,6 @@ const ROLE_OPTIONS = [
   { value: 'inspector' as const, label: 'בודק' },
   { value: 'admin' as const, label: 'מנהל' },
 ];
-
-function errText(e: unknown) {
-  if (e instanceof ApiError && Array.isArray(e.body.issues)) {
-    const msg = (e.body.issues as { message?: string }[]).map((i) => i.message).find((m) => m && /[֐-׿]/.test(m));
-    if (msg) return msg;
-  }
-  return e instanceof Error ? e.message : 'הפעולה נכשלה';
-}
 
 export function Users() {
   const { user: me } = useAuth();

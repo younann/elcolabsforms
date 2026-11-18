@@ -84,3 +84,12 @@ async function readBody(res: Response): Promise<unknown> {
 }
 
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
+
+/** First Hebrew validation message, else the error text. */
+export function errText(e: unknown) {
+  if (e instanceof ApiError && Array.isArray(e.body.issues)) {
+    const msg = (e.body.issues as { message?: string }[]).map((i) => i.message).find((m) => m && /[֐-׿]/.test(m));
+    if (msg) return msg;
+  }
+  return e instanceof Error ? e.message : 'הפעולה נכשלה';
+}
