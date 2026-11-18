@@ -9,7 +9,6 @@ import {
   GearSix,
   House,
   SignOut,
-  Tray,
   UserCircle,
   UsersThree,
   type IconProps,
@@ -37,7 +36,7 @@ const TABS: Record<Role, Tab[]> = {
     { to: '/profile', label: 'פרופיל', Icon: UserCircle },
   ],
   admin: [
-    { to: '/', label: 'לאישור', Icon: Tray, end: true },
+    { to: '/', label: 'הבית', Icon: House, end: true },
     { to: '/admin/jobs', label: 'עבודות', Icon: Briefcase },
     { to: '/admin/submissions', label: 'כל הטפסים', short: 'טפסים', Icon: Files },
     { to: '/admin/clients', label: 'לקוחות', Icon: AddressBook },

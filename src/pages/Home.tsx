@@ -7,24 +7,14 @@ import { Button, EmptyState } from '../ui';
 import { JobCard } from '../components/JobCard';
 import { listJobs } from '../lib/jobs';
 import { ListSkeleton, SubmissionRow } from '../components/SubmissionList';
-import { QueueList } from './admin/Queue';
+import { Overview } from './admin/Overview';
 import { PushCard } from '../pwa/PushCard';
 
 const SENT_PREVIEW = 8;
 
 export function Home() {
   const { user } = useAuth();
-  if (user?.role === 'admin') {
-    return (
-      <section>
-        <h1 className="text-2xl font-semibold tracking-tight">שלום, {user.displayName}</h1>
-        <p className="mt-1 text-[15px] text-muted">טפסים שממתינים לאישור שלך</p>
-        <div className="mt-6">
-          <QueueList />
-        </div>
-      </section>
-    );
-  }
+  if (user?.role === 'admin') return <Overview />;
   return <InspectorHome name={user?.displayName ?? ''} />;
 }
 
