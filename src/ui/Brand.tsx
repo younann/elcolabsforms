@@ -35,3 +35,14 @@ export function Brand({ size = 'md', compact, className }: BrandProps) {
     </span>
   );
 }
+
+export function DevCredit({ className }: { className?: string }) {
+  return (
+    <p className={cx('text-center text-xs text-muted', className)} dir="ltr">
+      Developed by{' '}
+      <a href="https://devultra.net" target="_blank" rel="noopener noreferrer" className="font-medium underline-offset-2 hover:underline">
+        devultra.net
+      </a>
+    </p>
+  );
+}

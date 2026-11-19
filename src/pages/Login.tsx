@@ -3,7 +3,7 @@ import { Navigate, useLocation, useNavigate, type Location } from 'react-router-
 import { Eye, EyeSlash } from '@phosphor-icons/react';
 import { useAuth } from '../lib/auth';
 import { ApiError } from '../lib/api';
-import { APP_NAME, Banner, Button, LogoMark, TAGLINE, TextField } from '../ui';
+import { APP_NAME, Banner, Button, DevCredit, LogoMark, TAGLINE, TextField } from '../ui';
 
 const fine = typeof window !== 'undefined' && window.matchMedia?.('(pointer: fine)').matches;
 
@@ -102,6 +102,7 @@ export function Login() {
         </form>
 
         <p className="mt-8 text-sm text-muted">אין לך חשבון? מנהל המערכת יפתח לך משתמש.</p>
+        <DevCredit className="mt-6" />
       </div>
     </div>
   );

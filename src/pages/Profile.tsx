@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { PenNib, Signature } from '@phosphor-icons/react';
 import { api, ApiError } from '../lib/api';
 import { useAuth } from '../lib/auth';
-import { Button, toast } from '../ui';
+import { Button, DevCredit, toast } from '../ui';
 import { SignatureSheet } from '../fill/SignatureSheet';
 
 /** Own details and the saved signature, for every role. */
@@ -69,6 +69,7 @@ export function Profile() {
       </div>
 
       <SignatureSheet open={open} title="החתימה שלי" onClose={() => setOpen(false)} onSave={save} />
+      <DevCredit className="mt-8" />
     </section>
   );
 }
