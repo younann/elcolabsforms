@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { ImageSquare, UploadSimple, WarningOctagon } from '@phosphor-icons/react';
+import { FileXls, ImageSquare, UploadSimple, WarningOctagon } from '@phosphor-icons/react';
 import { api, ApiError } from '../../lib/api';
 import { useLoad } from '../../lib/useLoad';
 import { compressImage } from '../../lib/image';
@@ -25,6 +25,7 @@ export function Settings() {
         <>
           <DetailsForm initial={data} />
           <StampCard hasStamp={data.hasStamp} />
+          <ExportCard />
         </>
       )}
     </section>
@@ -144,6 +145,35 @@ function StampCard({ hasStamp }: { hasStamp: boolean }) {
         <Button variant="secondary" loading={busy} icon={<UploadSimple className="size-5" aria-hidden />} onClick={() => input.current?.click()}>
           {src ? 'החלפת חותמת' : 'העלאת חותמת'}
         </Button>
+      </div>
+    </div>
+  );
+}
+
+// last month as YYYY-MM, Israel time
+function lastMonth() {
+  const [y, m] = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jerusalem' }).split('-').map(Number);
+  return m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, '0')}`;
+}
+
+function ExportCard() {
+  const [month, setMonth] = useState(lastMonth);
+  const ok = /^\d{4}-(0[1-9]|1[0-2])$/.test(month);
+  return (
+    <div className="mt-5 rounded-box bg-surface shadow-[var(--shadow-card)] p-4 md:p-6">
+      <h2 className="text-lg font-semibold">ייצוא חודשי</h2>
+      <p className="mt-1 text-[15px] text-muted">טפסים שאושרו בחודש, לפי בודק ולפי לקוח. כל טופס נספר פעם אחת, בחודש האישור הראשון.</p>
+      <div className="mt-4 flex flex-wrap items-end gap-3">
+        <TextField label="חודש" type="month" value={month} onChange={(e) => setMonth(e.target.value)} className="min-w-44 flex-1" />
+        <a
+          href={ok ? `/api/export?month=${month}` : undefined}
+          aria-disabled={!ok}
+          download
+          className="press inline-flex min-h-12 items-center justify-center gap-2 rounded-ctl bg-accent-fill px-4 font-semibold text-accent-fg transition-[transform,opacity] duration-150 ease-snap active:scale-[0.97] aria-disabled:pointer-events-none aria-disabled:opacity-50"
+        >
+          <FileXls className="size-5" aria-hidden />
+          הורדת Excel
+        </a>
       </div>
     </div>
   );
