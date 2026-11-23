@@ -29,6 +29,9 @@ const RULES: Partial<Record<FormId, Rule[]>> = {
   ],
 };
 
+/** Check ids an N/A rule may fill. */
+export const ruleChecks = (id: FormId): Set<string> => new Set((RULES[id] ?? []).flatMap((r) => r.checks));
+
 /** Applies N/A rules that flipped between prev and next. Manual answers are kept. */
 export function applyRules(def: FormDef, prev: FormData, next: FormData): FormData {
   const rules = RULES[def.id];

@@ -1,5 +1,6 @@
 import type { AttachmentRef, CheckField, CheckValue, Field, FormData, FormDef } from './types';
 import { NA_VALUE } from './types';
+import { ruleChecks } from './rules';
 
 export type Missing = { sectionId: string; fieldId: string; label: string };
 
@@ -79,6 +80,31 @@ export function markSectionNACount(def: FormDef, sectionId: string, data: FormDa
     changed++;
   }
   return { data: out, changed };
+}
+
+const OK_VALUE = { yesNoNA: 'כן', fitNotfitNA: 'מתאים', existsActive: 'קיים' } as const;
+
+// verdicts and rule-controlled checks stay manual
+export function markSectionOKCount(def: FormDef, sectionId: string, data: FormData): { data: FormData; changed: number } {
+  const out: FormData = { ...data };
+  let changed = 0;
+  const sec = def.sections.find((s) => s.id === sectionId);
+  if (!sec) return { data: out, changed };
+  const skip = ruleChecks(def.id);
+  for (const f of sec.fields) {
+    if (f.type !== 'check' || f.answers === 'conclusion' || skip.has(f.id)) continue;
+    const cur = out[f.id] as CheckValue | undefined;
+    if (cur && !blank(cur.answer)) continue;
+    out[f.id] = f.answers === 'existsActive' ? { ...cur, answer: OK_VALUE.existsActive, active: 'פעיל' } : { ...cur, answer: OK_VALUE[f.answers] };
+    changed++;
+  }
+  return { data: out, changed };
+}
+
+/** True when the section has a check "All OK" can fill. */
+export function hasOkChecks(def: FormDef, s: { fields: Field[] }): boolean {
+  const skip = ruleChecks(def.id);
+  return s.fields.some((f) => f.type === 'check' && f.answers !== 'conclusion' && !skip.has(f.id));
 }
 
 export function markSectionNA(def: FormDef, sectionId: string, data: FormData): FormData {

@@ -1,11 +1,11 @@
 import { Link } from 'react-router-dom';
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { CheckCircle, CircleNotch, CloudSlash, Checks, ListBullets, PaperPlaneTilt, WarningCircle } from '@phosphor-icons/react';
+import { CheckCircle, CircleNotch, ListChecks, CloudSlash, Checks, ListBullets, PaperPlaneTilt, WarningCircle } from '@phosphor-icons/react';
 import { Banner, Button, Sheet, StatusBadge, cx, toast, type SubmissionStatus } from '../ui';
 import { api, ApiError } from '../lib/api';
 import { clearLocal, createAutosave, dataHash, readLocal, sameData, type Autosave, type SaveStatus } from '../lib/autosave';
 import type { AttachmentRef, Field, FormData, FormDef, Section } from '../../shared/forms/types';
-import { markSectionNACount, validateForSubmit, type Missing } from '../../shared/forms/validate';
+import { hasOkChecks, markSectionNACount, markSectionOKCount, validateForSubmit, type Missing } from '../../shared/forms/validate';
 import { FillContext, fieldDomId, sectionDomId, type Attachment, type FillCtx, type FillMode } from './context';
 import { FieldRenderer } from './FieldRenderer';
 import { SectionNav, type SectionItem } from './SectionNav';
@@ -261,6 +261,13 @@ export function FormFiller({
     toast.success(r.changed > 0 ? `${r.changed} סעיפים סומנו` : 'כל הסעיפים כבר סומנו');
   }
 
+  function markOK(sectionId: string) {
+    const r = markSectionOKCount(def, sectionId, dataRef.current);
+    dataRef.current = r.data;
+    setData(r.data);
+    toast.success(r.changed > 0 ? `${r.changed} סעיפים סומנו כתקין` : 'כל הסעיפים כבר סומנו');
+  }
+
   async function submit() {
     setSubmitting(true);
     try {
@@ -353,6 +360,7 @@ export function FormFiller({
                 readOnly={locked}
                 missingIds={missingIds}
                 onMarkNA={markNA}
+                onMarkOK={hasOkChecks(def, s) ? markOK : undefined}
               />
             ))}
           </div>
@@ -434,9 +442,10 @@ type SectionCardProps = {
   readOnly: boolean;
   missingIds: Set<string>;
   onMarkNA(id: string): void;
+  onMarkOK?: (id: string) => void;
 };
 
-function SectionCard({ section: s, item, data, onChange, readOnly, missingIds, onMarkNA }: SectionCardProps) {
+function SectionCard({ section: s, item, data, onChange, readOnly, missingIds, onMarkNA, onMarkOK }: SectionCardProps) {
   const na = naLabel(s);
   const complete = item.total > 0 && item.done === item.total;
   let topic: string | undefined;
@@ -456,9 +465,16 @@ function SectionCard({ section: s, item, data, onChange, readOnly, missingIds, o
         )}
       </div>
       {na && !readOnly && !complete && (
-        <Button variant="ghost" className="-ms-2 mb-1 text-accent!" icon={<Checks className="size-5" aria-hidden />} onClick={() => onMarkNA(s.id)}>
-          {na}
-        </Button>
+        <div className="-ms-2 mb-1 flex flex-wrap gap-x-2">
+          {onMarkOK && (
+            <Button variant="ghost" className="text-success!" icon={<ListChecks className="size-5" aria-hidden />} onClick={() => onMarkOK(s.id)}>
+              סמן את השאר כתקין
+            </Button>
+          )}
+          <Button variant="ghost" className="text-accent!" icon={<Checks className="size-5" aria-hidden />} onClick={() => onMarkNA(s.id)}>
+            {na}
+          </Button>
+        </div>
       )}
       <div className="flex flex-col gap-4">
         {groups(s.fields).map((g, gi) =>
