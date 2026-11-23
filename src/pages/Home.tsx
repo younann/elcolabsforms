@@ -9,6 +9,9 @@ import { listJobs } from '../lib/jobs';
 import { ListSkeleton, SubmissionRow } from '../components/SubmissionList';
 import { Overview } from './admin/Overview';
 import { PushCard } from '../pwa/PushCard';
+import { myDay } from '../../shared/overview';
+
+const todayIL = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jerusalem' });
 
 const SENT_PREVIEW = 8;
 
@@ -33,7 +36,8 @@ function Group({ title, count, children }: { title: string; count?: number; chil
 function InspectorHome({ name }: { name: string }) {
   const { data, error, reload } = useLoad(() => listSubmissions(), 'mine');
   const jobs = useLoad(() => listJobs(), 'my-jobs');
-  const openJobs = (jobs.data ?? []).filter((j) => j.state === 'open' || j.state === 'cancelled-open');
+  const today = todayIL();
+  const day = myDay(jobs.data ?? [], today);
   const [allSent, setAllSent] = useState(false);
   const by = (pred: (s: Summary) => boolean) => (data ?? []).filter(pred);
   // returned stay listed for the note; job drafts live on their card
@@ -47,14 +51,23 @@ function InspectorHome({ name }: { name: string }) {
       <h1 className="text-[28px] leading-tight font-bold sm:text-[32px]">שלום, {name}</h1>
       <PushCard />
 
-      {openJobs.length > 0 && (
-        <Group title="עבודות פתוחות" count={openJobs.length}>
-          <div className="flex flex-col gap-3">
-            {openJobs.map((j) => (
-              <JobCard key={j.id} job={j} />
-            ))}
-          </div>
-        </Group>
+      {(
+        [
+          ['היום', day.today],
+          ['מחר', day.tomorrow],
+          ['בהמשך', day.later],
+        ] as const
+      ).map(
+        ([title, list]) =>
+          list.length > 0 && (
+            <Group key={title} title={title} count={list.length}>
+              <div className="flex flex-col gap-3">
+                {list.map((j) => (
+                  <JobCard key={j.id} job={j} late={j.state === 'open' && j.plannedDate < today} />
+                ))}
+              </div>
+            </Group>
+          ),
       )}
       {jobs.error && !jobs.data && (
         <EmptyState icon={<WarningOctagon />} title="לא ניתן לטעון עבודות" className="mt-6" action={<Button onClick={jobs.reload}>נסה שוב</Button>}>

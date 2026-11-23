@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ApiError, errText } from '../../lib/api';
 import { getClient, listClients, saveSite } from '../../lib/clients';
 import { createJob, type Qty } from '../../lib/jobs';
@@ -13,14 +13,16 @@ const today = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jer
 
 export function JobNew() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
   const clients = useLoad(listClients, 'clients');
   const people = useLoad(listInspectors, 'inspectors');
   const [clientId, setClientId] = useState('');
   const sites = useLoad(() => (clientId ? getClient(clientId).then((r) => r.sites.filter((s) => s.active)) : Promise.resolve([])), `sites:${clientId}`);
   const [siteId, setSiteId] = useState('');
   const [newSite, setNewSite] = useState({ name: '', address: '' });
-  const [inspectorId, setInspectorId] = useState('');
-  const [plannedDate, setPlannedDate] = useState(today);
+  // calendar passes inspector and day
+  const [inspectorId, setInspectorId] = useState(params.get('inspectorId') ?? '');
+  const [plannedDate, setPlannedDate] = useState(() => (/^\d{4}-\d{2}-\d{2}$/.test(params.get('date') ?? '') ? params.get('date')! : today()));
   const [note, setNote] = useState('');
   const [qty, setQty] = useState<Qty>({});
   const [busy, setBusy] = useState(false);

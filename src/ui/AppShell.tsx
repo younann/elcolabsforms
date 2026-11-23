@@ -2,6 +2,7 @@ import { useState, type ComponentType } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   AddressBook,
+  CalendarDots,
   CaretRight,
   Briefcase,
   DotsThreeOutline,
@@ -39,7 +40,8 @@ const TABS: Record<Role, Tab[]> = {
     { to: '/', label: 'הבית', Icon: House, end: true },
     { to: '/admin/jobs', label: 'עבודות', Icon: Briefcase },
     { to: '/admin/submissions', label: 'כל הטפסים', short: 'טפסים', Icon: Files },
-    { to: '/admin/clients', label: 'לקוחות', Icon: AddressBook },
+    { to: '/admin/calendar', label: 'יומן', Icon: CalendarDots },
+    { to: '/admin/clients', label: 'לקוחות', Icon: AddressBook, more: true },
     { to: '/admin/users', label: 'משתמשים', Icon: UsersThree, more: true },
     { to: '/admin/settings', label: 'הגדרות', Icon: GearSix, more: true },
     { to: '/profile', label: 'פרופיל', Icon: UserCircle, more: true },

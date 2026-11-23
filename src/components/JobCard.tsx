@@ -7,7 +7,7 @@ import { wazeLink } from '../lib/waze';
 import { WazeButton } from './WazeButton';
 
 /** Inspector home: one open job with its forms. */
-export function JobCard({ job }: { job: JobSummary }) {
+export function JobCard({ job, late }: { job: JobSummary; late?: boolean }) {
   return (
     <article className="rounded-box bg-surface shadow-[var(--shadow-card)]" data-testid="job-card">
       <div className="px-4 pt-4 pb-3">
@@ -15,6 +15,7 @@ export function JobCard({ job }: { job: JobSummary }) {
           <Link to={`/jobs/${job.id}`} className="min-w-0 flex-1 text-[17px] font-semibold leading-snug hover:underline">
             {job.client.name} · {job.site.name}
           </Link>
+          {late && <span className="shrink-0 rounded-full bg-warning-soft px-2.5 py-0.5 text-[13px] font-semibold text-warning">באיחור</span>}
           {job.state === 'cancelled-open' && <span className="shrink-0 rounded-full bg-danger-soft px-2.5 py-0.5 text-[13px] font-semibold text-danger">בוטלה</span>}
         </div>
         <div className="mt-2 flex flex-col gap-1.5 text-[15px] text-muted">
