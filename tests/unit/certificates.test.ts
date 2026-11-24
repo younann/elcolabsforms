@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { CertData, certTemplate, nextCertNumber } from '../../shared/certificates';
+import { CERT_NUMBER, CertData, certTemplate, nextCertNumber } from '../../shared/certificates';
 import { renderCertificateHtml } from '../../server/certificate';
 import { canGetReport, engineerSees } from '../../server/submissions';
 import type { Submission, User } from '../../server/db/schema';
@@ -9,8 +9,12 @@ const fx = JSON.parse(readFileSync('tests/fixtures/f1220.json', 'utf8'));
 
 describe('nextCertNumber', () => {
   test('first of the year', () => expect(nextCertNumber('FD', 2026, [])).toBe('FD260001'));
-  test('after the highest, ignoring other prefixes, years and gaps', () =>
-    expect(nextCertNumber('FD', 2026, ['FD260666', 'FD260012', 'FD250999', 'GS260900', null])).toBe('FD260667'));
+  test('one sequence across prefixes, ignoring other years', () =>
+    expect(nextCertNumber('ER', 2026, ['FD260666', 'KG260602', 'INT260649-1', 'FD250999', null])).toBe('ER260667'));
+  test('number format', () => {
+    expect(CERT_NUMBER.test('INT260649-1')).toBe(true);
+    expect(CERT_NUMBER.test('FD26066')).toBe(false);
+  });
   test('new year starts again', () => expect(nextCertNumber('FD', 2027, ['FD260666'])).toBe('FD270001'));
 });
 
@@ -32,7 +36,67 @@ describe('1220 prefill', () => {
     expect(d.boards[0]).toEqual({ space: 'פירוט לוח חשמל 1 – מיקום לוח חשמל 1', cutoff: 'כן', protectedBy: '' });
     expect(d.defects).toHaveLength(2);
   });
-  test('no template for other forms yet', () => expect(certTemplate('gas')).toBeNull());
+  test('no template for detectors yet', () => expect(certTemplate('detectors')).toBeNull());
+});
+
+const fixture = (id: string) => JSON.parse(readFileSync(`tests/fixtures/${id}.json`, 'utf8')).data;
+
+describe('gas and aerosol prefill', () => {
+  test('gas: spaces, contact, agent type and detector count', () => {
+    const t = certTemplate('gas')!;
+    const d = t.prefill(fixture('gas'));
+    expect(t.prefix).toBe('KG');
+    expect(d.spaces[0]).toMatchObject({ desc: 'תיאור החלל המוגן 1', volume: '2', agent: '2' });
+    expect(d.dialsTo).toBe('דנה כהן, קב"ט');
+    expect(d.dialsToPhone).toBe('054-3322110');
+    expect(d.systemType).toBe('מכון התקנים'); // c5 gasType in the fixture
+    expect(Number(d.detectorQty)).toBeGreaterThan(0);
+    expect(d.contractor.idNo).toBeTruthy();
+  });
+  test('aerosol uses its own prefix and standard', () => {
+    const t = certTemplate('aerosol')!;
+    expect([t.prefix, t.standard]).toEqual(['ER', 'ת"י 5210']);
+    expect(t.prefill(fixture('aerosol')).spaces.length).toBeGreaterThan(0);
+  });
+});
+
+describe('536 prefill', () => {
+  const t = certTemplate('f536')!;
+  const d = t.prefill(fixture('f536'));
+  test('documents, systems and fire panel', () => {
+    expect(d.docs).toHaveLength(11);
+    expect(d.docs[1]).toMatchObject({ lab: 'מכון התקנים', certNo: 'IL-4424', fit: 'לא' });
+    expect(d.systems.find((x) => x.name === 'מערכת BMS')?.value).toBe('כן');
+    expect(d.panel[0]).toEqual({ name: 'לוח משנה', exists: 'קיים', sign: '', fit: 'מתאים' });
+  });
+  test('scenario tables keep only used rows and columns', () => {
+    expect(d.scenarios.length).toBeGreaterThan(0);
+    const s0 = d.scenarios[0];
+    expect(s0.rows.every((r) => r.cells.length === s0.columns.length)).toBe(true);
+    expect(s0.rows[0].action).toBe('התראה ברכזת גילוי עשן');
+  });
+  test('conclusion from the form', () => expect(d.fit).toBe(false));
+});
+
+describe('other layouts render', () => {
+  const base = { issueDate: '24/11/2026', inspectorName: 'נאיל', engineerName: 'מקסים', images: {} };
+  test('gas: spaces table, no ceiling note, repeat reference', () => {
+    const t = certTemplate('gas')!;
+    const html = renderCertificateHtml({ ...base, template: t, number: 'KG260602', data: { ...t.prefill(fixture('gas')), repeatOf: '260558' } });
+    expect(html).toContain('חללים מוגנים');
+    expect(html).toContain('חוזרת ל260558');
+    expect(html).toContain('פריקת המחולל');
+    expect(html).not.toContain('תקרה תותבת');
+    expect(html).not.toContain('לוחות חשמל');
+  });
+  test('536: four pages with the end mark', () => {
+    const t = certTemplate('f536')!;
+    const html = renderCertificateHtml({ ...base, template: t, number: 'INT260649-1', data: t.prefill(fixture('f536')) });
+    expect(html.match(/class="page"/g)).toHaveLength(4);
+    expect(html).toContain('260649-1');
+    expect(html).toContain('סוף תעודה');
+    expect(html).toContain('לא מתאימה');
+  });
 });
 
 describe('renderCertificateHtml', () => {

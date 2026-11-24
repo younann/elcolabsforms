@@ -7,11 +7,11 @@ import { requireUser } from '../../server/auth';
 import { getBlob } from '../../server/blobs';
 import { asData, assertAccess, auditSafe, loadSubmission, transition } from '../../server/submissions';
 import { certificateHtml, suggestNumber, triggerCertificate } from '../../server/certificates';
-import { CertData, certTemplate } from '../../shared/certificates';
+import { CERT_NUMBER, CertData, certTemplate } from '../../shared/certificates';
 import { canTransition, type Status } from '../../shared/status';
 
 const Ymd = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
-const Number_ = z.string().trim().regex(/^[A-Z]{1,4}\d{6}$/, 'מספר תעודה לא תקין');
+const Number_ = z.string().trim().regex(CERT_NUMBER, 'מספר תעודה לא תקין');
 const Preview = z.object({ number: Number_, issueDate: Ymd, data: CertData });
 const Issue = z.discriminatedUnion('withoutTemplate', [
   z.object({ withoutTemplate: z.literal(false), number: Number_, issueDate: Ymd, data: CertData, sentTo: z.email() }),
@@ -58,7 +58,7 @@ export default handle(async (req) => {
     }
     return json({
       certificate: cert ?? null,
-      template: template && { prefix: template.prefix, title: template.title },
+      template: template && { prefix: template.prefix, title: template.title, layout: template.layout },
       prefill: template ? template.prefill(asData(s.data)) : null,
       suggestedNumber: await suggestNumber(s.formId, Number(todayIL().slice(0, 4))),
       issueDate: todayIL(),

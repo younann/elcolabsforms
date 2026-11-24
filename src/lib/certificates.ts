@@ -1,11 +1,11 @@
 import { api } from './api';
-import type { CertData } from '../../shared/certificates';
+import type { CertData, CertLayout } from '../../shared/certificates';
 import type { Status } from '../../shared/status';
 
 export type { CertData };
 export type CertInfo = {
   certificate: { number: string | null; status: string; sentTo: string; sentAt: string | null; error: string | null; mailLogged: boolean } | null;
-  template: { prefix: string; title: string } | null;
+  template: { prefix: string; title: string; layout: CertLayout } | null;
   prefill: CertData | null;
   suggestedNumber: string | null;
   issueDate: string;

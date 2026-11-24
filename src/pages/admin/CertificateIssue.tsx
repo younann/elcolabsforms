@@ -4,6 +4,7 @@ import { Eye, PaperPlaneTilt, Plus, Trash, WarningOctagon } from '@phosphor-icon
 import { ApiError } from '../../lib/api';
 import { useLoad } from '../../lib/useLoad';
 import { getCertInfo, issueCertificate, previewCertificate, type CertData } from '../../lib/certificates';
+import { CERT_NUMBER } from '../../../shared/certificates';
 import { Banner, Button, EmptyState, Segmented, TextArea, TextField, toast } from '../../ui';
 import { BackLink, DetailSkeleton } from '../../components/SubmissionDetail';
 
@@ -47,7 +48,7 @@ export function CertificateIssue() {
   if (!info) return <DetailSkeleton />;
 
   const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sentTo.trim());
-  const numberOk = /^[A-Z]{1,4}\d{6}$/.test(number.trim());
+  const numberOk = CERT_NUMBER.test(number.trim());
 
   async function issue() {
     if (busy) return;
@@ -102,6 +103,7 @@ export function CertificateIssue() {
     );
   }
 
+  const layout = info.template.layout;
   const set = <K extends keyof CertData>(k: K, v: CertData[K]) => setD({ ...d, [k]: v });
   const text = (k: keyof CertData, label: string, area = false) =>
     area ? (
@@ -132,63 +134,152 @@ export function CertificateIssue() {
         <TextField label="תאריך הפצה" type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} />
         {recipient}
         {text('agreement', "מס' הסכם")}
+        {layout === 'extinguish' && text('repeatOf', 'חוזרת לתעודה מס׳')}
       </Card>
 
-      <Card title="האתר והמבנה">
-        {text('testDate', 'תאריך הבדיקה')}
-        {text('siteName', 'שם האתר')}
-        {text('address', 'כתובת האתר')}
-        {text('buildingUse', 'ייעוד המבנה')}
-        {text('description', 'תיאור מבנה', true)}
-        {text('protectedSpaces', 'חללים מוגנים ע"י המערכת', true)}
-        {text('unprotectedSpaces', 'חללים אינם מוגנים', true)}
-        {text('gush', 'גוש')}
-        {text('helka', 'חלקה')}
-        {text('migrash', 'מגרש')}
-        {text('area', 'שטח המבנה (מ"ר)')}
-        {text('height', 'גובה המבנה (מטר)')}
-        {text('risk', 'רמת סיכון')}
-      </Card>
+      {layout === 'integration' ? (
+        <>
+          <Card title="פרטי הלקוח וההזמנה">
+            {text('customerName', 'שם המזמין')}
+            {text('siteName', 'שם אתר')}
+            {text('address', 'כתובת אתר')}
+            <TextField label="שם מתכנן" value={d.designer.name} onChange={(e) => set('designer', { ...d.designer, name: e.target.value })} />
+            {text('fireDeptRef', "מס' סימוכין")}
+            {text('fireDeptFile', "מס' תיק")}
+            {text('clientNo', "מס' הלקוח")}
+            {text('orderNo', "מס' הזמנה")}
+            {text('gush', 'גוש')}
+            {text('helka', 'חלקה')}
+            {text('migrash', 'מגרש')}
+          </Card>
+          <Card title="מהות הבדיקה והאתר">
+            {text('testDate', 'תאריך בדיקה')}
+            {text('description', 'מבנה חדש / ביקורת תקופתית')}
+            {text('previousCert', "מס' תעודה קודמת")}
+            {text('heightClass', 'סיווג הבניין לפי גובה')}
+            {text('floors', 'פירוט קומות')}
+            {text('buildingUse', 'ייעוד המבנה')}
+            {text('dialerPhone', "מס' חייגן ראשי")}
+          </Card>
+          <Rows
+            title="רשימת מסמכים"
+            rows={d.docs}
+            empty={{ type: '', lab: '', certNo: '', fit: '' }}
+            cols={[
+              ['type', 'סוג התעודה'],
+              ['lab', 'מעבדה מבצעת'],
+              ['certNo', "מס' תעודה"],
+              ['fit', 'מתאים (כן / לא / ל.ר)'],
+            ]}
+            onChange={(docs) => set('docs', docs)}
+          />
+          <Rows
+            title="מערכות משתתפות"
+            rows={d.systems}
+            empty={{ name: '', value: '' }}
+            cols={[
+              ['name', 'מערכת'],
+              ['value', 'כן / לא'],
+            ]}
+            onChange={(systems) => set('systems', systems)}
+          />
+          <Rows
+            title="בעמדת כבאים מותקנים"
+            rows={d.panel}
+            empty={{ name: '', exists: '', sign: '', fit: '' }}
+            cols={[
+              ['name', 'מערכת'],
+              ['exists', 'קיים / לא קיים'],
+              ['sign', 'שילוט (יש / אין)'],
+              ['fit', 'מתאים / לא מתאים / לא רלוונטי'],
+            ]}
+            onChange={(panel) => set('panel', panel)}
+          />
+          <Banner tone="info" className="mt-5" title="טבלאות משטר ההפעלות">
+            {d.scenarios.length} טבלאות נלקחות מהטופס כפי שמילא הבודק. לשינוי – יש לתקן בטופס.
+          </Banner>
+        </>
+      ) : (
+        <>
+          <Card title="האתר והמבנה">
+            {text('testDate', 'תאריך הבדיקה')}
+            {text('siteName', 'שם האתר')}
+            {text('address', 'כתובת האתר')}
+            {text('buildingUse', 'ייעוד המבנה')}
+            {layout === 'detection' && text('description', 'תיאור מבנה', true)}
+            {layout === 'detection' && text('protectedSpaces', 'חללים מוגנים ע"י המערכת', true)}
+            {layout === 'detection' && text('unprotectedSpaces', 'חללים אינם מוגנים', true)}
+            {text('gush', 'גוש')}
+            {text('helka', 'חלקה')}
+            {text('migrash', 'מגרש')}
+            {text('area', 'שטח המבנה (מ"ר)')}
+            {text('height', 'גובה המבנה (מטר)')}
+            {text('risk', 'רמת סיכון')}
+          </Card>
 
-      <Card title="כבאות ורכזת">
-        {text('fireDeptShown', 'הוצגו דרישות כבאות')}
-        {text('fireDeptFile', "מס' תיק")}
-        {text('fireDeptRef', "מס' סימוכין")}
-        {text('dialerPhone', 'הרכזת מחוברת לחייגן בטלפון')}
-        {text('dialsTo', 'מחייג ל')}
-        {text('panelType', 'סוג הרכזת')}
-        {text('panelLocation', 'מיקום הרכזת')}
-      </Card>
+          <Card title="כבאות ורכזת">
+            {text('fireDeptShown', 'הוצגו דרישות כבאות')}
+            {text('fireDeptFile', "מס' תיק")}
+            {text('fireDeptRef', "מס' סימוכין")}
+            {text('dialerPhone', 'הרכזת מחוברת לחייגן בטלפון')}
+            {text('dialsTo', layout === 'extinguish' ? 'מחייג לאחראי בשם' : 'מחייג ל')}
+            {layout === 'extinguish' && text('dialsToPhone', 'טלפון האחראי')}
+            {text('panelType', 'סוג הרכזת')}
+            {text('panelLocation', 'מיקום הרכזת')}
+            {layout === 'extinguish' && text('systemType', 'סוג מערכת הכיבוי')}
+            {layout === 'extinguish' && text('detectorType', 'סוג הגלאים')}
+            {layout === 'extinguish' && text('detectorQty', 'כמות הגלאים')}
+          </Card>
 
-      <Rows
-        title="ציוד"
-        rows={d.equipment}
-        empty={{ label: '', model: '', qty: '' }}
-        cols={[
-          ['label', 'פריט'],
-          ['model', 'דגם'],
-          ['qty', 'כמות'],
-        ]}
-        onChange={(equipment) => set('equipment', equipment)}
-      />
+          {layout === 'extinguish' ? (
+            <Rows
+              title="חללים מוגנים"
+              rows={d.spaces}
+              empty={{ desc: '', location: '', dims: '', volume: '', agent: '', container: '', containerQty: '' }}
+              cols={[
+                ['desc', 'תיאור החלל המוגן'],
+                ['location', 'מיקום'],
+                ['dims', 'מידות'],
+                ['volume', 'נפח החלל'],
+                ['agent', 'כמות חומר הכיבוי'],
+                ['container', 'סוג מיכל'],
+                ['containerQty', 'כמות המכלים'],
+              ]}
+              onChange={(spaces) => set('spaces', spaces)}
+            />
+          ) : (
+            <Rows
+              title="ציוד"
+              rows={d.equipment}
+              empty={{ label: '', model: '', qty: '' }}
+              cols={[
+                ['label', 'פריט'],
+                ['model', 'דגם'],
+                ['qty', 'כמות'],
+              ]}
+              onChange={(equipment) => set('equipment', equipment)}
+            />
+          )}
 
-      <Card title="אנשים">
-        {party('designer', 'מתכנן')}
-        {party('contractor', 'קבלן מבצע')}
-        {party('escort', 'מלווה הבדיקה')}
-      </Card>
+          <Card title="אנשים">
+            {party('designer', 'מתכנן')}
+            {party('contractor', 'קבלן מבצע')}
+            {party('escort', 'מלווה הבדיקה')}
+          </Card>
 
-      <Rows
-        title="לוחות חשמל"
-        rows={d.boards}
-        empty={{ space: '', cutoff: '', protectedBy: '' }}
-        cols={[
-          ['space', 'תיאור החלל'],
-          ['cutoff', 'ניתוק ממקור הזנה'],
-          ['protectedBy', 'מוגן ע"י גלאים'],
-        ]}
-        onChange={(boards) => set('boards', boards)}
-      />
+          <Rows
+            title="לוחות חשמל"
+            rows={d.boards}
+            empty={{ space: '', cutoff: '', protectedBy: '' }}
+            cols={[
+              ['space', 'תיאור החלל'],
+              ['cutoff', 'ניתוק ממקור הזנה'],
+              ['protectedBy', 'מוגן ע"י גלאים'],
+            ]}
+            onChange={(boards) => set('boards', boards)}
+          />
+        </>
+      )}
 
       <section className="mt-5 flex flex-col gap-4 rounded-box bg-surface p-4 shadow-[var(--shadow-card)] md:p-6">
         <h2 className="text-lg font-semibold">מסקנה וליקויים</h2>

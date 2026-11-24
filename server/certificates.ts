@@ -58,11 +58,10 @@ export async function certificateHtml(sub: Submission, input: { number: string; 
 export async function suggestNumber(formId: string, year: number): Promise<string | null> {
   const t = certTemplate(formId);
   if (!t) return null;
-  const head = `${t.prefix}${String(year % 100).padStart(2, '0')}`;
   const rows = await getDb()
     .select({ number: schema.certificates.number })
     .from(schema.certificates)
-    .where(like(schema.certificates.number, `${head}%`));
+    .where(like(schema.certificates.number, `%${String(year % 100).padStart(2, '0')}____%`));
   return nextCertNumber(t.prefix, year, rows.map((r) => r.number));
 }
 
