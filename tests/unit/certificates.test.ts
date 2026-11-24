@@ -36,7 +36,7 @@ describe('1220 prefill', () => {
     expect(d.boards[0]).toEqual({ space: 'פירוט לוח חשמל 1 – מיקום לוח חשמל 1', cutoff: 'כן', protectedBy: '' });
     expect(d.defects).toHaveLength(2);
   });
-  test('no template for detectors yet', () => expect(certTemplate('detectors')).toBeNull());
+  test('every form has a template', () => expect(['f1220', 'gas', 'aerosol', 'detectors', 'f536'].every((f) => certTemplate(f))).toBe(true));
 });
 
 const fixture = (id: string) => JSON.parse(readFileSync(`tests/fixtures/${id}.json`, 'utf8')).data;
@@ -57,6 +57,24 @@ describe('gas and aerosol prefill', () => {
     const t = certTemplate('aerosol')!;
     expect([t.prefix, t.standard]).toEqual(['ER', 'ת"י 5210']);
     expect(t.prefill(fixture('aerosol')).spaces.length).toBeGreaterThan(0);
+  });
+});
+
+describe('detectors', () => {
+  const t = certTemplate('detectors')!;
+  const d = t.prefill(fixture('detectors'));
+  test('prefill counts and detector row', () => {
+    expect(t.prefix).toBe('FDA');
+    expect(d.floors).toBe('30');
+    expect(d.apartmentsWithDetectors).toBe('32');
+    expect(Number(d.detectorQty)).toBeGreaterThan(0);
+    expect(d.detectorRows[0]).toMatchObject({ model: 'ערך דגם 23', battery: 'ערך דגם סוללת הגלאי 26' });
+  });
+  test('renders conclusion on page 1 and the not-accredited note', () => {
+    const html = renderCertificateHtml({ issueDate: '24/11/2026', inspectorName: 'א', engineerName: 'מ', images: {}, template: t, number: 'FDA260549', data: d });
+    expect(html.indexOf('התקנת גלאים')).toBeLessThan(html.indexOf('הערות כלליות'));
+    expect(html).toContain('שלא בהסמכת הרשות');
+    expect(html.match(/מסקנה:/g)).toHaveLength(1);
   });
 });
 

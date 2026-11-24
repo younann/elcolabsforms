@@ -46,13 +46,19 @@ export const CertData = z.object({
     .array(z.object({ desc: str, location: str, dims: str, volume: str, agent: str, container: str, containerQty: str }))
     .max(60)
     .default([]),
+  // independent detectors
+  testPlace: str,
+  floors: str,
+  apartments: str,
+  apartmentsWithDetectors: str,
+  detectorLocations: str,
+  detectorRows: z.array(z.object({ model: str, maker: str, location: str, battery: str })).max(30).default([]),
   // 536 integration
   customerName: str,
   clientNo: str,
   orderNo: str,
   previousCert: str,
   heightClass: str,
-  floors: str,
   docs: z.array(z.object({ type: str, lab: str, certNo: str, fit: str })).max(30).default([]),
   systems: z.array(z.object({ name: str, value: str })).max(30).default([]),
   panel: z.array(z.object({ name: str, exists: str, sign: str, fit: str })).max(30).default([]),
@@ -63,8 +69,8 @@ export const CertData = z.object({
 });
 export type CertData = z.infer<typeof CertData>;
 
-/** detection: 1220 layout; extinguish: gas/aerosol; integration: 536. */
-export type CertLayout = 'detection' | 'extinguish' | 'integration';
+/** detection: 1220 layout; extinguish: gas/aerosol; detectors: independent detectors; integration: 536. */
+export type CertLayout = 'detection' | 'extinguish' | 'detectors' | 'integration';
 
 export type CertTemplate = {
   layout: CertLayout;
@@ -192,6 +198,40 @@ const aerosol = extinguish(
   'מחולל ארוסול',
 );
 
+const detectors: CertTemplate = {
+  layout: 'detectors',
+  prefix: 'FDA',
+  title: 'בדיקת גלאים עצמאים לנוהל כבאות סימוכין 5750-1102-2015-000467',
+  standard: "הוראות נציב הכבאות, מס' הוראה 550 סעיף 3.4.8.10",
+  systemName: 'מערכת גילוי אש',
+  prefill(d) {
+    const apts = Array.isArray(d.apartments) ? (d.apartments as Record<string, unknown>[]) : [];
+    const count = apts.reduce((n, a) => n + (Number(a?.count) || 0), 0);
+    const locs = [...new Set(apts.map((a) => s(a?.location)).filter(Boolean))];
+    const row = { model: s(d.detectorModel), maker: s(d.detectorMaker), location: s(d.detectorLocation), battery: s(d.batteryModel) };
+    return CertData.parse({
+      testDate: ymdToIl(s(d.date)),
+      siteName: s(d.siteName),
+      buildingUse: s(d.buildingPurpose),
+      address: s(d.siteAddress),
+      gush: s(d.gush),
+      helka: s(d.helka),
+      migrash: s(d.migrash),
+      floors: s(d.floors),
+      detectorQty: count ? String(count) : '',
+      apartments: s(d.apartmentsInBuilding),
+      apartmentsWithDetectors: s(d.apartmentsWithDetectors),
+      detectorLocations: locs.join(', ') || row.location,
+      detectorRows: Object.values(row).some(Boolean) ? [row] : [],
+      contractor: { name: s(d.installerName), phone: s(d.installerPhone), idNo: s(d.installerId) },
+      designer: noParty,
+      escort: noParty,
+      fit: (d.conclusion as CheckValue | undefined)?.answer !== 'לא מתאים',
+      defects: lines(d.defects),
+    });
+  },
+};
+
 const YES_NO: Record<string, string> = { מתאים: 'כן', 'לא מתאים': 'לא', 'ל"ר': 'ל.ר' };
 
 const f536: CertTemplate = {
@@ -256,7 +296,7 @@ const f536: CertTemplate = {
   },
 };
 
-export const CERTS: Partial<Record<FormId, CertTemplate>> = { f1220, gas, aerosol, f536 };
+export const CERTS: Partial<Record<FormId, CertTemplate>> = { f1220, gas, aerosol, detectors, f536 };
 export const certTemplate = (formId: string): CertTemplate | null => CERTS[formId as FormId] ?? null;
 
 /** Certificate number: prefix, yy, 4 digits, optional -N revision. */

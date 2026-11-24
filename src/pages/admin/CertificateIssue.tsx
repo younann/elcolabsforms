@@ -199,6 +199,41 @@ export function CertificateIssue() {
             {d.scenarios.length} טבלאות נלקחות מהטופס כפי שמילא הבודק. לשינוי – יש לתקן בטופס.
           </Banner>
         </>
+      ) : layout === 'detectors' ? (
+        <>
+          <Card title="האתר והמבנה">
+            {text('testDate', 'תאריך הבדיקה')}
+            {text('siteName', 'שם האתר')}
+            {text('address', 'כתובת האתר')}
+            {text('buildingUse', 'ייעוד המבנה')}
+            {text('testPlace', 'מקום הבדיקה')}
+            {text('floors', 'מספר קומות')}
+            {text('detectorQty', 'כמות הגלאים')}
+            {text('apartments', "מס' דירות בבניין")}
+            {text('apartmentsWithDetectors', "מס' דירות שהותקנו גלאים עצמאיים")}
+            {text('detectorLocations', 'מיקום הגלאים שנבדקו')}
+            {text('gush', 'גוש')}
+            {text('helka', 'חלקה')}
+            {text('migrash', 'מגרש')}
+          </Card>
+          <Rows
+            title="פרטי גלאי עצמאי"
+            rows={d.detectorRows}
+            empty={{ model: '', maker: '', location: '', battery: '' }}
+            cols={[
+              ['model', 'דגם'],
+              ['maker', 'מתוצרת חברת'],
+              ['location', 'מיקום התקנת הגלאי'],
+              ['battery', 'דגם סוללת הגלאי'],
+            ]}
+            onChange={(detectorRows) => set('detectorRows', detectorRows)}
+          />
+          <Card title="אנשים">
+            {party('designer', 'מתכנן')}
+            {party('contractor', 'קבלן מבצע')}
+            {party('escort', 'מלווה הבדיקה')}
+          </Card>
+        </>
       ) : (
         <>
           <Card title="האתר והמבנה">

@@ -15,14 +15,17 @@ const esc = (v: unknown) =>
   String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 const img = (src: string | null | undefined, cls: string) => (src ? `<img class="${cls}" src="${esc(src)}" alt="">` : '');
 
+const CEILING = 'אם לאחר בדיקת המעבדה תותקן תקרה תותבת, יש להזמין את המעבדה לבדיקה חוזרת, לרבות בדיקת תוכניות – באחריות בעל העסק / המבנה.';
 const GENERAL = (t: CertTemplate) =>
   [
-    t.layout === 'detection' && 'אם לאחר בדיקת המעבדה תותקן תקרה תותבת, יש להזמין את המעבדה לבדיקה חוזרת, לרבות בדיקת תוכניות – באחריות בעל העסק / המבנה.',
-    `באחריות בעל העסק / מבנה לבצע תחזוקה שוטפת למערכת עפ"י ${t.layout === 'detection' ? t.standard.replace(/חלק \d+/, 'חלק 11') : t.standard}.`,
+    t.layout === 'detectors' && 'ציוד מתואם לתקן 1220 חלק 5.',
+    (t.layout === 'detection' || t.layout === 'detectors') && CEILING,
+    `באחריות בעל העסק / מבנה לבצע תחזוקה שוטפת למערכת עפ"י ${t.layout === 'detectors' ? 'ת"י 1220 חלק 11' : t.layout === 'detection' ? t.standard.replace(/חלק \d+/, 'חלק 11') : t.standard}.`,
     'כל שינוי מבני או מערכתי יחייב הוצאת אישור מעבדה חדש.',
     'חובה לשמור על תיק המערכת שהוגש וכל שינוי במערכת או במבנה - יש ליידע במיידי.',
     t.layout === 'extinguish' && 'באחריות בעל העסק לבצע פעולות לאחר פריקת המחולל כיבוי לפי הנחיות היצרן המערכת.',
     'ממצאי הבדיקה תקפים ליום הבדיקה בלבד.',
+    t.layout === 'detectors' && 'הבדיקה בוצעה שלא בהסמכת הרשות הלאומית להסמכת מעבדות.',
   ].filter((x): x is string => !!x);
 const DECL = [
   'הבדיקה שתוצאותיהן נכללות בתעודה זו בוצעו בהתאם לתקנים הרשמים.',
@@ -121,6 +124,33 @@ ${commonMid(d)}
 <table class="grid">
 ${d.equipment.map((e) => `<tr><th>${esc(e.label)}:</th><td><bdi dir="ltr">${esc(e.model)}</bdi></td><th style="width:12%">${e.qty ? 'כמות:' : ''}</th><td style="width:10%">${esc(e.qty)}</td></tr>`).join('') || '<tr><th>ציוד:</th><td colspan="3"></td></tr>'}
 </table>`;
+}
+
+function conclusion(d: CertData, t: CertTemplate) {
+  return t.layout === 'detectors'
+    ? `<div class="concl"><u>מסקנה:</u><br>המערכת נבדקה עפ"י התקנה.<br>התקנת גלאים <span class="big">${d.fit ? 'מתאימה' : 'אינה מתאימה'}</span> לדרישות ${esc(t.standard)}.</div>`
+    : `<div class="concl"><u>מסקנה:</u><br>המערכת נבדקה עפ"י התקנה.<br>המערכת <span class="big">${d.fit ? 'מתאימה' : 'אינה מתאימה'}</span> לדרישות ${esc(t.standard)} כמפורט מטה.</div>`;
+}
+
+function detectorsMid(d: CertData, t: CertTemplate) {
+  const rows = d.detectorRows.length ? d.detectorRows : [{ model: '', maker: '', location: '', battery: '' }];
+  return `<table class="grid">
+<tr>${kv('מקום הבדיקה', d.testPlace)}</tr>
+<tr>${kv('מספר קומות', d.floors)}</tr>
+<tr>${kv('כמות הגלאים', d.detectorQty)}</tr>
+<tr>${kv("מס' דירות בבניין", d.apartments)}</tr>
+<tr>${kv("מס' דירות שהותקנו גלאים עצמאיים", d.apartmentsWithDetectors)}</tr>
+<tr>${kv('מיקום הגלאים שנבדקו', d.detectorLocations)}</tr>
+<tr>${kv('גוש', d.gush)}</tr>
+<tr>${kv('חלקה', d.helka)}</tr>
+<tr>${kv('מגרש', d.migrash)}</tr>
+</table>
+<p><b><u>פרטי גלאי עצמאי:</u></b></p>
+<table class="grid spaces">
+<tr class="band"><th>דגם</th><th>מתוצרת חברת</th><th>מיקום התקנת הגלאי</th><th>דגם סוללת הגלאי</th></tr>
+${rows.map((r) => `<tr><td><bdi dir="ltr">${esc(r.model)}</bdi></td><td><bdi dir="ltr">${esc(r.maker)}</bdi></td><td>${esc(r.location)}</td><td><bdi dir="ltr">${esc(r.battery)}</bdi></td></tr>`).join('')}
+</table>
+${conclusion(d, t)}`;
 }
 
 function commonMid(d: CertData) {
@@ -274,7 +304,7 @@ ${head(1)}
 <tr>${kv('ייעוד המבנה', d.buildingUse)}${kv('שם האתר', d.siteName)}</tr>
 <tr>${kv('כתובת האתר', d.address)}${kv("מס' הסכם", d.agreement)}</tr>
 </table>
-${t.layout === 'detection' ? detectionMid(d) : extinguishMid(d)}
+${t.layout === 'detection' ? detectionMid(d) : t.layout === 'detectors' ? detectorsMid(d, t) : extinguishMid(d)}
 <table class="grid">
 ${party(`שם מתכנן ${t.systemName}`, d.designer)}
 ${party('שם הקבלן המבצע', d.contractor)}
@@ -287,15 +317,12 @@ ${foot}
 <section class="page">
 ${head(2)}
 <div class="body">
-${t.layout === 'extinguish' && !d.boards.length ? '' : `<table class="grid" style="margin-top:3mm">
+${t.layout !== 'detection' && !d.boards.length ? '' : `<table class="grid" style="margin-top:3mm">
 <tr class="band"><th colspan="3" style="text-align:center">לוחות חשמל</th></tr>
 <tr><th>תיאור החלל</th><th>ניתוק ממקור הזנה</th><th>מוגן ע"י גלאים</th></tr>
 ${(d.boards.length ? d.boards : [{ space: '', cutoff: '', protectedBy: '' }]).map((b) => `<tr><td>${esc(b.space) || '&nbsp;'}</td><td>${esc(b.cutoff)}</td><td>${esc(b.protectedBy)}</td></tr>`).join('')}
 </table>`}
-<div class="concl">
-<u>מסקנה:</u><br>המערכת נבדקה עפ"י התקנה.<br>
-המערכת <span class="big">${d.fit ? 'מתאימה' : 'אינה מתאימה'}</span> לדרישות ${esc(t.standard)} כמפורט מטה.
-</div>
+${t.layout === 'detectors' ? '' : conclusion(d, t)}
 <div><p><b><u>רשימת ליקויים ע"י המעבדה : ${d.defects.length ? '' : 'אין.'}</u></b></p>
 ${d.defects.length ? `<ol class="def">${d.defects.map((x) => `<li>${esc(x)}</li>`).join('')}</ol>` : ''}</div>
 <div><p><u>הערות כלליות:</u></p>
