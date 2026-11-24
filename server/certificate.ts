@@ -8,7 +8,7 @@ export type CertInput = {
   data: CertData;
   inspectorName: string;
   engineerName: string;
-  images: { inspectorSignature?: string | null; engineerSignature?: string | null; stamp?: string | null };
+  images: { inspectorSignature?: string | null; engineerSignature?: string | null; stamp?: string | null; matrix?: string[] };
 };
 
 const esc = (v: unknown) =>
@@ -80,6 +80,7 @@ ul, ol.def { margin: 1mm 0; padding-inline-start: 6mm; line-height: 1.5; font-si
 .matrix td:first-child, .matrix th:first-child { text-align: start }
 h2 { font-size: 11pt; margin: 3mm 0 1.5mm; text-decoration: underline }
 .ifoot { font-size: 8pt; line-height: 1.4; padding-top: 2mm }
+.matrix-img { display: block; max-width: 100%; max-height: 205mm; margin: 2mm auto; object-fit: contain; border: 1px solid #999 }
 .end { text-align: center; font-weight: 700; margin-top: 4mm }
 footer { border-top: 1.5px solid #1d3c8f; padding-top: 2mm; display: flex; justify-content: space-between; font-weight: 700; color: #1d3c8f }
 `;
@@ -267,9 +268,19 @@ ${x.addresses ? `<tr><td colspan="${x.columns.length + 2}">כתובת התקני
 ${x.rows.map((r, ri) => `<tr><td>${ri + 1}</td><td><b>${esc(r.action)}</b></td>${r.cells.map((v) => `<td>${esc(v)}</td>`).join('')}</tr>`).join('')}
 </table></div>`,
   );
-  const p4 = page(`<h2>5. ממצאי משטר הפעלות:</h2>${scen.join('') || '<p>&nbsp;</p>'}<p class="end">****סוף תעודה ****</p>`);
+  const end = '<p class="end">****סוף תעודה ****</p>';
+  const matrix = c.images.matrix ?? [];
+  const p4 = page(`<h2>5. ממצאי משטר הפעלות:</h2>${scen.join('') || '<p>&nbsp;</p>'}${matrix.length ? '' : end}`);
+  // one scanned matrix page per certificate page
+  const p5 = matrix
+    .map((src, i) =>
+      page(
+        `${i ? '' : '<h2>6. להלן פירוט חלקי המערכות שנבדקו במהלך בדיקת משטר ההפעלות אל מול טבלת משטר ההפעלות:</h2>'}<img class="matrix-img" src="${esc(src)}" alt="">${i === matrix.length - 1 ? end : ''}`,
+      ),
+    )
+    .join('');
 
-  return doc(c.number, p1 + p2 + p3 + p4);
+  return doc(c.number, p1 + p2 + p3 + p4 + p5);
 }
 
 /** Certificate pages, as approved from the 1220 sample. */

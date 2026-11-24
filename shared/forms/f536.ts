@@ -187,6 +187,11 @@ export const f536: FormDef = {
       ],
     },
     {
+      id: 'consultantMatrix',
+      title: 'טבלת משטר הפעלות של יועץ הבטיחות',
+      fields: [{ id: 'consultantMatrix', type: 'photos', label: 'צילום / סריקה של טבלת משטר ההפעלות של יועץ הבטיחות' }],
+    },
+    {
       id: 'preTest',
       title: 'טרום בדיקה',
       fields: preTest.map((t, i): Field => ({ id: `pre${i + 1}`, type: 'check', clause: '8', topic: 'טרום בדיקה', text: t, answers: 'yesNoNA' })),

@@ -39,6 +39,14 @@ export async function certificateHtml(sub: Submission, input: { number: string; 
   const [inspector] = await db.select().from(schema.users).where(eq(schema.users.id, sub.inspectorId));
   const [engineer] = sub.engineerId ? await db.select().from(schema.users).where(eq(schema.users.id, sub.engineerId)) : [];
   const settings = await loadSettings();
+  const matrix =
+    template.layout === 'integration'
+      ? await db
+          .select({ blobKey: schema.attachments.blobKey })
+          .from(schema.attachments)
+          .where(and(eq(schema.attachments.submissionId, sub.id), eq(schema.attachments.fieldId, 'consultantMatrix')))
+          .orderBy(schema.attachments.createdAt)
+      : [];
   return renderCertificateHtml({
     template,
     number: input.number,
@@ -50,6 +58,7 @@ export async function certificateHtml(sub: Submission, input: { number: string; 
       inspectorSignature: await dataUrl(sig?.blobKey),
       engineerSignature: await dataUrl(engineer?.signatureKey),
       stamp: await dataUrl(settings.stampKey),
+      matrix: (await Promise.all(matrix.map((m) => dataUrl(m.blobKey)))).filter((x): x is string => !!x),
     },
   });
 }

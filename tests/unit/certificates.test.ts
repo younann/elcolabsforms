@@ -115,6 +115,13 @@ describe('other layouts render', () => {
     expect(html).toContain('סוף תעודה');
     expect(html).toContain('לא מתאימה');
   });
+  test('536: a page per consultant matrix scan, end mark after the last', () => {
+    const t = certTemplate('f536')!;
+    const html = renderCertificateHtml({ ...base, images: { matrix: ['data:image/png;base64,M1', 'data:image/png;base64,M2'] }, template: t, number: 'INT260649', data: t.prefill(fixture('f536')) });
+    expect(html.match(/class="page"/g)).toHaveLength(6);
+    expect(html.match(/סוף תעודה/g)).toHaveLength(1);
+    expect(html.indexOf('סוף תעודה')).toBeGreaterThan(html.indexOf('M2'));
+  });
 });
 
 describe('renderCertificateHtml', () => {
