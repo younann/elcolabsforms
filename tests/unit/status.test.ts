@@ -33,4 +33,22 @@ describe('canTransition', () => {
     expect(canTransition('emailed', 'retry', 'admin', new Date(now), now, true)).toBe('sending');
     expect(canTransition('emailed', 'retry', 'inspector', new Date(now), now, true)).toBeNull();
   });
+  it('engineer approves or returns only forms waiting for them', () => {
+    expect(canTransition('engineer_review', 'engineer_approve', 'engineer')).toBe('engineer_approved');
+    expect(canTransition('engineer_review', 'engineer_return', 'engineer')).toBe('submitted');
+    expect(canTransition('engineer_review', 'engineer_approve', 'admin')).toBeNull();
+    expect(canTransition('submitted', 'engineer_approve', 'engineer')).toBeNull();
+    expect(canTransition('submitted', 'approve', 'engineer')).toBeNull();
+    expect(canTransition('draft', 'submit', 'engineer')).toBeNull();
+    expect(canTransition('submitted', 'edit', 'engineer')).toBeNull();
+  });
+  it('admin issues a certificate after the engineer and retries a failed one', () => {
+    const now = Date.now();
+    expect(canTransition('engineer_approved', 'issue', 'admin')).toBe('cert_sending');
+    expect(canTransition('engineer_review', 'issue', 'admin')).toBeNull();
+    expect(canTransition('engineer_approved', 'issue', 'engineer')).toBeNull();
+    expect(canTransition('cert_failed', 'cert_retry', 'admin')).toBe('cert_sending');
+    expect(canTransition('cert_sending', 'cert_retry', 'admin', new Date(now - 60_000), now)).toBeNull();
+    expect(canTransition('cert_sending', 'cert_retry', 'admin', new Date(now - 16 * 60_000), now)).toBe('cert_sending');
+  });
 });

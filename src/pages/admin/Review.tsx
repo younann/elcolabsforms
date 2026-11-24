@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { ArrowUUpRight, CheckCircle } from '@phosphor-icons/react';
-import { api, ApiError } from '../../lib/api';
+import { ApiError } from '../../lib/api';
 import { flushAll, readLocal } from '../../lib/autosave';
 import { useAuth } from '../../lib/auth';
 import { act } from '../../lib/submissions';
@@ -35,14 +35,6 @@ export function Review() {
   const [sheet, setSheet] = useState<'return' | 'approve' | null>(null);
   const [note, setNote] = useState('');
   const [pending, setPending] = useState<'return' | 'approve' | null>(null);
-  const [recipient, setRecipient] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (sheet !== 'approve' || recipient !== null) return;
-    api<{ settings: { recipientEmail?: string } }>('/api/settings')
-      .then((r) => setRecipient(r.settings.recipientEmail ?? ''))
-      .catch(() => {});
-  }, [sheet, recipient]);
 
   if (!state) return <DetailSkeleton />;
   if ('error' in state) return <DetailError error={state.error} onRetry={() => void load()} />;
@@ -70,7 +62,7 @@ export function Review() {
     try {
       if (!(await saved(id))) return;
       await act(id, 'approve');
-      toast.success('הטופס אושר. הדוח בהכנה ובשליחה');
+      toast.success('הטופס אושר ונשלח למהנדס');
       navigate(`/submissions/${id}`, { replace: true });
     } catch (e) {
       if (!(e instanceof ApiError && e.status === 401)) toast.error(errorText(e));
@@ -108,6 +100,11 @@ export function Review() {
           }
         >
           הדוח נחתם בחתימה השמורה שלך בעת האישור. בלי חתימה תיבת המאשר תישאר ריקה.
+        </Banner>
+      )}
+      {s.reviewNote && (
+        <Banner tone="warning" title="הוחזר ע״י המהנדס" className="mb-5">
+          <span className="whitespace-pre-wrap">{s.reviewNote}</span>
         </Banner>
       )}
       <ReassignCard
@@ -153,33 +150,15 @@ export function Review() {
       <Sheet
         open={sheet === 'approve'}
         onClose={() => setSheet(null)}
-        title="אישור ושליחת הדוח"
+        title="אישור ושליחה למהנדס"
         footer={
           <Button variant="accent" block size="lg" loading={pending === 'approve'} onClick={doApprove} data-testid="confirm-approve">
-            אישור ושליחה
+            אישור ושליחה למהנדס
           </Button>
         }
       >
         <div className="flex flex-col gap-3 text-[15px] leading-relaxed">
-          <p>
-            הדוח יופק כ-PDF עם החתימה השמורה שלך ויישלח אל{' '}
-            {recipient === null ? (
-              <span className="text-muted">…</span>
-            ) : recipient ? (
-              <bdi className="font-semibold">{recipient}</bdi>
-            ) : (
-              <span className="font-semibold text-danger">כתובת שלא הוגדרה</span>
-            )}
-            .
-          </p>
-          {recipient === '' && (
-            <Banner tone="danger">
-              לא הוגדרה כתובת לשליחה, והשליחה תיכשל.{' '}
-              <Link to="/admin/settings" className="font-semibold underline underline-offset-2">
-                להגדרות
-              </Link>
-            </Banner>
-          )}
+          <p>הדוח יופק כ-PDF עם החתימה השמורה שלך וישלח למהנדס לאישור.</p>
           {!user?.hasSignature && <Banner tone="warning">אין לך חתימה שמורה. תיבת המאשר תישאר ריקה.</Banner>}
         </div>
       </Sheet>

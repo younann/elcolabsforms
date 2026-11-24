@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { PASSWORD_MIN } from './password';
 
 const PASSWORD_HINT = `סיסמה: לפחות ${PASSWORD_MIN} תווים`;
-const role = z.enum(['admin', 'inspector']);
+const role = z.enum(['admin', 'inspector', 'engineer']);
 // '' clears the field
 export const optEmail = z.union([z.literal(''), z.email('דוא״ל לא תקין')]).transform((v) => v || null).optional();
 export const optText = (max: number, msg?: string) => z.string().trim().max(max, msg).transform((v) => v || null).optional();

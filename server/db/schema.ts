@@ -5,7 +5,7 @@ export const users = pgTable('users', {
   username: text('username').notNull().unique(),
   displayName: text('display_name').notNull(),
   passwordHash: text('password_hash').notNull(),
-  role: text('role', { enum: ['admin', 'inspector'] }).notNull(),
+  role: text('role', { enum: ['admin', 'inspector', 'engineer'] }).notNull(),
   active: boolean('active').notNull().default(true),
   signatureKey: text('signature_key'),
   email: text('email'),
@@ -106,11 +106,32 @@ export const submissions = pgTable(
     jobId: uuid('job_id').references(() => jobs.id),
     touchedAt: timestamp('touched_at', { withTimezone: true }),
     jobCopy: integer('job_copy'),
+    // new flow: report goes to the engineer
+    needsEngineer: boolean('needs_engineer').notNull().default(false),
+    engineerId: uuid('engineer_id').references(() => users.id),
+    engineerApprovedAt: timestamp('engineer_approved_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index('submissions_status').on(t.status), index('submissions_inspector').on(t.inspectorId), uniqueIndex('submissions_parent').on(t.parentId), index('submissions_job').on(t.jobId)],
 );
+
+export const certificates = pgTable('certificates', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  submissionId: uuid('submission_id').notNull().unique().references(() => submissions.id),
+  // null when the report is sent instead
+  number: text('number').unique(),
+  issueDate: date('issue_date', { mode: 'string' }).notNull(),
+  data: jsonb('data').notNull().default({}),
+  pdfKey: text('pdf_key'),
+  sentTo: text('sent_to').notNull(),
+  sentAt: timestamp('sent_at', { withTimezone: true }),
+  status: text('status', { enum: ['sending', 'sent', 'failed'] }).notNull().default('sending'),
+  error: text('error'),
+  mailLogged: boolean('mail_logged').notNull().default(false),
+  createdBy: uuid('created_by').notNull().references(() => users.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
 
 export const attachments = pgTable('attachments', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -140,3 +161,4 @@ export type Settings = typeof settings.$inferSelect;
 export type Client = typeof clients.$inferSelect;
 export type ClientSite = typeof clientSites.$inferSelect;
 export type Job = typeof jobs.$inferSelect;
+export type Certificate = typeof certificates.$inferSelect;

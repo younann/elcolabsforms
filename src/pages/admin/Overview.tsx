@@ -60,6 +60,8 @@ export function Overview() {
         <li><Stat to="#late" label="באיחור" n={o?.late.length ?? null} tone="danger" /></li>
         <li><Stat to="#week" label="עבודות השבוע" n={o?.week.length ?? null} /></li>
         <li><Stat to="/admin/submissions?status=returned" label="הוחזרו לבודק" n={o?.returned ?? null} /></li>
+        <li><Stat to="/admin/submissions?status=engineer_review" label="אצל המהנדס" n={o?.atEngineer ?? null} /></li>
+        <li><Stat to="/admin/submissions?status=engineer_approved" label="ממתינים להפקת תעודה" n={o?.certReady ?? null} tone="warning" /></li>
       </ul>
 
       {o && o.late.length > 0 && (

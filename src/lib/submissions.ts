@@ -44,7 +44,7 @@ export function listSubmissions(q: Record<string, string | undefined> = {}) {
   return api<{ submissions: Summary[] }>(`/api/submissions${qs ? `?${qs}` : ''}`).then((r) => r.submissions);
 }
 
-export function act(id: string, action: 'return' | 'approve' | 'reopen' | 'retry', note?: string) {
+export function act(id: string, action: 'return' | 'approve' | 'reopen' | 'retry' | 'engineer_approve' | 'engineer_return', note?: string) {
   return api<{ submission: { id: string; status: Status } }>(`/api/submissions/${id}/action`, {
     method: 'POST',
     json: note ? { action, note } : { action },
@@ -75,7 +75,7 @@ export function rowHref(s: Pick<Summary, 'id' | 'status'>, role: Role) {
 }
 
 export const isStuck = (s: Pick<Summary, 'status' | 'updatedAt'>, now = Date.now()) =>
-  s.status === 'sending' && now - new Date(s.updatedAt).getTime() > STUCK_MS;
+  (s.status === 'sending' || s.status === 'cert_sending') && now - new Date(s.updatedAt).getTime() > STUCK_MS;
 
 const dayFmt = new Intl.DateTimeFormat('he-IL', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Jerusalem' });
 const timeFmt = new Intl.DateTimeFormat('he-IL', {
@@ -92,3 +92,5 @@ export const fmtTime = (iso: string | null | undefined) => (iso ? timeFmt.format
 // israel calendar day, yyyy-mm-dd
 export const ilDay = (iso: string) =>
   new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(iso));
+
+export const certPdfUrl = (id: string) => `/api/submissions/${id}/certificate/pdf`;

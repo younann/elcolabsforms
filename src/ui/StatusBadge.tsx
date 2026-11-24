@@ -11,6 +11,11 @@ const map: Record<SubmissionStatus, { label: string; cls: string }> = {
   sending: { label: 'בשליחה', cls: 'bg-info-soft text-info' },
   emailed: { label: 'נשלח', cls: 'bg-success-soft text-success' },
   send_failed: { label: 'השליחה נכשלה', cls: 'bg-danger-soft text-danger' },
+  engineer_review: { label: 'אצל המהנדס', cls: 'bg-info-soft text-info' },
+  engineer_approved: { label: 'אושר ע"י מהנדס', cls: 'bg-success-soft text-success' },
+  cert_sending: { label: 'שולח תעודה', cls: 'bg-info-soft text-info' },
+  certified: { label: 'תעודה נשלחה', cls: 'bg-success-soft text-success' },
+  cert_failed: { label: 'שליחת התעודה נכשלה', cls: 'bg-danger-soft text-danger' },
 };
 
 export const statusLabel = (s: SubmissionStatus): string => map[s]?.label ?? s;

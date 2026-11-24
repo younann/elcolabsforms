@@ -8,11 +8,11 @@ import { getForm } from '../../shared/forms';
 import { validateForSubmit } from '../../shared/forms/validate';
 import { canTransition, type Status } from '../../shared/status';
 import { getBlob, putBlob } from '../../server/blobs';
-import { notifySubmitted } from '../../server/mail';
+import { notifyEngineerDone, notifySubmitted } from '../../server/mail';
 import { asData, assertAccess, auditSafe, loadSubmission, transition, triggerReport } from '../../server/submissions';
 
 const Body = z.object({
-  action: z.enum(['submit', 'return', 'approve', 'reopen', 'retry']),
+  action: z.enum(['submit', 'return', 'approve', 'reopen', 'retry', 'engineer_approve', 'engineer_return']),
   note: z.string().trim().max(2000).optional(),
 });
 
@@ -25,7 +25,8 @@ export default handle(async (req, ctx) => {
   const db = getDb();
   const s = await loadSubmission(id);
   assertAccess(me, s);
-  if (action !== 'submit' && me.role !== 'admin') throw new HttpError(403, 'אין הרשאה');
+  const engineerAction = action === 'engineer_approve' || action === 'engineer_return';
+  if (action !== 'submit' && me.role !== (engineerAction ? 'engineer' : 'admin')) throw new HttpError(403, 'אין הרשאה');
   const from = s.status as Status;
   const to = canTransition(from, action, me.role, s.updatedAt, Date.now(), s.mailLogged);
   if (!to) throw new HttpError(409, 'פעולה לא אפשרית במצב הנוכחי');
@@ -57,9 +58,26 @@ export default handle(async (req, ctx) => {
 
   if (action === 'approve') {
     await check();
-    const row = await transition(id, from, { status: to, approvedBy: me.id, approvedAt: new Date(), sendError: null });
+    // first approval date stays for the monthly export
+    const row = await transition(id, from, { status: to, approvedBy: me.id, approvedAt: s.approvedAt ?? new Date(), sendError: null, needsEngineer: true });
     await triggerReport(req, id);
     await auditSafe(id, me.id, 'approve', { note });
+    return json({ submission: row });
+  }
+
+  if (action === 'engineer_approve') {
+    if (!me.signatureKey) throw new HttpError(409, 'יש לשמור חתימה בפרופיל לפני אישור');
+    const row = await transition(id, from, { status: to, engineerId: me.id, engineerApprovedAt: new Date() });
+    await auditSafe(id, me.id, 'engineer_approve', { note });
+    background(ctx, notifyEngineerDone(row, getForm(s.formId, s.formVersion), me.displayName));
+    return json({ submission: row });
+  }
+
+  if (action === 'engineer_return') {
+    if (!note) throw new HttpError(400, 'נדרשת הערה');
+    const row = await transition(id, from, { status: to, reviewNote: note });
+    await auditSafe(id, me.id, 'engineer_return', { note });
+    background(ctx, notifyEngineerDone(row, getForm(s.formId, s.formVersion), me.displayName, note));
     return json({ submission: row });
   }
 

@@ -36,6 +36,10 @@ const TABS: Record<Role, Tab[]> = {
     { to: '/', label: 'הבית', Icon: House, end: true },
     { to: '/profile', label: 'פרופיל', Icon: UserCircle },
   ],
+  engineer: [
+    { to: '/', label: 'הבית', Icon: House, end: true },
+    { to: '/profile', label: 'פרופיל', Icon: UserCircle },
+  ],
   admin: [
     { to: '/', label: 'הבית', Icon: House, end: true },
     { to: '/admin/jobs', label: 'עבודות', Icon: Briefcase },
@@ -49,7 +53,7 @@ const TABS: Record<Role, Tab[]> = {
 };
 
 // full-screen task pages carry their own bottom bar
-const TASK = /^\/(fill|submissions|jobs|admin\/review)\/|^\/admin\/jobs\/new$/;
+const TASK = /^\/(fill|submissions|jobs|admin\/review|admin\/certificate)\/|^\/admin\/jobs\/new$/;
 
 // where back goes without in-app history
 function backTarget(pathname: string, role?: Role) {

@@ -10,7 +10,7 @@ import { MailLoggedBadge, MailModeBanner, useMailMode } from '../../components/M
 import { FORMS } from '../../../shared/forms';
 import type { Status } from '../../../shared/status';
 
-const STATUSES: Status[] = ['submitted', 'returned', 'sending', 'emailed', 'send_failed', 'draft'];
+const STATUSES: Status[] = ['submitted', 'returned', 'engineer_review', 'engineer_approved', 'certified', 'cert_failed', 'sending', 'emailed', 'send_failed', 'draft'];
 const PAGE = 30;
 
 const smallBtn =
@@ -169,7 +169,7 @@ export function AllSubmissions() {
               {rows.slice(0, limit).map((s) => {
                 const logged = s.status === 'emailed' && s.mailLogged;
                 // logged-only mail can go out once sending is live
-                const retry = s.status === 'send_failed' || isStuck(s) || (logged && mailMode === 'live' && !s.hasChild);
+                const retry = s.status === 'send_failed' || (s.status === 'sending' && isStuck(s)) || (logged && mailMode === 'live' && !s.hasChild);
                 const canReopen = s.status === 'emailed' && !s.hasChild;
                 const acts =
                   s.hasPdf || retry || canReopen ? (

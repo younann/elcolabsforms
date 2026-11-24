@@ -12,6 +12,7 @@ import { reassignCheck } from '../../shared/reassign';
 import {
   asData,
   assertAccess,
+  canGetReport,
   audit,
   auditSafe,
   changedFieldIds,
@@ -36,7 +37,9 @@ export default handle(async (req) => {
       const conds: SQL[] = [];
       if (q.get('status')) conds.push(eq(schema.submissions.status, q.get('status')!));
       if (q.get('formId')) conds.push(eq(schema.submissions.formId, q.get('formId')!));
-      const inspectorId = me.role === 'admin' ? q.get('inspectorId') : me.id;
+      // engineers: forms waiting for them and ones they approved
+      if (me.role === 'engineer') conds.push(sql`${schema.submissions.needsEngineer} and (${schema.submissions.status} = 'engineer_review' or ${schema.submissions.engineerId} = ${me.id})`);
+      const inspectorId = me.role === 'admin' ? q.get('inspectorId') : me.role === 'engineer' ? null : me.id;
       if (inspectorId) {
         if (!Id.safeParse(inspectorId).success) throw new HttpError(400, 'נתונים לא תקינים');
         conds.push(eq(schema.submissions.inspectorId, inspectorId));
@@ -79,8 +82,7 @@ export default handle(async (req) => {
 
   if (sub === 'pdf') {
     if (req.method !== 'GET') throw new HttpError(405, 'Method not allowed');
-    // owner only once emailed
-    if (me.role !== 'admin' && s.status !== 'emailed') throw new HttpError(403, 'אין הרשאה');
+    if (!canGetReport(me, s)) throw new HttpError(403, 'אין הרשאה');
     const b = s.pdfKey ? await getBlob(s.pdfKey) : null;
     if (!b) throw new HttpError(404, 'הדוח לא נמצא');
     const name = `${s.testNumber || s.id}${s.revision > 0 ? `-Rev${s.revision}` : ''}`.replace(/[\\/:*?"<>|\s]+/g, '_');
@@ -94,8 +96,7 @@ export default handle(async (req) => {
   }
   if (sub === 'docx') {
     if (req.method !== 'GET') throw new HttpError(405, 'Method not allowed');
-    // same rules as the pdf
-    if (me.role !== 'admin' && s.status !== 'emailed') throw new HttpError(403, 'אין הרשאה');
+    if (!canGetReport(me, s)) throw new HttpError(403, 'אין הרשאה');
     if (!s.pdfKey) throw new HttpError(404, 'הדוח לא נמצא');
     const key = docxKey(s.id, s.revision);
     const b = await getBlob(key);
@@ -145,7 +146,7 @@ export default handle(async (req) => {
       submission: s,
       attachments: attachments.map((a) => ({ id: a.id, fieldId: a.fieldId, kind: a.kind, url: `/api/files/${a.id}` })),
     };
-    if (me.role === 'admin') {
+    if (me.role !== 'inspector') {
       const [owner] = await db.select({ displayName: schema.users.displayName }).from(schema.users).where(eq(schema.users.id, s.inspectorId));
       out.inspectorName = owner?.displayName ?? null;
       out.audit = await db.select().from(schema.auditLog).where(eq(schema.auditLog.submissionId, id)).orderBy(asc(schema.auditLog.at));

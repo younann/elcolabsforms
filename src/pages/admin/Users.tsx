@@ -11,6 +11,7 @@ type U = { id: string; username: string; displayName: string; role: Role; active
 
 const ROLE_OPTIONS = [
   { value: 'inspector' as const, label: 'בודק' },
+  { value: 'engineer' as const, label: 'מהנדס' },
   { value: 'admin' as const, label: 'מנהל' },
 ];
 
@@ -74,7 +75,7 @@ export function Users() {
                       !u.active ? 'bg-danger-soft text-danger' : u.role === 'admin' ? 'bg-info-soft text-info' : 'bg-surface-2 text-muted',
                     )}
                   >
-                    {!u.active ? 'מושבת' : u.role === 'admin' ? 'מנהל' : 'בודק'}
+                    {!u.active ? 'מושבת' : u.role === 'admin' ? 'מנהל' : u.role === 'engineer' ? 'מהנדס' : 'בודק'}
                   </span>
                   <CaretLeft className="size-4 shrink-0 text-muted max-sm:hidden" aria-hidden />
                 </button>

@@ -15,6 +15,8 @@ export function overview(jobs: JobSummary[], subs: { status: string }[], today: 
     week: open.filter((j) => j.plannedDate >= today && j.plannedDate <= end),
     waiting: subs.filter((s) => s.status === 'submitted').length,
     returned: subs.filter((s) => s.status === 'returned').length,
+    atEngineer: subs.filter((s) => s.status === 'engineer_review').length,
+    certReady: subs.filter((s) => s.status === 'engineer_approved' || s.status === 'cert_failed').length,
   };
 }
 

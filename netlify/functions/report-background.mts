@@ -12,6 +12,14 @@ const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
 
 const CLAIM_MINUTES = 14;
 
+async function engineerEmails(): Promise<string> {
+  const rows = await getDb()
+    .select({ email: schema.users.email })
+    .from(schema.users)
+    .where(and(eq(schema.users.role, 'engineer'), eq(schema.users.active, true)));
+  return rows.map((r) => r.email?.trim()).filter(Boolean).join(', ');
+}
+
 // true when this run claimed the row
 async function run(id: string): Promise<boolean> {
   const db = getDb();
@@ -34,7 +42,9 @@ async function run(id: string): Promise<boolean> {
   }
   const assets = await loadReportAssets(sub);
   const { def, data, settings } = assets;
-  if (!settings.recipientEmail) throw new Error('לא הוגדרה כתובת דוא"ל לשליחה');
+  // new flow mails the engineers, old rows the office
+  const to = sub.needsEngineer ? await engineerEmails() : settings.recipientEmail;
+  if (!to) throw new Error(sub.needsEngineer ? 'אין מהנדס פעיל עם כתובת דוא"ל' : 'לא הוגדרה כתובת דוא"ל לשליחה');
   const images: ReportImages = {};
   for (const [fieldId, list] of Object.entries(assets.images)) images[fieldId] = list.map(toDataUrl);
 
@@ -76,10 +86,13 @@ async function run(id: string): Promise<boolean> {
   const testNumber = sub.testNumber ?? String(data.testNumber ?? '');
   const subject = reportSubject(def, siteName, testNumber, sub.revision);
   const fileBase = `${testNumber || id}${sub.revision > 0 ? `-Rev${sub.revision}` : ''}`.replace(/[\\/:*?"<>|\s]+/g, '_');
+  const link = `${process.env.APP_URL ?? ''}/submissions/${id}`;
   const sent = await sendMail({
-    to: settings.recipientEmail,
-    subject,
-    html: `<div dir="rtl" style="font-family:Arial,sans-serif"><p>מצורף דוח בדיקה מאושר.</p><p>${esc(subject)}</p></div>`,
+    to,
+    subject: sub.needsEngineer ? `ממתין לאישור מהנדס – ${subject}` : subject,
+    html: sub.needsEngineer
+      ? `<div dir="rtl" style="font-family:Arial,sans-serif"><p>דוח בדיקה אושר במשרד וממתין לאישורך.</p><p>${esc(subject)}</p><p><a href="${esc(link)}">${esc(link)}</a></p></div>`
+      : `<div dir="rtl" style="font-family:Arial,sans-serif"><p>מצורף דוח בדיקה מאושר.</p><p>${esc(subject)}</p></div>`,
     attachments: [
       { filename: `${fileBase}.pdf`, content: pdf },
       ...(docx ? [{ filename: `${fileBase}.docx`, content: docx, contentType: DOCX_TYPE }] : []),
@@ -88,7 +101,7 @@ async function run(id: string): Promise<boolean> {
 
   await db
     .update(schema.submissions)
-    .set({ status: 'emailed', pdfKey: key, emailedAt: new Date(), sendError: null, sendClaimedAt: null, mailLogged: sent.logged, updatedAt: new Date() })
+    .set({ status: sub.needsEngineer ? 'engineer_review' : 'emailed', pdfKey: key, emailedAt: new Date(), sendError: null, sendClaimedAt: null, mailLogged: sent.logged, updatedAt: new Date() })
     .where(and(eq(S.id, id), eq(S.status, 'sending')));
   return true;
 }

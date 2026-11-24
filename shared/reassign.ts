@@ -1,6 +1,6 @@
 import type { Status } from './status';
 
-export type ReassignTarget = { id: string; role: 'admin' | 'inspector'; active: boolean } | null;
+export type ReassignTarget = { id: string; role: 'admin' | 'inspector' | 'engineer'; active: boolean } | null;
 export type ReassignResult = { ok: true } | { ok: false; status: number; error: string };
 
 export const REASSIGNABLE: readonly Status[] = ['draft', 'returned', 'submitted'];

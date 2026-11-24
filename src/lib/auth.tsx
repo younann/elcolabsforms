@@ -6,7 +6,7 @@ import { flushAll } from './autosave';
 import { clearLoadCache } from './useLoad';
 import { ShellSkeleton } from '../ui/ShellSkeleton';
 
-export type Role = 'admin' | 'inspector';
+export type Role = 'admin' | 'inspector' | 'engineer';
 
 export type User = {
   id: string;

@@ -11,10 +11,19 @@ export async function loadSubmission(id: string): Promise<Submission> {
   return s;
 }
 
+// engineers see forms waiting for them and ones they approved
+export const engineerSees = (me: User, s: Submission) =>
+  me.role === 'engineer' && s.needsEngineer && (s.status === 'engineer_review' || s.engineerId === me.id);
+
 // inspectors see only their own
 export function assertAccess(me: User, s: Submission) {
-  if (me.role !== 'admin' && s.inspectorId !== me.id) throw new HttpError(403, 'אין הרשאה');
+  if (me.role === 'admin' || engineerSees(me, s)) return;
+  if (me.role !== 'inspector' || s.inspectorId !== me.id) throw new HttpError(403, 'אין הרשאה');
 }
+
+// report download: admin always; others once the report exists in the flow
+const REPORT_READY = new Set(['emailed', 'engineer_review', 'engineer_approved', 'cert_sending', 'certified', 'cert_failed']);
+export const canGetReport = (me: User, s: Submission) => me.role === 'admin' || REPORT_READY.has(s.status);
 
 export const asData = (v: unknown): FormData => (v && typeof v === 'object' && !Array.isArray(v) ? (v as FormData) : {});
 

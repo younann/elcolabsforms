@@ -18,6 +18,7 @@ const SENT_PREVIEW = 8;
 export function Home() {
   const { user } = useAuth();
   if (user?.role === 'admin') return <Overview />;
+  if (user?.role === 'engineer') return <EngineerHome name={user.displayName} />;
   return <InspectorHome name={user?.displayName ?? ''} />;
 }
 
@@ -134,6 +135,51 @@ function InspectorHome({ name }: { name: string }) {
               </>
             )}
           </Group>
+        </>
+      )}
+    </div>
+  );
+}
+
+/** Engineer: forms waiting for approval, then ones already approved. */
+function EngineerHome({ name }: { name: string }) {
+  const { data, error, reload } = useLoad(() => listSubmissions(), 'engineer');
+  const waiting = (data ?? []).filter((s) => s.status === 'engineer_review');
+  const done = (data ?? []).filter((s) => s.status !== 'engineer_review');
+  return (
+    <div>
+      <h1 className="text-[28px] leading-tight font-bold sm:text-[32px]">שלום, {name}</h1>
+      <PushCard />
+      {error && !data ? (
+        <EmptyState icon={<WarningOctagon />} title="לא ניתן לטעון את הטפסים" className="mt-6" action={<Button onClick={reload}>נסה שוב</Button>}>
+          {error}
+        </EmptyState>
+      ) : !data ? (
+        <div className="mt-9">
+          <ListSkeleton />
+        </div>
+      ) : (
+        <>
+          <Group title="ממתינים לאישורך" count={waiting.length}>
+            {waiting.length === 0 ? (
+              <EmptyState icon={<ClipboardText />} title="אין טפסים שממתינים לך" className="rounded-box border border-dashed border-border py-8" />
+            ) : (
+              <ul className="group-list" data-testid="engineer-queue">
+                {waiting.map((s) => (
+                  <SubmissionRow key={s.id} s={s} href={`/submissions/${s.id}`} />
+                ))}
+              </ul>
+            )}
+          </Group>
+          {done.length > 0 && (
+            <Group title="אישרת" count={done.length}>
+              <ul className="group-list">
+                {done.map((s) => (
+                  <SubmissionRow key={s.id} s={s} href={`/submissions/${s.id}`} />
+                ))}
+              </ul>
+            </Group>
+          )}
         </>
       )}
     </div>

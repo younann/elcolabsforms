@@ -42,7 +42,7 @@ export default handle(async (req, ctx) => {
   }
   if (id && req.method === 'PATCH') {
     const b = await parseBody(req, Patch);
-    if (id === me.id && (b.active === false || b.role === 'inspector')) {
+    if (id === me.id && (b.active === false || (b.role !== undefined && b.role !== 'admin'))) {
       throw new HttpError(400, 'לא ניתן להשבית או להוריד הרשאה לעצמך');
     }
     const set: Partial<typeof schema.users.$inferInsert> = {};

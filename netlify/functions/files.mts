@@ -6,6 +6,7 @@ import { handle, json, HttpError } from '../../server/http';
 import { requireUser } from '../../server/auth';
 import { putBlob, getBlob, deleteBlob } from '../../server/blobs';
 import { readImage } from '../../server/upload';
+import { assertAccess } from '../../server/submissions';
 import type { Submission, User } from '../../server/db/schema';
 
 const Meta = z.object({
@@ -61,7 +62,7 @@ export default handle(async (req) => {
   const s = await loadSubmission(att.submissionId);
 
   if (req.method === 'GET') {
-    if (me.role !== 'admin' && s.inspectorId !== me.id) throw new HttpError(403, 'אין הרשאה');
+    assertAccess(me, s);
     const b = await getBlob(att.blobKey);
     if (!b) throw new HttpError(404, 'הקובץ לא נמצא');
     return new Response(b.data, { headers: { 'content-type': b.contentType, 'cache-control': 'private, max-age=86400' } });
