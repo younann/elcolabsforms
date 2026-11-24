@@ -17,6 +17,7 @@ import { ClientDetail } from './pages/admin/ClientDetail';
 import { Jobs } from './pages/admin/Jobs';
 import { JobNew } from './pages/admin/JobNew';
 import { Calendar } from './pages/admin/Calendar';
+import { CertificateIssue } from './pages/admin/CertificateIssue';
 import { JobPage } from './pages/JobView';
 
 function Root() {
@@ -61,6 +62,7 @@ export const router = createBrowserRouter([
               { path: 'jobs', element: <Jobs /> },
               { path: 'jobs/new', element: <JobNew /> },
               { path: 'calendar', element: <Calendar /> },
+              { path: 'certificate/:id', element: <CertificateIssue /> },
             ],
           },
         ],

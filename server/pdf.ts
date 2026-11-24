@@ -32,7 +32,7 @@ export function footerTemplate(text: string): string {
   return `<style>${FONT_CSS}</style><div dir="rtl" style="font-family:'Heebo',sans-serif;font-size:7.5pt;color:#555;width:100%;padding:0 11mm;display:flex;justify-content:space-between;-webkit-print-color-adjust:exact"><span>${escHtml(text)}</span><span>עמוד <span class="pageNumber"></span> מתוך <span class="totalPages"></span></span></div>`;
 }
 
-export async function htmlToPdf(html: string, opts: { footerText?: string } = {}): Promise<Buffer> {
+export async function htmlToPdf(html: string, opts: { footerText?: string; plain?: boolean } = {}): Promise<Buffer> {
   const { default: puppeteer } = await import('puppeteer-core');
   const local = process.env.CHROME_PATH;
   let executablePath = local;
@@ -51,12 +51,15 @@ export async function htmlToPdf(html: string, opts: { footerText?: string } = {}
     const page = await browser.newPage();
     await page.goto(pathToFileURL(file).href, { waitUntil: 'load', timeout: 120_000 });
     await page.evaluate(() => document.fonts.ready);
+    // pages may lay themselves out first
+    await page.evaluate(() => (window as unknown as { __ready?: Promise<unknown> }).__ready);
     const pdf = await page.pdf({
       timeout: 120_000,
       format: 'A4',
       printBackground: true,
       preferCSSPageSize: true,
-      displayHeaderFooter: true,
+      // certificates draw their own header and footer
+      displayHeaderFooter: !opts.plain,
       headerTemplate: '<span></span>',
       footerTemplate: footerTemplate(opts.footerText ?? ''),
     });
