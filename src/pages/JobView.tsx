@@ -6,7 +6,7 @@ import { useAuth } from '../lib/auth';
 import { addJobForms, cancelJob, getJob, jobDate, patchJob, setJobInspector, type JobView, type Qty } from '../lib/jobs';
 import { listInspectors, rowHref } from '../lib/submissions';
 import { useLoad } from '../lib/useLoad';
-import { wazeLink } from '../lib/waze';
+import { wazeLink } from '../../shared/waze';
 import { Banner, Button, EmptyState, InspectorPicker, QtyStepper, Sheet, StatusBadge, TextArea, TextField, cx, toast } from '../ui';
 import { ListSkeleton } from '../components/SubmissionList';
 import { WhatsAppButton } from '../components/WhatsAppButton';

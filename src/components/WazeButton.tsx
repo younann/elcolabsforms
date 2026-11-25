@@ -1,5 +1,5 @@
 import { NavigationArrow } from '@phosphor-icons/react';
-import { wazeLink } from '../lib/waze';
+import { wazeLink } from '../../shared/waze';
 import { cx } from '../ui';
 
 /** Opens Waze navigation to the site. */

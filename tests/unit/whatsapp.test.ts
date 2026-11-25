@@ -23,8 +23,12 @@ describe('jobMessage', () => {
     expect(m).not.toContain('null');
     expect(m).not.toContain('undefined');
   });
+  test('includes waze link to the site', () => {
+    expect(jobMessage(base)).toContain('https://waze.com/ul?q=' + encodeURIComponent('הרצל 12') + '&navigate=yes');
+  });
   test('omits empty parts', () => {
-    const m = jobMessage({ ...base, contactPerson: undefined, contactPhone: null });
+    const m = jobMessage({ ...base, contactPerson: undefined, contactPhone: null, siteAddress: '' });
+    expect(m).not.toContain('waze');
     expect(m).not.toContain('undefined');
     expect(m).not.toContain('null');
   });

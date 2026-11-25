@@ -1,3 +1,5 @@
+import { wazeLink } from './waze';
+
 // israeli number to wa.me format, or null when invalid
 export function normalizeIlPhone(raw: string | null | undefined): string | null {
   if (!raw) return null;
@@ -31,6 +33,7 @@ export function jobMessage(j: {
     contact && `איש קשר: ${contact}`,
     j.forms.length ? `טפסים: ${j.forms.join(', ')}` : '',
     j.note && j.note.trim() ? `הערה: ${j.note.trim()}` : '',
+    j.siteAddress && j.siteAddress.trim() ? `ניווט בוויז: ${wazeLink(j.siteAddress)}` : '',
     `לפתיחה: ${j.link}`,
   ];
   return lines.filter(Boolean).join('\n');

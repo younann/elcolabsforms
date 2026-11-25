@@ -3,7 +3,7 @@ import { CalendarBlank, MapPin, Phone } from '@phosphor-icons/react';
 import { jobDate, type JobSummary } from '../lib/jobs';
 import { rowHref } from '../lib/submissions';
 import { StatusBadge } from '../ui';
-import { wazeLink } from '../lib/waze';
+import { wazeLink } from '../../shared/waze';
 import { WazeButton } from './WazeButton';
 
 /** Inspector home: one open job with its forms. */
