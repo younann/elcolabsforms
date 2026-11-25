@@ -14,7 +14,7 @@ import {
   UsersThree,
   type IconProps,
 } from '@phosphor-icons/react';
-import { useAuth, type Role } from '../lib/auth';
+import { ROLE_LABEL, useAuth, type Role } from '../lib/auth';
 import { InstallBanner } from '../pwa/InstallBanner';
 import { Brand } from './Brand';
 import { Button } from './Button';
@@ -133,7 +133,7 @@ export function AppShell() {
             <p className="truncate text-[15px] font-medium" data-testid="user-name">
               {user?.displayName}
             </p>
-            <p className="text-[13px] text-muted">{user?.role === 'admin' ? 'מנהל' : 'בודק'}</p>
+            <p className="text-[13px] text-muted">{user && ROLE_LABEL[user.role]}</p>
           </div>
           {logoutBtn(false)}
         </div>

@@ -7,6 +7,7 @@ import { clearLoadCache } from './useLoad';
 import { ShellSkeleton } from '../ui/ShellSkeleton';
 
 export type Role = 'admin' | 'inspector' | 'engineer';
+export const ROLE_LABEL: Record<Role, string> = { admin: 'מנהל', inspector: 'בודק', engineer: 'מהנדס' };
 
 export type User = {
   id: string;

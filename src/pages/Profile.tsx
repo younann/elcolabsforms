@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { PenNib, Signature } from '@phosphor-icons/react';
 import { api, ApiError } from '../lib/api';
-import { useAuth } from '../lib/auth';
+import { ROLE_LABEL, useAuth } from '../lib/auth';
 import { Button, DevCredit, toast } from '../ui';
 import { SignatureSheet } from '../fill/SignatureSheet';
 
@@ -44,7 +44,7 @@ export function Profile() {
         </div>
         <div>
           <dt className="text-sm text-muted">תפקיד</dt>
-          <dd className="text-[17px] font-semibold">{admin ? 'מנהל' : 'בודק'}</dd>
+          <dd className="text-[17px] font-semibold">{ROLE_LABEL[user.role]}</dd>
         </div>
       </dl>
 

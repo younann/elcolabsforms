@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { CaretLeft, Plus, UsersThree, WarningOctagon } from '@phosphor-icons/react';
 import { api, ApiError, errText } from '../../lib/api';
-import { useAuth, type Role } from '../../lib/auth';
+import { ROLE_LABEL, useAuth, type Role } from '../../lib/auth';
 import { useLoad } from '../../lib/useLoad';
 import { Banner, Button, EmptyState, Segmented, Sheet, TextField, cx, toast } from '../../ui';
 import { ListSkeleton } from '../../components/SubmissionList';
@@ -75,7 +75,7 @@ export function Users() {
                       !u.active ? 'bg-danger-soft text-danger' : u.role === 'admin' ? 'bg-info-soft text-info' : 'bg-surface-2 text-muted',
                     )}
                   >
-                    {!u.active ? 'מושבת' : u.role === 'admin' ? 'מנהל' : u.role === 'engineer' ? 'מהנדס' : 'בודק'}
+                    {!u.active ? 'מושבת' : ROLE_LABEL[u.role]}
                   </span>
                   <CaretLeft className="size-4 shrink-0 text-muted max-sm:hidden" aria-hidden />
                 </button>

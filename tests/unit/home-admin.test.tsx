@@ -7,7 +7,7 @@ import { isStuck, rowHref, type Summary } from '../../src/lib/submissions';
 const auth = vi.hoisted(() => ({
   user: { id: 'me', username: 'me', displayName: 'דנה', role: 'inspector' as 'inspector' | 'admin', hasSignature: true },
 }));
-vi.mock('../../src/lib/auth', () => ({ useAuth: () => ({ ...auth, logout: async () => {} }) }));
+vi.mock('../../src/lib/auth', async (orig) => ({ ...(await orig<object>()), useAuth: () => ({ ...auth, logout: async () => {} }) }));
 vi.mock('../../src/pwa/InstallBanner', () => ({ InstallBanner: () => null }));
 
 const { Home } = await import('../../src/pages/Home');
