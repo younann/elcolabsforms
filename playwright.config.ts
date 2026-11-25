@@ -4,7 +4,10 @@ import { config as loadEnv } from 'dotenv';
 // seed credentials for e2e
 loadEnv({ path: process.env.DOTENV_CONFIG_PATH ?? 'local.env', quiet: true });
 
-const baseURL = process.env.E2E_BASE_URL ?? 'http://localhost:8888';
+// E2E_PORT runs a separate dev server so a running one is left alone
+const port = Number(process.env.E2E_PORT ?? 8888);
+const vitePort = port === 8888 ? 5173 : port + 1;
+const baseURL = process.env.E2E_BASE_URL ?? `http://localhost:${port}`;
 
 export default defineConfig({
   testDir: 'tests/e2e',
@@ -26,7 +29,8 @@ export default defineConfig({
   webServer: process.env.E2E_BASE_URL
     ? undefined
     : {
-        command: 'npx dotenv-cli@8.0.0 -e local.env -- npx -y netlify-cli@27.20.0 dev --offline',
+        // APP_URL so background reports call back into this server
+        command: `APP_URL=${baseURL} npx dotenv-cli@8.0.0 -e local.env -- npx -y netlify-cli@27.20.0 dev --offline --port ${port} --target-port ${vitePort} --command "npx vite --host 127.0.0.1 --port ${vitePort} --strictPort"`,
         url: baseURL,
         reuseExistingServer: true,
         timeout: 180_000,
