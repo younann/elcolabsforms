@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
-import { ArrowClockwise, ArrowUUpRight, ArrowsCounterClockwise, Certificate, CheckCircle, FileDoc, FilePdf } from '@phosphor-icons/react';
+import { ArrowClockwise, ArrowUUpRight, ArrowsCounterClockwise, Certificate, CheckCircle, Export, FileDoc, FilePdf } from '@phosphor-icons/react';
 import { ApiError } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { act, certPdfUrl, docxUrl, isStuck, pdfUrl } from '../lib/submissions';
 import { retryCertificate } from '../lib/certificates';
+import { canShareFiles, fetchFile } from '../lib/share';
 import { Banner, Button, Sheet, TextArea, toast } from '../ui';
 import { FormFiller } from '../fill/FormFiller';
 import { MailModeBanner, useMailMode } from '../components/MailMode';
@@ -14,6 +15,38 @@ import { AuditButton, BackLink, DetailError, DetailSkeleton, useSubmission } fro
 const POLL_MS = 4000;
 // statuses after the report exists
 const REPORT_READY = new Set(['emailed', 'engineer_review', 'engineer_approved', 'cert_sending', 'certified', 'cert_failed']);
+
+/** Native share sheet for the report, plus the certificate once issued. */
+function ShareFiles({ urls }: { urls: string[] }) {
+  const [files, setFiles] = useState<File[] | null>(null);
+  const [busy, setBusy] = useState(false);
+  const key = urls.join('|');
+  useEffect(() => setFiles(null), [key]);
+
+  async function onShare() {
+    setBusy(true);
+    let ready = files;
+    try {
+      ready ??= await Promise.all(urls.map((u, i) => fetchFile(u, i ? 'certificate.pdf' : 'report.pdf')));
+      setFiles(ready);
+      await navigator.share({ files: ready });
+    } catch (e) {
+      const name = (e as Error).name;
+      // the fetch can outlast the tap; files are cached so a second tap shares at once
+      if (name === 'NotAllowedError' && ready) toast('הקבצים מוכנים, הקישו שוב על שיתוף');
+      else if (name !== 'AbortError') toast.error('השיתוף נכשל');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <button type="button" onClick={onShare} disabled={busy} className={`${linkBtn} disabled:opacity-50`} data-testid="share-btn">
+      <Export className="size-5" aria-hidden />
+      שיתוף
+    </button>
+  );
+}
 
 const linkBtn =
   'press inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-ctl border border-border-strong bg-surface px-3 text-base max-sm:flex-1 sm:px-4 font-medium whitespace-nowrap text-text transition-[transform,background-color] duration-150 ease-snap hover:bg-surface-2 active:scale-[0.97]';
@@ -114,6 +147,9 @@ export function SubmissionView() {
             Word
           </a>
         </>
+      )}
+      {s.pdfKey && (admin || REPORT_READY.has(s.status)) && canShareFiles() && (
+        <ShareFiles urls={s.status === 'certified' ? [pdfUrl(s.id), certPdfUrl(s.id)] : [pdfUrl(s.id)]} />
       )}
       {s.status === 'certified' && (
         <a href={certPdfUrl(s.id)} download className={linkBtn} data-testid="cert-link">
