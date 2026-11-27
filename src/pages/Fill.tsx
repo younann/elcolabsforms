@@ -7,6 +7,8 @@ import { canTransition, type Role, type Status } from '../../shared/status';
 import { preferLocal } from '../lib/autosave';
 import { Button, EmptyState } from '../ui';
 import { getForm } from '../../shared/forms';
+import { applyRequired } from '../../shared/forms/required';
+import { requiredOverrides } from '../lib/required';
 import type { FormData, FormDef } from '../../shared/forms/types';
 import { FormFiller, draftKey, type SubmissionRow } from '../fill/FormFiller';
 import type { Attachment } from '../fill/context';
@@ -49,8 +51,11 @@ export function Fill() {
   const load = useCallback(async () => {
     setState(null);
     try {
-      const r = await api<{ submission: SubmissionRow & { inspectorId?: string; jobId?: string | null }; attachments: Attachment[] }>(`/api/submissions/${id}`);
-      const def = getForm(r.submission.formId, r.submission.formVersion);
+      const [r, overrides] = await Promise.all([
+        api<{ submission: SubmissionRow & { inspectorId?: string; jobId?: string | null }; attachments: Attachment[] }>(`/api/submissions/${id}`),
+        requiredOverrides(),
+      ]);
+      const def = applyRequired(getForm(r.submission.formId, r.submission.formVersion), overrides);
       const editable = canEdit(r.submission, uid, role);
       const picked = editable
         ? preferLocal(draftKey(id), r.submission.data ?? {}, r.submission.updatedAt)

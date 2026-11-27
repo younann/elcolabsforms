@@ -145,7 +145,7 @@ export const SignatureField = memo(function SignatureField({ field: f, disabled 
     // filled from the approver profile at approval
     return (
       <div id={fieldDomId(f.id)} className="flex flex-col gap-1.5">
-        <Label>{f.label}</Label>
+        <Label required={f.required}>{f.label}</Label>
         <p className="rounded-box bg-surface-2 px-4 py-3 text-[15px] text-muted">
           {mode === 'admin' ? 'החתימה השמורה שלך תצורף בעת האישור' : 'ייחתם על ידי המאשר'}
         </p>
@@ -154,7 +154,7 @@ export const SignatureField = memo(function SignatureField({ field: f, disabled 
   }
   return (
     <div id={fieldDomId(f.id)} tabIndex={-1} className="scroll-mt-36 flex flex-col gap-1.5 outline-none">
-      <Label required>{f.label}</Label>
+      <Label required={f.required !== false}>{f.label}</Label>
       <SignatureSlot fieldId={f.id} title={f.label} disabled={disabled} />
     </div>
   );
@@ -322,7 +322,7 @@ export const DrawingField = memo(function DrawingField({ field: f, disabled }: F
   const locked = !!disabled || readOnly;
   return (
     <div id={fieldDomId(f.id)} className="flex flex-col gap-3">
-      <Label>{f.label}</Label>
+      <Label required={f.required}>{f.label}</Label>
       {items.length + pending.length > 0 && (
         <ul className="grid gap-2 sm:grid-cols-2">
           {items.map((a) => (

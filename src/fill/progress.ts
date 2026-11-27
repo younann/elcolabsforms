@@ -1,26 +1,11 @@
 import type { AttachmentRef, Field, FormData, FormDef, Section } from '../../shared/forms/types';
 import { NA_VALUE } from '../../shared/forms/types';
 import { validateForSubmit } from '../../shared/forms/validate';
+import { defaultRequired } from '../../shared/forms/required';
 
 // fields the submit check looks at
 export function isTracked(f: Field): boolean {
-  switch (f.type) {
-    case 'text':
-    case 'textarea':
-    case 'number':
-    case 'date':
-    case 'time':
-    case 'choice':
-      return !!f.required;
-    case 'check':
-      return true;
-    case 'repeatTable':
-      return (f.minRows ?? 0) > 0;
-    case 'signature':
-      return f.role === 'inspector';
-    default:
-      return false;
-  }
+  return f.type !== 'note' && (f.required ?? defaultRequired(f));
 }
 
 export function sectionProgress(def: FormDef, s: Section, data: FormData, atts: AttachmentRef[]) {

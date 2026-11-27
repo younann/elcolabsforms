@@ -1,13 +1,13 @@
 import { useState, type ReactNode } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { CalendarBlank, MapPin, Phone, User, WarningOctagon } from '@phosphor-icons/react';
 import { ApiError, errText } from '../lib/api';
 import { useAuth } from '../lib/auth';
-import { addJobForms, cancelJob, getJob, jobDate, patchJob, setJobInspector, type JobView, type Qty } from '../lib/jobs';
+import { addJobForms, cancelJob, getJob, jobDate, patchJob, setJobInspector, type JobView } from '../lib/jobs';
 import { listInspectors, rowHref } from '../lib/submissions';
 import { useLoad } from '../lib/useLoad';
 import { wazeLink } from '../../shared/waze';
-import { Banner, Button, EmptyState, InspectorPicker, QtyStepper, Sheet, StatusBadge, TextArea, TextField, cx, toast } from '../ui';
+import { Banner, Button, EmptyState, FormChecks, InspectorPicker, Sheet, StatusBadge, TextArea, TextField, cx, toast } from '../ui';
 import { ListSkeleton } from '../components/SubmissionList';
 import { WhatsAppButton } from '../components/WhatsAppButton';
 import { WazeButton } from '../components/WazeButton';
@@ -21,18 +21,20 @@ export function JobPage() {
   const { id = '' } = useParams();
   const { user } = useAuth();
   const admin = user?.role === 'admin';
+  const navigate = useNavigate();
   const { data: job, error, reload } = useLoad(() => getJob(id), `job:${id}`);
   const [panel, setPanel] = useState<Panel>(null);
   const [busy, setBusy] = useState(false);
 
   // one runner for every sheet action
-  async function run(fn: () => Promise<JobView>, done: string) {
+  async function run(fn: () => Promise<JobView | null>, done: string) {
     if (busy) return;
     setBusy(true);
     try {
-      await fn();
+      const j = await fn();
       toast.success(done);
       setPanel(null);
+      if (!j) return navigate('/', { replace: true });
       await reload();
     } catch (e) {
       if (!(e instanceof ApiError && e.status === 401)) toast.error(errText(e));
@@ -59,6 +61,7 @@ export function JobPage() {
         <div className="min-w-0 flex-1">
           <h1 className="text-[28px] leading-tight font-bold sm:text-[32px]">{job.client.name}</h1>
           <p className="mt-0.5 text-[15px] text-muted">{job.site.name}</p>
+          {job.openedByInspector && <p className="mt-1 inline-block rounded-full bg-warning-soft px-2.5 py-0.5 text-[13px] font-semibold text-warning">נפתח ע"י בודק</p>}
         </div>
         <span
           className={cx(
@@ -112,7 +115,7 @@ export function JobPage() {
         {!job.forms.length && <li className="text-[15px] text-muted">אין טפסים</li>}
       </ul>
 
-      {admin && live && (
+      {job.canManage && live && (
         <div className="mt-7 grid grid-cols-2 gap-2 border-t border-border pt-5">
           <Button variant="secondary" onClick={() => setPanel('edit')}>
             תאריך והערה
@@ -129,10 +132,10 @@ export function JobPage() {
         </div>
       )}
 
-      {admin && (
+      {job.canManage && (
         <>
           <EditSheet job={job} open={panel === 'edit'} busy={busy} onClose={() => setPanel(null)} onSave={(b) => run(() => patchJob(id, b), 'העבודה עודכנה')} />
-          <FormsSheet open={panel === 'forms'} busy={busy} onClose={() => setPanel(null)} onSave={(q) => run(() => addJobForms(id, q), 'הטפסים נוספו')} />
+          <FormsSheet job={job} open={panel === 'forms'} busy={busy} onClose={() => setPanel(null)} onSave={(q) => run(() => addJobForms(id, q), 'הטפסים נוספו')} />
           <InspectorSheet
             job={job}
             open={panel === 'inspector'}
@@ -187,30 +190,26 @@ function EditSheet({ job, open, busy, onClose, onSave }: SheetBase & { job: JobV
   );
 }
 
-function FormsSheet({ open, busy, onClose, onSave }: SheetBase & { onSave(q: Qty): void }) {
-  const [qty, setQty] = useState<Qty>({});
+function FormsSheet({ job, open, busy, onClose, onSave }: SheetBase & { job: JobView; onSave(forms: string[]): void }) {
+  const [pick, setPick] = useState<string[]>([]);
   const [was, setWas] = useState(false);
   if (open !== was) {
     setWas(open);
-    if (open) setQty({});
+    if (open) setPick([]);
   }
-  const total = Object.values(qty).reduce((a, b) => a + b, 0);
+  const have = [...new Set(job.forms.map((f) => f.formId))];
   return (
     <Sheet
       open={open}
       onClose={onClose}
       title="הוספת טפסים"
       footer={
-        <Button variant="primary" block size="lg" loading={busy} disabled={!total} onClick={() => onSave(qty)}>
-          {total ? `הוספת ${total} טפסים` : 'בחר טפסים'}
+        <Button variant="primary" block size="lg" loading={busy} disabled={!pick.length} onClick={() => onSave(pick)}>
+          {pick.length ? `הוספת ${pick.length} טפסים` : 'בחר טפסים'}
         </Button>
       }
     >
-      <div className="divide-y divide-border">
-        {FORMS.map((f) => (
-          <QtyStepper key={f.id} label={f.shortTitle} value={qty[f.id] ?? 0} onChange={(n) => setQty({ ...qty, [f.id]: n })} />
-        ))}
-      </div>
+      <FormChecks label="" value={pick} onChange={setPick} disabled={have} />
     </Sheet>
   );
 }

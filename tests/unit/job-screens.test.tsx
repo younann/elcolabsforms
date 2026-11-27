@@ -13,6 +13,8 @@ const job = (phone: string | null): JobView => ({
   note: null,
   cancelledAt: null,
   state: 'open',
+  openedByInspector: false,
+  canManage: true,
   forms: [{ id: 'f', formId: 'gas', jobCopy: 1, status: 'draft', inspectorId: 'i', label: 'גז' }],
 });
 

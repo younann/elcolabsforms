@@ -11,17 +11,22 @@ const row = (p: Partial<ExportRow>): ExportRow => ({
   inspector: 'יוסי',
   form: 'גלאים',
   testNumber: '1',
+  openedBy: 'מנהל',
   ...p,
 });
 
 describe('exportSheets', () => {
-  const rows = [row({}), row({ form: '1220' }), row({ inspector: 'דנה', client: 'לוי' }), row({ approvedAt: new Date('2026-11-01T08:00:00Z'), testNumber: '0' })];
+  const rows = [row({}), row({ form: '1220', openedBy: 'בודק' }), row({ inspector: 'דנה', client: 'לוי' }), row({ approvedAt: new Date('2026-11-01T08:00:00Z'), testNumber: '0' })];
   const [detail, byInspector, byClient] = exportSheets(rows, ['1220', 'גלאים', 'גז']);
 
   test('detail has one row per form, by date', () => {
     expect(detail.rows).toHaveLength(5);
     expect(detail.rows[1][6]).toBe('0');
     expect(detail.rows[1][0]).toBe('01/11/2026');
+  });
+  test('detail says who opened the work', () => {
+    expect(detail.rows[0][7]).toBe('נפתח ע"י');
+    expect(detail.rows.slice(1).map((r) => r[7]).sort()).toEqual(['בודק', 'מנהל', 'מנהל', 'מנהל']);
   });
   test('per inspector counts form types with totals; unused types dropped', () => {
     expect(byInspector.rows[0]).toEqual(['בודק', '1220', 'גלאים', 'סה"כ']);

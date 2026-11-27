@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowClockwise, ArrowsCounterClockwise, FileDoc, FilePdf, FunnelSimple, MagnifyingGlass, WarningOctagon } from '@phosphor-icons/react';
 import { api, ApiError } from '../../lib/api';
 import { useLoad } from '../../lib/useLoad';
+import { getClient, listClients } from '../../lib/clients';
 import { act, docxUrl, ilDay, isStuck, listSubmissions, pdfUrl, rowHref, type Summary } from '../../lib/submissions';
 import { Button, EmptyState, InspectorPicker, Select, Sheet, TextField, cx, statusLabel, toast } from '../../ui';
 import { ListSkeleton, SubmissionRow } from '../../components/SubmissionList';
@@ -26,13 +27,18 @@ export function AllSubmissions() {
     from: params.get('from') ?? '',
     to: params.get('to') ?? '',
     q: params.get('q') ?? '',
+    clientId: params.get('client') ?? '',
+    siteId: params.get('site') ?? '',
   };
-  const set = (k: string, v: string) =>
+  // several keys in one update, so none is lost
+  const set = (k: string, v: string, extra: Record<string, string> = {}) =>
     setParams(
       (p) => {
         const n = new URLSearchParams(p);
-        if (v) n.set(k, v);
-        else n.delete(k);
+        for (const [key, val] of Object.entries({ [k]: v, ...extra })) {
+          if (val) n.set(key, val);
+          else n.delete(key);
+        }
         return n;
       },
       { replace: true },
@@ -52,6 +58,8 @@ export function AllSubmissions() {
       ),
     'users:inspectors',
   );
+  const clients = useLoad(listClients, 'clients');
+  const sites = useLoad(() => (f.clientId ? getClient(f.clientId).then((r) => r.sites) : Promise.resolve([])), `sites:${f.clientId}`);
   const list = useLoad(
     () => listSubmissions({ formId: f.formId, inspectorId: f.inspectorId, status: f.status }),
     `subs:${f.formId}|${f.inspectorId}|${f.status}`,
@@ -64,12 +72,14 @@ export function AllSubmissions() {
       const day = ilDay(s.submittedAt ?? s.createdAt);
       if (f.from && day < f.from) return false;
       if (f.to && day > f.to) return false;
+      if (f.clientId && s.clientId !== f.clientId) return false;
+      if (f.siteId && s.siteId !== f.siteId) return false;
       if (q && ![s.siteName, s.testNumber, s.inspectorName].some((v) => v?.toLowerCase().includes(q))) return false;
       return true;
     });
-  }, [list.data, f.from, f.to, f.q]);
+  }, [list.data, f.from, f.to, f.q, f.clientId, f.siteId]);
 
-  const active = [f.formId, f.inspectorId, f.status, f.from, f.to].filter(Boolean).length;
+  const active = [f.formId, f.inspectorId, f.status, f.from, f.to, f.clientId, f.siteId].filter(Boolean).length;
 
   async function run(s: Summary, action: 'retry' | 'reopen') {
     if (busy) return;
@@ -121,6 +131,24 @@ export function AllSubmissions() {
       </Select>
       <TextField label="מתאריך" type="date" value={f.from} max={f.to || undefined} onChange={(e) => set('from', e.target.value)} />
       <TextField label="עד תאריך" type="date" value={f.to} min={f.from || undefined} onChange={(e) => set('to', e.target.value)} />
+      <InspectorPicker
+        label="לקוח"
+        placeholder="כולם"
+        noun={{ one: 'לקוח', many: 'לקוחות' }}
+        options={(clients.data ?? []).map((c) => ({ id: c.id, displayName: c.name, username: c.contactPerson ?? '' }))}
+        loading={clients.loading}
+        value={f.clientId}
+        clearable
+        onChange={(c) => set('client', c?.id ?? '', { site: '' })}
+      />
+      <Select label="אתר" value={f.siteId} disabled={!f.clientId} onChange={(e) => set('site', e.target.value)}>
+        <option value="">הכול</option>
+        {sites.data?.map((x) => (
+          <option key={x.id} value={x.id}>
+            {x.name}
+          </option>
+        ))}
+      </Select>
     </div>
   );
 

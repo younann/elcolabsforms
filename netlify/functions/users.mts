@@ -1,6 +1,6 @@
 import type { Config } from '@netlify/functions';
 import { z } from 'zod';
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, sql } from 'drizzle-orm';
 import { getDb, schema } from '../../server/db/client';
 import { handle, json, parseBody, HttpError } from '../../server/http';
 import { requireUser, hashPassword } from '../../server/auth';
@@ -12,16 +12,19 @@ const view = (u: typeof schema.users.$inferSelect) => ({
 });
 
 export default handle(async (req, ctx) => {
-  const me = await requireUser(req, 'admin');
+  const me = await requireUser(req);
   const db = getDb();
   const id = ctx.params?.id as string | undefined;
+  const picker = !id && req.method === 'GET' && new URL(req.url).searchParams.get('inspectors') === '1';
+  // inspectors may reassign their own jobs, so they get the picker list
+  if (me.role !== 'admin' && !(picker && me.role === 'inspector')) throw new HttpError(403, 'אין הרשאה');
   if (id !== undefined && !z.uuid().safeParse(id).success) throw new HttpError(404, 'משתמש לא נמצא');
 
   if (!id && req.method === 'GET') {
     // light list for pickers
-    if (new URL(req.url).searchParams.get('inspectors') === '1') {
+    if (picker) {
       const list = await db
-        .select({ id: schema.users.id, displayName: schema.users.displayName, username: schema.users.username, phone: schema.users.phone })
+        .select({ id: schema.users.id, displayName: schema.users.displayName, username: schema.users.username, phone: me.role === 'admin' ? schema.users.phone : sql<null>`null` })
         .from(schema.users)
         .where(and(eq(schema.users.role, 'inspector'), eq(schema.users.active, true)))
         .orderBy(asc(schema.users.displayName));

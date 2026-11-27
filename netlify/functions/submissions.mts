@@ -62,6 +62,8 @@ export default handle(async (req) => {
           hasChild: sql<boolean>`exists (select 1 from ${schema.submissions} c where c.parent_id = ${schema.submissions.id})`,
           inspectorId: schema.submissions.inspectorId,
           inspectorName: schema.users.displayName,
+          clientId: schema.jobs.clientId,
+          siteId: schema.jobs.siteId,
           submittedAt: schema.submissions.submittedAt,
           emailedAt: schema.submissions.emailedAt,
           createdAt: schema.submissions.createdAt,
@@ -69,6 +71,7 @@ export default handle(async (req) => {
         })
         .from(schema.submissions)
         .innerJoin(schema.users, eq(schema.users.id, schema.submissions.inspectorId))
+        .leftJoin(schema.jobs, eq(schema.jobs.id, schema.submissions.jobId))
         .where(conds.length ? and(...conds) : undefined)
         .orderBy(desc(schema.submissions.updatedAt));
       return json({ submissions: rows });

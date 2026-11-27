@@ -11,7 +11,7 @@ test('admin job reaches the inspector pre-filled, with a WhatsApp link', async (
   expect(u.status()).toBe(201);
   const inspectorId = (await u.json()).user.id as string;
   await admin.dispose();
-  const job = await createJob(inspectorId, { aerosol: 1 });
+  const job = await createJob(inspectorId, ['aerosol']);
 
   // inspector: card on home, form pre-filled
   await login(page.request, username, PASS);
@@ -29,6 +29,11 @@ test('admin job reaches the inspector pre-filled, with a WhatsApp link', async (
   const adminPage = await ctx.newPage();
   await login(adminPage.request, ADMIN_USER, ADMIN_PASS);
   await adminPage.goto(`/jobs/${job.jobId}`);
-  await expect(adminPage.getByTestId('whatsapp')).toHaveAttribute('href', /^https:\/\/wa\.me\/972501234567\?text=/);
+  const wa = adminPage.getByTestId('whatsapp');
+  await expect(wa).toHaveAttribute('href', /^https:\/\/wa\.me\/972501234567\?text=/);
+  const text = new URL((await wa.getAttribute('href'))!).searchParams.get('text')!;
+  expect(text).toContain(job.clientName);
+  expect(text).toContain(`ניווט בוויז: https://waze.com/ul?q=${encodeURIComponent('הרצל 12, חיפה')}&navigate=yes`);
+  expect(text).toContain(`/jobs/${job.jobId}`);
   await ctx.close();
 });

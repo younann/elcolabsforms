@@ -47,6 +47,7 @@ export const router = createBrowserRouter([
           { path: 'fill/:id', element: <Fill /> },
           { path: 'submissions/:id', element: <SubmissionView /> },
           { path: 'profile', element: <Profile /> },
+          { path: 'jobs/new', element: <JobNew /> },
           { path: 'jobs/:id', element: <JobPage /> },
           {
             path: 'admin',

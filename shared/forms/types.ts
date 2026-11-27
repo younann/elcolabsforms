@@ -28,20 +28,22 @@ export type Field =
       text: string;
       answers: AnswerSet;
       inline?: { id: string; label: string }[];
+      required?: boolean;
     })
-  | (Base & { type: 'equipmentTable'; rows: string[] })
-  | (Base & { type: 'repeatTable'; label: string; columns: ColumnDef[]; minRows?: number })
-  | (Base & { type: 'systemsGrid'; systems: string[]; allowOther: boolean })
-  | (Base & { type: 'contactAck'; label: string })
-  | (Base & { type: 'signature'; label: string; role: 'inspector' | 'approver' })
-  | (Base & { type: 'photos'; label: string })
-  | (Base & { type: 'drawing'; label: string })
+  | (Base & { type: 'equipmentTable'; rows: string[]; required?: boolean })
+  | (Base & { type: 'repeatTable'; label: string; columns: ColumnDef[]; minRows?: number; required?: boolean })
+  | (Base & { type: 'systemsGrid'; systems: string[]; allowOther: boolean; required?: boolean })
+  | (Base & { type: 'contactAck'; label: string; required?: boolean })
+  | (Base & { type: 'signature'; label: string; role: 'inspector' | 'approver'; required?: boolean })
+  | (Base & { type: 'photos'; label: string; required?: boolean })
+  | (Base & { type: 'drawing'; label: string; required?: boolean })
   | (Base & {
       type: 'scenarioMatrix';
       actions: string[];
       columns: string[];
       values: string[];
       tableFields: { id: string; label: string }[];
+      required?: boolean;
     })
   | (Base & { type: 'note'; text: string });
 

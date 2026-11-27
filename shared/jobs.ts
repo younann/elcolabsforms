@@ -3,8 +3,6 @@ import { FORMS } from './forms';
 import type { FormData, FormDef } from './forms/types';
 import type { Status } from './status';
 
-export const JOB_QTY_MAX = 9;
-
 export type PrefillCtx = {
   plannedDate: string;
   siteName: string;
@@ -45,17 +43,9 @@ export function copyLabel(shortTitle: string, copy: number | null, copiesOfForm:
   return copy && copiesOfForm > 1 ? `${shortTitle} ${copy}` : shortTitle;
 }
 
-// copies continue after the existing count
-export function expandQuantities(
-  q: Record<string, number>,
-  existing: Record<string, number> = {},
-): { formId: string; copy: number }[] {
-  const out: { formId: string; copy: number }[] = [];
-  for (const [formId, n] of Object.entries(q)) {
-    const start = existing[formId] ?? 0;
-    for (let i = 1; i <= n; i++) out.push({ formId, copy: start + i });
-  }
-  return out;
+// admins manage every job, inspectors the ones they opened
+export function canManageJob(me: { id: string; role: string }, job: { createdBy: string }): boolean {
+  return me.role === 'admin' || (me.role === 'inspector' && job.createdBy === me.id);
 }
 
 export function isUntouched(s: { status: Status; touchedAt: Date | string | null }): boolean {
@@ -63,8 +53,11 @@ export function isUntouched(s: { status: Status; touchedAt: Date | string | null
 }
 
 const formId = z.enum(FORMS.map((f) => f.id) as [string, ...string[]]);
-const qty = z.partialRecord(formId, z.number().int().min(0).max(JOB_QTY_MAX));
-const forms = qty.refine((q) => Object.values(q).some((n) => (n ?? 0) > 0), 'יש לבחור לפחות טופס אחד');
+// one copy of each form per job
+const forms = z
+  .array(formId)
+  .min(1, 'יש לבחור לפחות טופס אחד')
+  .refine((a) => new Set(a).size === a.length, 'כל טופס פעם אחת בלבד');
 const plannedDate = z.iso.date('תאריך לא תקין');
 const note = z.string().trim().max(1000).transform((v) => v || null).optional();
 
@@ -83,6 +76,9 @@ export type JobView = {
   note: string | null;
   cancelledAt: string | null;
   state: JobState;
+  openedByInspector: boolean;
+  // viewer may edit, add forms, reassign, cancel
+  canManage: boolean;
   forms: JobFormView[];
 };
 // list rows carry the same shape

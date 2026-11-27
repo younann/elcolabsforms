@@ -2,13 +2,14 @@ import { sendNotification, setVapidDetails } from 'web-push';
 import { eq, inArray } from 'drizzle-orm';
 import { getDb, schema } from './db/client';
 
-export type JobEvent = 'created' | 'inspector' | 'forms' | 'cancelled';
+export type JobEvent = 'created' | 'inspector' | 'forms' | 'cancelled' | 'opened';
 
 const TITLES: Record<JobEvent, string> = {
   created: 'עבודה חדשה',
   inspector: 'עבודה הועברה אליך',
   forms: 'נוספו טפסים לעבודה',
   cancelled: 'עבודה בוטלה',
+  opened: 'עבודה נפתחה ע"י בודק',
 };
 
 const dateFmt = new Intl.DateTimeFormat('he-IL', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Asia/Jerusalem' });

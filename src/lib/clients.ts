@@ -5,7 +5,7 @@ import type { JobSummary } from '../../shared/jobs';
 export type { ClientRow, SiteRow };
 export type Client = Omit<ClientRow, 'siteCount'>;
 export type ClientInputBody = { name?: string; contactPerson?: string; phone?: string; email?: string; active?: boolean };
-export type SiteInputBody = { name?: string; address?: string; active?: boolean };
+export type SiteInputBody = { name?: string; address?: string; formIds?: string[]; active?: boolean };
 
 export const listClients = (q?: string) =>
   api<{ clients: ClientRow[] }>(`/api/clients${q ? `?q=${encodeURIComponent(q)}` : ''}`).then((r) => r.clients);

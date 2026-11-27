@@ -2,9 +2,9 @@ import { useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowRight, Briefcase, MapPin, PencilSimple, Plus, WarningOctagon } from '@phosphor-icons/react';
 import { ApiError, errText } from '../../lib/api';
-import { getClient, saveClient, saveSite, type SiteRow } from '../../lib/clients';
+import { getClient, saveClient, saveSite, type SiteInputBody, type SiteRow } from '../../lib/clients';
 import { useLoad } from '../../lib/useLoad';
-import { Banner, Button, EmptyState, Sheet, TextField, cx, toast } from '../../ui';
+import { Banner, Button, EmptyState, FormChecks, Sheet, TextField, cx, toast } from '../../ui';
 import { ListSkeleton } from '../../components/SubmissionList';
 import { ClientSheet } from './Clients';
 import { JobGroups } from './Jobs';
@@ -159,7 +159,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 }
 
 function SiteSheet({ clientId, site, onClose, onSaved }: { clientId: string; site: SiteRow | 'new' | null; onClose(): void; onSaved(): void }) {
-  const [form, setForm] = useState({ name: '', address: '' });
+  const [form, setForm] = useState<{ name: string; address: string; formIds: string[] }>({ name: '', address: '', formIds: [] });
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [shown, setShown] = useState<SiteRow | 'new' | null>(null);
@@ -170,11 +170,11 @@ function SiteSheet({ clientId, site, onClose, onSaved }: { clientId: string; sit
     setShown(site);
     if (site) {
       setErr(null);
-      setForm(existing ? { name: existing.name, address: existing.address } : { name: '', address: '' });
+      setForm(existing ? { name: existing.name, address: existing.address, formIds: existing.formIds } : { name: '', address: '', formIds: [] });
     }
   }
 
-  async function save(kind: string, body: { name?: string; address?: string; active?: boolean }, done: string) {
+  async function save(kind: string, body: SiteInputBody, done: string) {
     if (busy) return;
     setBusy(kind);
     setErr(null);
@@ -209,6 +209,7 @@ function SiteSheet({ clientId, site, onClose, onSaved }: { clientId: string; sit
         {err && <Banner tone="danger">{err}</Banner>}
         <TextField label="שם האתר" required maxLength={120} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
         <TextField label="כתובת" required maxLength={200} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
+        <FormChecks label="טפסים לאתר (לפי התקנים)" value={form.formIds} onChange={(formIds) => setForm({ ...form, formIds })} />
         {existing && (
           <div className="border-t border-border pt-4">
             <Button

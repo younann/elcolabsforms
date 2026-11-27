@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildJobRows } from '../../server/jobs';
-import { JobCreate } from '../../shared/jobs';
+import { canManageJob, JobCreate } from '../../shared/jobs';
 import type { FormData } from '../../shared/forms/types';
 
 const valid = {
@@ -8,7 +8,7 @@ const valid = {
   siteId: '22222222-2222-4222-8222-222222222222',
   inspectorId: '33333333-3333-4333-8333-333333333333',
   plannedDate: '2026-11-24',
-  forms: { gas: 1 },
+  forms: ['gas'],
 };
 
 describe('job rows', () => {
@@ -29,10 +29,21 @@ describe('JobCreate', () => {
   it('accepts a valid job and blanks the note', () => {
     expect(JobCreate.parse({ ...valid, note: ' ' }).note).toBeNull();
   });
-  it('rejects zero, too many, or unknown forms', () => {
-    expect(JobCreate.safeParse({ ...valid, forms: { gas: 0 } }).success).toBe(false);
-    expect(JobCreate.safeParse({ ...valid, forms: { gas: 10 } }).success).toBe(false);
-    expect(JobCreate.safeParse({ ...valid, forms: { nope: 1 } }).success).toBe(false);
+  it('rejects no forms, a repeated form, or unknown forms', () => {
+    expect(JobCreate.safeParse({ ...valid, forms: [] }).success).toBe(false);
+    expect(JobCreate.safeParse({ ...valid, forms: ['gas', 'gas'] }).success).toBe(false);
+    expect(JobCreate.safeParse({ ...valid, forms: ['nope'] }).success).toBe(false);
+    expect(JobCreate.safeParse({ ...valid, forms: ['gas', 'f536'] }).success).toBe(true);
     expect(JobCreate.safeParse({ ...valid, plannedDate: '24/11/2026' }).success).toBe(false);
+  });
+});
+
+describe('canManageJob', () => {
+  const job = { createdBy: 'insp-1' };
+  it('admin manages any job', () => expect(canManageJob({ id: 'a', role: 'admin' }, job)).toBe(true));
+  it('inspector manages only jobs they opened', () => {
+    expect(canManageJob({ id: 'insp-1', role: 'inspector' }, job)).toBe(true);
+    expect(canManageJob({ id: 'insp-2', role: 'inspector' }, job)).toBe(false);
+    expect(canManageJob({ id: 'insp-1', role: 'engineer' }, job)).toBe(false);
   });
 });

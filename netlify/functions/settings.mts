@@ -8,6 +8,8 @@ import { getBlob, putBlob } from '../../server/blobs';
 import { readPngBody } from '../../server/upload';
 import { loadSettings } from '../../server/settings';
 import { mailMode } from '../../server/mail';
+import { FORMS } from '../../shared/forms';
+import { isSwitchable, RequiredPut } from '../../shared/forms/required';
 
 const Put = z.object({
   recipientEmail: z.union([z.literal(''), z.email()]),
@@ -36,10 +38,23 @@ export default handle(async (req) => {
     await db.update(schema.settings).set({ stampKey: key }).where(eq(schema.settings.id, 1));
     return json({ ok: true });
   }
+  if (url.pathname.endsWith('/required')) {
+    await requireUser(req, 'admin');
+    if (req.method !== 'PUT') throw new HttpError(405, 'Method not allowed');
+    const b = await parseBody(req, RequiredPut);
+    const def = FORMS.find((f) => f.id === b.formId);
+    const ok = new Set(def?.sections.flatMap((s) => s.fields).filter(isSwitchable).map((f) => f.id));
+    if (!def || Object.keys(b.overrides).some((k) => !ok.has(k))) throw new HttpError(400, 'נתונים לא תקינים');
+    const s = await loadSettings();
+    const next = { ...s.requiredOverrides, [b.formId]: b.overrides };
+    if (!Object.keys(b.overrides).length) delete next[b.formId];
+    await db.update(schema.settings).set({ requiredOverrides: next }).where(eq(schema.settings.id, 1));
+    return json({ requiredOverrides: next });
+  }
   if (req.method === 'GET') {
     const me = await requireUser(req);
     const s = await loadSettings();
-    const base = { companyName: s.companyName, companyDetails: s.companyDetails, hasStamp: !!s.stampKey };
+    const base = { companyName: s.companyName, companyDetails: s.companyDetails, hasStamp: !!s.stampKey, requiredOverrides: s.requiredOverrides };
     return json({ settings: me.role === 'admin' ? { ...base, recipientEmail: s.recipientEmail, mailMode: mailMode() } : base });
   }
   if (req.method === 'PUT') {
@@ -52,4 +67,4 @@ export default handle(async (req) => {
   throw new HttpError(405, 'Method not allowed');
 });
 
-export const config: Config = { path: ['/api/settings', '/api/settings/stamp'] };
+export const config: Config = { path: ['/api/settings', '/api/settings/stamp', '/api/settings/required'] };

@@ -12,4 +12,4 @@ export { Brand, DevCredit, LogoMark, APP_NAME, TAGLINE } from './Brand';
 export { cx } from './cx';
 export { InspectorPicker, type InspectorPickerProps, type Inspector } from './InspectorPicker';
 export { BackGuard, useBackCloses, useGoBack } from './back';
-export { QtyStepper } from './QtyStepper';
+export { FormChecks } from './FormChecks';

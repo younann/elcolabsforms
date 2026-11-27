@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { ClipboardText, WarningOctagon } from '@phosphor-icons/react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { useLoad } from '../lib/useLoad';
 import { listSubmissions, rowHref, type Summary } from '../lib/submissions';
@@ -49,7 +50,12 @@ function InspectorHome({ name }: { name: string }) {
 
   return (
     <div>
-      <h1 className="text-[28px] leading-tight font-bold sm:text-[32px]">שלום, {name}</h1>
+      <div className="flex items-center gap-3">
+        <h1 className="min-w-0 flex-1 text-[28px] leading-tight font-bold sm:text-[32px]">שלום, {name}</h1>
+        <Link to="/jobs/new" className="press shrink-0 rounded-ctl bg-accent px-4 py-2.5 text-[15px] font-semibold text-accent-fg" data-testid="open-job">
+          + פתיחת עבודה
+        </Link>
+      </div>
       <PushCard />
 
       {(

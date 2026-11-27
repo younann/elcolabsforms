@@ -38,6 +38,8 @@ export const settings = pgTable('settings', {
   companyName: text('company_name').notNull().default(''),
   companyDetails: text('company_details').notNull().default(''),
   stampKey: text('stamp_key'),
+  // { formId: { fieldId: required } }, only admin choices
+  requiredOverrides: jsonb('required_overrides').$type<Record<string, Record<string, boolean>>>().notNull().default({}),
 });
 
 export const clients = pgTable('clients', {
@@ -55,6 +57,8 @@ export const clientSites = pgTable('client_sites', {
   clientId: uuid('client_id').notNull().references(() => clients.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
   address: text('address').notNull(),
+  // forms the site needs by its standards
+  formIds: text('form_ids').array().notNull().default([]),
   active: boolean('active').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });

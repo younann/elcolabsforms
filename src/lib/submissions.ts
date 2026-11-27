@@ -20,6 +20,8 @@ export type Summary = {
   hasChild: boolean;
   inspectorId: string;
   inspectorName: string;
+  clientId?: string | null;
+  siteId?: string | null;
   submittedAt: string | null;
   emailedAt: string | null;
   createdAt: string;

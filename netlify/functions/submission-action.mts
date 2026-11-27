@@ -6,6 +6,8 @@ import { background, handle, json, parseBody, HttpError } from '../../server/htt
 import { requireUser } from '../../server/auth';
 import { getForm } from '../../shared/forms';
 import { validateForSubmit } from '../../shared/forms/validate';
+import { applyRequired } from '../../shared/forms/required';
+import { loadSettings } from '../../server/settings';
 import { canTransition, type Status } from '../../shared/status';
 import { getBlob, putBlob } from '../../server/blobs';
 import { notifyEngineerDone, notifySubmitted } from '../../server/mail';
@@ -31,10 +33,13 @@ export default handle(async (req, ctx) => {
   const to = canTransition(from, action, me.role, s.updatedAt, Date.now(), s.mailLogged);
   if (!to) throw new HttpError(409, 'פעולה לא אפשרית במצב הנוכחי');
 
-  const check = async () => {
+  // approve only honors relaxed fields, so a new rule never blocks an old report
+  const check = async (relaxOnly = false) => {
     const def = getForm(s.formId, s.formVersion);
-    const atts = await db.select().from(schema.attachments).where(eq(schema.attachments.submissionId, id));
-    const v = validateForSubmit(def, asData(s.data), atts.map((a) => ({ id: a.id, fieldId: a.fieldId, kind: a.kind })));
+    const [atts, settings] = await Promise.all([db.select().from(schema.attachments).where(eq(schema.attachments.submissionId, id)), loadSettings()]);
+    const o = settings.requiredOverrides[def.id] ?? {};
+    const rules = relaxOnly ? Object.fromEntries(Object.entries(o).filter(([, v]) => !v)) : o;
+    const v = validateForSubmit(applyRequired(def, { [def.id]: rules }), asData(s.data), atts.map((a) => ({ id: a.id, fieldId: a.fieldId, kind: a.kind })));
     if (!v.ok) throw new HttpError(422, 'חסרים שדות חובה', { missing: v.missing });
     return def;
   };
@@ -57,7 +62,7 @@ export default handle(async (req, ctx) => {
   }
 
   if (action === 'approve') {
-    await check();
+    await check(true);
     // first approval date stays for the monthly export
     const row = await transition(id, from, { status: to, approvedBy: me.id, approvedAt: s.approvedAt ?? new Date(), sendError: null, needsEngineer: true });
     await triggerReport(req, id);

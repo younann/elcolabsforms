@@ -10,7 +10,7 @@ import { ClientInput, ClientPatch, SiteInput, SitePatch } from '../../shared/cli
 const { clients, clientSites, jobs } = schema;
 
 const siteView = (s: typeof clientSites.$inferSelect) => ({
-  id: s.id, clientId: s.clientId, name: s.name, address: s.address, active: s.active,
+  id: s.id, clientId: s.clientId, name: s.name, address: s.address, formIds: s.formIds, active: s.active,
 });
 const clientView = (c: typeof clients.$inferSelect) => ({
   id: c.id, name: c.name, contactPerson: c.contactPerson, phone: c.phone, email: c.email, active: c.active,
@@ -23,11 +23,15 @@ const uuidOr404 = (v: string | undefined, what: string) => {
 };
 
 export default handle(async (req, ctx) => {
-  const me = await requireUser(req, 'admin');
+  const me = await requireUser(req);
   const db = getDb();
   const id = uuidOr404(ctx.params?.id, 'לקוח');
   const siteId = uuidOr404(ctx.params?.siteId, 'אתר');
   const onSites = new URL(req.url).pathname.includes('/sites');
+  const admin = me.role === 'admin';
+  // inspectors: read names, add clients and sites, nothing else
+  const inspectorOk = me.role === 'inspector' && (req.method === 'GET' ? !siteId : req.method === 'POST');
+  if (!admin && !inspectorOk) throw new HttpError(403, 'אין הרשאה');
 
   if (!id) {
     if (req.method === 'GET') {
@@ -39,9 +43,9 @@ export default handle(async (req, ctx) => {
           siteCount: sql<number>`(select count(*)::int from client_sites s where s.client_id = ${clients.id} and s.active)`,
         })
         .from(clients)
-        .where(q ? ilike(clients.name, `%${q.replace(/[\\%_]/g, '\\$&')}%`) : undefined)
+        .where(and(q ? ilike(clients.name, `%${q.replace(/[\\%_]/g, '\\$&')}%`) : undefined, admin ? undefined : eq(clients.active, true)))
         .orderBy(desc(clients.active), asc(clients.name));
-      return json({ clients: rows });
+      return json({ clients: admin ? rows : rows.map((r) => ({ ...r, contactPerson: null, phone: null, email: null })) });
     }
     if (req.method === 'POST') {
       const b = await parseBody(req, ClientInput);
@@ -54,12 +58,17 @@ export default handle(async (req, ctx) => {
   if (!onSites) {
     if (req.method === 'GET') {
       const [c] = await db.select().from(clients).where(eq(clients.id, id));
-      if (!c) throw notFound('לקוח');
+      if (!c || (!admin && !c.active)) throw notFound('לקוח');
       const sites = await db.select().from(clientSites).where(eq(clientSites.clientId, id)).orderBy(desc(clientSites.active), asc(clientSites.name));
+      if (!admin) {
+        const shown = sites.filter((s) => s.active).map((s) => ({ ...siteView(s), address: '' }));
+        return json({ client: { ...clientView(c), contactPerson: null, phone: null, email: null }, sites: shown, jobs: [] });
+      }
       const list = await loadJobs(eq(jobs.clientId, id), me);
       return json({ client: clientView(c), sites: sites.map(siteView), jobs: list });
     }
     if (req.method === 'PATCH') {
+      if (!admin) throw new HttpError(403, 'אין הרשאה');
       const b = await parseBody(req, ClientPatch);
       if (!Object.keys(b).length) throw new HttpError(400, 'אין מה לעדכן');
       const [c] = await db.update(clients).set(b).where(eq(clients.id, id)).returning();
@@ -67,6 +76,7 @@ export default handle(async (req, ctx) => {
       return json({ client: clientView(c) });
     }
     if (req.method === 'DELETE') {
+      if (!admin) throw new HttpError(403, 'אין הרשאה');
       const [used] = await db.select({ id: jobs.id }).from(jobs).where(eq(jobs.clientId, id)).limit(1);
       if (used) throw new HttpError(409, 'הלקוח בשימוש. אפשר להסתיר אותו');
       const [c] = await db.delete(clients).where(eq(clients.id, id)).returning({ id: clients.id });
@@ -79,8 +89,8 @@ export default handle(async (req, ctx) => {
   if (!siteId) {
     if (req.method === 'POST') {
       const b = await parseBody(req, SiteInput);
-      const [c] = await db.select({ id: clients.id }).from(clients).where(eq(clients.id, id));
-      if (!c) throw notFound('לקוח');
+      const [c] = await db.select({ id: clients.id, active: clients.active }).from(clients).where(eq(clients.id, id));
+      if (!c || (!admin && !c.active)) throw notFound('לקוח');
       const [s] = await db.insert(clientSites).values({ ...b, clientId: id }).returning();
       return json({ site: siteView(s) }, 201);
     }

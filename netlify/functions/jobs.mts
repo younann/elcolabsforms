@@ -1,12 +1,12 @@
 import type { Config } from '@netlify/functions';
 import { z } from 'zod';
-import { and, eq, inArray, isNull, max, type SQL } from 'drizzle-orm';
+import { and, eq, inArray, isNull, type SQL } from 'drizzle-orm';
 import { getDb, schema } from '../../server/db/client';
 import { background, handle, json, parseBody, HttpError } from '../../server/http';
 import { requireUser } from '../../server/auth';
 import { buildJobRows, loadJobs, loadJobView } from '../../server/jobs';
-import { notifyJob } from '../../server/push';
-import { expandQuantities, JobAddForms, JobCreate, JobInspector, JobPatch, type PrefillCtx } from '../../shared/jobs';
+import { notifyJob, type JobEvent } from '../../server/push';
+import { canManageJob, JobAddForms, JobCreate, JobInspector, JobPatch, type PrefillCtx } from '../../shared/jobs';
 import type { Status } from '../../shared/status';
 
 const { jobs, clients, clientSites, users, submissions, auditLog } = schema;
@@ -24,6 +24,13 @@ async function prefillCtx(clientId: string, siteId: string, plannedDate: string)
   if (!s || !s.active || s.clientId !== c.id) throw new HttpError(400, 'האתר לא נמצא או אינו שייך ללקוח');
   return { plannedDate, siteName: s.name, siteAddress: s.address, clientName: c.name, clientPhone: c.phone, clientEmail: c.email };
 }
+
+const adminIds = () =>
+  getDb()
+    .select({ id: users.id })
+    .from(users)
+    .where(and(eq(users.role, 'admin'), eq(users.active, true)))
+    .then((r) => r.map((u) => u.id));
 
 const auditRows = (ids: string[], userId: string, action: string, extra: Partial<typeof auditLog.$inferInsert> = {}) =>
   ids.map((submissionId) => ({ submissionId, userId, action, ...extra }));
@@ -53,22 +60,25 @@ export default handle(async (req, ctx) => {
       return json({ jobs: state ? list.filter((j) => j.state === state) : list });
     }
     if (req.method === 'POST') {
-      admin();
+      if (me.role !== 'admin' && me.role !== 'inspector') throw new HttpError(403, 'אין הרשאה');
       const b = await parseBody(req, JobCreate);
+      // inspectors open work only for themselves
+      if (me.role === 'inspector' && b.inspectorId !== me.id) throw new HttpError(403, 'אין הרשאה');
       const [p, [insp]] = await Promise.all([
         prefillCtx(b.clientId, b.siteId, b.plannedDate),
         db.select().from(users).where(eq(users.id, b.inspectorId)),
       ]);
       if (!insp || !insp.active || insp.role !== 'inspector') throw new HttpError(400, 'הבודק לא נמצא או אינו פעיל');
       const job = { id: crypto.randomUUID(), clientId: b.clientId, siteId: b.siteId, inspectorId: insp.id, plannedDate: b.plannedDate, note: b.note ?? null, createdBy: me.id };
-      const rows = buildJobRows(job, p, expandQuantities(b.forms as Record<string, number>));
+      const rows = buildJobRows(job, p, b.forms.map((formId) => ({ formId, copy: 1 })));
       // all or nothing: job, drafts and audits
       await db.batch([
         db.insert(jobs).values(job),
         db.insert(submissions).values(rows),
         db.insert(auditLog).values(auditRows(rows.map((r) => r.id), me.id, 'create', { note: `job ${job.id}` })),
       ]);
-      background(ctx, notifyJob('created', job.id, [insp.id]));
+      if (me.role === 'admin') background(ctx, notifyJob('created', job.id, [insp.id]));
+      else background(ctx, adminIds().then((ids) => notifyJob('opened', job.id, ids)));
       return json({ job: await loadJobView(job.id, me) }, 201);
     }
     throw new HttpError(405, 'Method not allowed');
@@ -78,9 +88,15 @@ export default handle(async (req, ctx) => {
 
   if (!sub && req.method === 'GET') return json({ job: await loadJobView(id, me) });
 
-  admin();
   const [job] = await db.select().from(jobs).where(eq(jobs.id, id));
   if (!job) throw new HttpError(404, 'העבודה לא נמצאה');
+  if (!canManageJob(me, job)) throw new HttpError(403, 'אין הרשאה');
+  // office hears about inspector changes
+  const tellAdmins = (event: JobEvent) => {
+    if (me.role !== 'admin') background(ctx, adminIds().then((ids) => notifyJob(event, id, ids)));
+  };
+  // an inspector may lose sight of the job after reassign or cancel
+  const viewAfter = () => loadJobView(id, me).catch((e) => (me.role === 'admin' ? Promise.reject(e) : null));
   if (job.cancelledAt) throw new HttpError(409, 'העבודה בוטלה');
   const live = and(eq(jobs.id, id), isNull(jobs.cancelledAt));
 
@@ -94,13 +110,13 @@ export default handle(async (req, ctx) => {
 
   if (sub === 'forms' && req.method === 'POST') {
     const b = await parseBody(req, JobAddForms);
-    const [p, counts] = await Promise.all([
+    const [p, have] = await Promise.all([
       // details as they are now
       prefillCtx(job.clientId, job.siteId, job.plannedDate),
-      db.select({ formId: submissions.formId, n: max(submissions.jobCopy) }).from(submissions).where(eq(submissions.jobId, id)).groupBy(submissions.formId),
+      db.selectDistinct({ formId: submissions.formId }).from(submissions).where(eq(submissions.jobId, id)),
     ]);
-    const existing = Object.fromEntries(counts.map((c) => [c.formId, c.n ?? 0]));
-    const rows = buildJobRows(job, p, expandQuantities(b.forms as Record<string, number>, existing));
+    if (have.some((h) => b.forms.includes(h.formId))) throw new HttpError(409, 'הטופס כבר קיים בעבודה');
+    const rows = buildJobRows(job, p, b.forms.map((formId) => ({ formId, copy: 1 })));
     await db.batch([db.insert(submissions).values(rows), db.insert(auditLog).values(auditRows(rows.map((r) => r.id), me.id, 'create', { note: `job ${id}` }))]);
     background(ctx, notifyJob('forms', id, [job.inspectorId]));
     return json({ job: await loadJobView(id, me) }, 201);
@@ -128,7 +144,8 @@ export default handle(async (req, ctx) => {
         : []),
     ]);
     background(ctx, notifyJob('inspector', id, [target.id]));
-    return json({ job: await loadJobView(id, me) });
+    tellAdmins('inspector');
+    return json({ job: await viewAfter() });
   }
 
   if (sub === 'cancel' && req.method === 'POST') {
@@ -138,8 +155,9 @@ export default handle(async (req, ctx) => {
       db.delete(submissions).where(and(eq(submissions.jobId, id), eq(submissions.status, 'draft'), isNull(submissions.touchedAt))),
       db.select({ inspectorId: submissions.inspectorId }).from(submissions).where(and(eq(submissions.jobId, id), inArray(submissions.status, PENDING))),
     ]);
-    background(ctx, notifyJob('cancelled', id, [...new Set(kept.map((k) => k.inspectorId))]));
-    return json({ job: await loadJobView(id, me) });
+    background(ctx, notifyJob('cancelled', id, [...new Set([job.inspectorId, ...kept.map((k) => k.inspectorId)])].filter((u) => u !== me.id)));
+    tellAdmins('cancelled');
+    return json({ job: await viewAfter() });
   }
 
   throw new HttpError(405, 'Method not allowed');

@@ -64,7 +64,7 @@ export const RepeatTableField = memo(function RepeatTableField({ field: f, value
   return (
     <div id={fieldDomId(f.id)} tabIndex={-1} className="scroll-mt-36 outline-none">
       <div className="mb-3 flex items-baseline justify-between gap-3">
-        <Label required={min > 0}>{f.label}</Label>
+        <Label required={f.required ?? min > 0}>{f.label}</Label>
         <span className="shrink-0 text-sm text-muted tabular-nums">{rows.length} שורות</span>
       </div>
       <ol className="flex flex-col gap-3">

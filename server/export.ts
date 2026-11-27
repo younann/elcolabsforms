@@ -2,8 +2,11 @@ import { and, eq, isNotNull, isNull, sql } from 'drizzle-orm';
 import { getDb, schema } from './db/client';
 import { FORMS } from '../shared/forms';
 import type { Cell, Sheet } from './xlsx';
+import { alias } from 'drizzle-orm/pg-core';
 
-export type ExportRow = { approvedAt: Date; client: string; site: string; address: string; inspector: string; form: string; testNumber: string };
+const creator = alias(schema.users, 'job_creator');
+
+export type ExportRow = { approvedAt: Date; client: string; site: string; address: string; inspector: string; form: string; testNumber: string; openedBy: 'בודק' | 'מנהל' };
 
 const dayFmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Jerusalem', day: '2-digit', month: '2-digit', year: 'numeric' });
 
@@ -32,8 +35,8 @@ export function exportSheets(rows: ExportRow[], formOrder: string[]): Sheet[] {
     {
       name: 'פירוט',
       rows: [
-        ['תאריך אישור', 'לקוח', 'אתר', 'כתובת', 'בודק', 'סוג טופס', "מס' בדיקה"],
-        ...sorted.map((r) => [dayFmt.format(r.approvedAt), r.client, r.site, r.address, r.inspector, r.form, r.testNumber]),
+        ['תאריך אישור', 'לקוח', 'אתר', 'כתובת', 'בודק', 'סוג טופס', "מס' בדיקה", 'נפתח ע"י'],
+        ...sorted.map((r) => [dayFmt.format(r.approvedAt), r.client, r.site, r.address, r.inspector, r.form, r.testNumber, r.openedBy]),
       ],
     },
     { name: 'לפי בודק', rows: counts(rows, (r) => r.inspector, 'בודק', forms) },
@@ -58,12 +61,14 @@ export async function monthSheets(month: string): Promise<Sheet[]> {
       dataClient: data('customerName'),
       dataSite: data('siteName'),
       dataAddress: data('siteAddress'),
+      creatorRole: creator.role,
     })
     .from(s)
     .innerJoin(schema.users, eq(schema.users.id, s.inspectorId))
     .leftJoin(schema.jobs, eq(schema.jobs.id, s.jobId))
     .leftJoin(schema.clients, eq(schema.clients.id, schema.jobs.clientId))
     .leftJoin(schema.clientSites, eq(schema.clientSites.id, schema.jobs.siteId))
+    .leftJoin(creator, eq(creator.id, schema.jobs.createdBy))
     // first approval only: revisions carry a parent
     .where(and(isNull(s.parentId), isNotNull(s.approvedAt), sql`to_char(${s.approvedAt} at time zone 'Asia/Jerusalem', 'YYYY-MM') = ${month}`));
 
@@ -77,6 +82,8 @@ export async function monthSheets(month: string): Promise<Sheet[]> {
       inspector: r.inspector,
       form: title.get(r.formId) ?? r.formId,
       testNumber: r.testNumber ?? '',
+      // forms outside a job count as office work
+      openedBy: r.creatorRole === 'inspector' ? 'בודק' : 'מנהל',
     })),
     FORMS.map((f) => f.shortTitle),
   );

@@ -4,8 +4,10 @@ import { api, ApiError } from '../../lib/api';
 import { useLoad } from '../../lib/useLoad';
 import { compressImage } from '../../lib/image';
 import { Button, EmptyState, TextArea, TextField, toast } from '../../ui';
+import { RequiredFieldsCard } from './RequiredFields';
+import type { RequiredOverrides } from '../../../shared/forms/required';
 
-type S = { recipientEmail: string; companyName: string; companyDetails: string; hasStamp: boolean };
+type S = { recipientEmail: string; companyName: string; companyDetails: string; hasStamp: boolean; requiredOverrides?: RequiredOverrides };
 
 export function Settings() {
   const { data, error, reload } = useLoad(() => api<{ settings: S }>('/api/settings').then((r) => r.settings), 'settings');
@@ -25,6 +27,7 @@ export function Settings() {
         <>
           <DetailsForm initial={data} />
           <StampCard hasStamp={data.hasStamp} />
+          <RequiredFieldsCard initial={data.requiredOverrides ?? {}} />
           <ExportCard />
         </>
       )}

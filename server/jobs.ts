@@ -5,7 +5,7 @@ import { HttpError } from './http';
 import { mirror } from './submissions';
 import type { User } from './db/schema';
 import { getForm } from '../shared/forms';
-import { copyLabel, jobState, prefillData, type JobView, type PrefillCtx } from '../shared/jobs';
+import { canManageJob, copyLabel, jobState, prefillData, type JobView, type PrefillCtx } from '../shared/jobs';
 import type { Status } from '../shared/status';
 
 type JobKeys = { id: string; inspectorId: string };
@@ -33,17 +33,19 @@ export function buildJobRows(job: JobKeys & Record<string, unknown>, ctx: Prefil
 
 const { jobs, clients, clientSites, users, submissions } = schema;
 const inspector = alias(users, 'job_inspector');
+const creator = alias(users, 'job_creator');
 
 /** Jobs with their latest form revisions; inspectors see only their own forms. */
 export async function loadJobs(where: SQL | undefined, me: User): Promise<JobView[]> {
   const db = getDb();
   const own = me.role === 'admin' ? undefined : sql`exists (select 1 from ${submissions} s where s.job_id = ${jobs.id} and s.inspector_id = ${me.id})`;
   const rows = await db
-    .select({ job: jobs, client: clients, site: clientSites, insp: { id: inspector.id, displayName: inspector.displayName, phone: inspector.phone } })
+    .select({ job: jobs, client: clients, site: clientSites, insp: { id: inspector.id, displayName: inspector.displayName, phone: inspector.phone }, creatorRole: creator.role })
     .from(jobs)
     .innerJoin(clients, eq(clients.id, jobs.clientId))
     .innerJoin(clientSites, eq(clientSites.id, jobs.siteId))
     .innerJoin(inspector, eq(inspector.id, jobs.inspectorId))
+    .innerJoin(creator, eq(creator.id, jobs.createdBy))
     .where(and(where, own))
     .orderBy(desc(jobs.plannedDate), desc(jobs.createdAt));
   if (!rows.length) return [];
@@ -59,7 +61,7 @@ export async function loadJobs(where: SQL | undefined, me: User): Promise<JobVie
     )
     .orderBy(submissions.formId, submissions.jobCopy);
 
-  return rows.flatMap(({ job, client, site, insp }) => {
+  return rows.flatMap(({ job, client, site, insp, creatorRole }) => {
     const all = forms.filter((f) => f.jobId === job.id);
     const mine = me.role === 'admin' ? all : all.filter((f) => f.inspectorId === me.id);
     if (!mine.length && me.role !== 'admin') return [];
@@ -75,6 +77,8 @@ export async function loadJobs(where: SQL | undefined, me: User): Promise<JobVie
         note: job.note,
         cancelledAt: job.cancelledAt?.toISOString() ?? null,
         state: jobState(all as { status: Status }[], job.cancelledAt),
+        openedByInspector: creatorRole === 'inspector',
+        canManage: canManageJob(me, job),
         forms: mine.map((f) => ({
           id: f.id,
           formId: f.formId,

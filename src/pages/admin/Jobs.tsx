@@ -115,6 +115,7 @@ export function JobRow({ job }: { job: JobSummary }) {
           {jobDate(job.plannedDate)} · {job.inspector.displayName} · {job.forms.length === 1 ? 'טופס אחד' : `${job.forms.length} טפסים`}{pending ? `, ${pending} פתוחים` : ''}
         </span>
       </span>
+      {job.openedByInspector && <span className="shrink-0 rounded-full bg-warning-soft px-2.5 py-0.5 text-[13px] font-semibold text-warning">נפתח ע"י בודק</span>}
       <CaretLeft className="size-4 shrink-0 text-muted" aria-hidden />
     </Link>
   );

@@ -1,6 +1,7 @@
 import type { AttachmentRef, CheckField, CheckValue, Field, FormData, FormDef } from './types';
 import { NA_VALUE } from './types';
 import { ruleChecks } from './rules';
+import { defaultRequired } from './required';
 
 export type Missing = { sectionId: string; fieldId: string; label: string };
 
@@ -12,7 +13,7 @@ function checkAnswered(f: CheckField, v: CheckValue | undefined): boolean {
   return true;
 }
 
-function labelOf(f: Field): string {
+export function labelOf(f: Field): string {
   switch (f.type) {
     case 'check':
       return f.clause ? `${f.clause} ${f.text}` : f.text;
@@ -37,6 +38,7 @@ export function validateForSubmit(
   const missing: Missing[] = [];
   for (const s of def.sections) {
     for (const f of s.fields) {
+      if (f.type === 'note' || !(f.required ?? defaultRequired(f))) continue;
       let bad = false;
       const v = data[f.id];
       switch (f.type) {
@@ -46,16 +48,25 @@ export function validateForSubmit(
         case 'date':
         case 'time':
         case 'choice':
-          bad = !!f.required && blank(v);
+          bad = blank(v);
           break;
         case 'check':
           bad = !checkAnswered(f, v as CheckValue | undefined);
           break;
         case 'repeatTable':
-          bad = (f.minRows ?? 0) > (Array.isArray(v) ? v.length : 0);
+          bad = Math.max(f.minRows ?? 0, 1) > (Array.isArray(v) ? v.length : 0);
           break;
         case 'signature':
-          bad = f.role === 'inspector' && !attachments.some((a) => a.fieldId === f.id && a.kind === 'signature');
+          bad = !attachments.some((a) => a.fieldId === f.id && a.kind === 'signature');
+          break;
+        case 'photos':
+          bad = !attachments.some((a) => a.fieldId === f.id && a.kind === 'photo');
+          break;
+        case 'drawing':
+          bad = !attachments.some((a) => a.fieldId === f.id && a.kind === 'drawing');
+          break;
+        case 'contactAck':
+          bad = blank((v as { name?: string } | undefined)?.name);
           break;
         default:
           break;
