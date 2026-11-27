@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { ClipboardText, WarningOctagon } from '@phosphor-icons/react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
@@ -41,6 +41,12 @@ function InspectorHome({ name }: { name: string }) {
   const today = todayIL();
   const day = myDay(jobs.data ?? [], today);
   const [allSent, setAllSent] = useState(false);
+  const openJobs = jobs.data?.filter((j) => j.state === 'open').length;
+  // home-screen icon count
+  useEffect(() => {
+    if (openJobs === undefined) return;
+    void (openJobs ? navigator.setAppBadge?.(openJobs) : navigator.clearAppBadge?.())?.catch(() => {});
+  }, [openJobs]);
   const by = (pred: (s: Summary) => boolean) => (data ?? []).filter(pred);
   // returned stay listed for the note; job drafts live on their card
   const returned = by((s) => s.status === 'returned');

@@ -15,7 +15,8 @@ export default defineConfig({
       includeAssets: ['apple-touch-icon.png', 'icons/logo.svg'],
       manifest: {
         name: 'ELCO – מעבדה לבדיקות גילוי וכיבוי אש',
-        short_name: 'ELCO – מעבדה לבדיקות גילוי וכיבוי אש',
+        short_name: 'ELCO',
+        id: '/',
         lang: 'he',
         dir: 'rtl',
         display: 'standalone',
@@ -27,6 +28,11 @@ export default defineConfig({
           { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
           { src: '/icons/maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+        ],
+        // admin only; others land on home
+        shortcuts: [
+          { name: 'עבודה חדשה', url: '/admin/jobs/new', icons: [{ src: '/icons/icon-192.png', sizes: '192x192' }] },
+          { name: 'יומן', url: '/admin/calendar', icons: [{ src: '/icons/icon-192.png', sizes: '192x192' }] },
         ],
       },
       injectManifest: {

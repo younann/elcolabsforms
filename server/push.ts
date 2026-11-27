@@ -16,7 +16,7 @@ const dateFmt = new Intl.DateTimeFormat('he-IL', { weekday: 'short', day: 'numer
 
 export function pushPayload(event: JobEvent, j: { id: string; clientName: string; siteName: string; plannedDate: string }) {
   const day = dateFmt.format(new Date(`${j.plannedDate}T12:00:00Z`));
-  return { title: TITLES[event], body: `${j.clientName} · ${j.siteName} · ${day}`, url: `/jobs/${j.id}` };
+  return { title: TITLES[event], body: `${j.clientName} · ${j.siteName} · ${day}`, url: `/jobs/${j.id}`, badge: event !== 'cancelled' };
 }
 
 /** Best effort: never throws. */

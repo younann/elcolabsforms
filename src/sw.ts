@@ -14,12 +14,14 @@ self.addEventListener('message', (e) => {
 });
 
 self.addEventListener('push', (e) => {
-  let p: { title?: string; body?: string; url?: string } = {};
+  let p: { title?: string; body?: string; url?: string; badge?: boolean } = {};
   try {
     p = e.data?.json() ?? {};
   } catch {
     p = { body: e.data?.text() };
   }
+  // dot until the app opens and sets the real count
+  if (p.badge) void self.navigator.setAppBadge?.().catch(() => {});
   e.waitUntil(
     self.registration.showNotification(p.title ?? 'ELCO', {
       body: p.body,

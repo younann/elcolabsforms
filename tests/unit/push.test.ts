@@ -51,6 +51,8 @@ describe('push', () => {
     expect(p.body).toContain('מגדלי הים');
     expect(p.body).toContain('בניין A');
     expect(p.url).toBe('/jobs/j');
+    expect(p.badge).toBe(true);
+    expect(pushPayload('cancelled', { id: 'j', clientName: 'a', siteName: 'b', plannedDate: '2026-11-24' }).badge).toBe(false);
   });
 
   it('drops a dead device and still resolves', async () => {
