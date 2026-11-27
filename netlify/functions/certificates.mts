@@ -43,6 +43,14 @@ export default handle(async (req) => {
     });
   }
 
+  // engineer checks the saved certificate before signing
+  if (sub === 'preview' && req.method === 'GET') {
+    if (me.role !== 'admin' && me.role !== 'engineer') throw new HttpError(403, 'אין הרשאה');
+    if (!cert?.number) throw new HttpError(404, 'התעודה לא נמצאה');
+    const html = await certificateHtml(s, { number: cert.number, issueDate: cert.issueDate, data: CertData.parse(cert.data) });
+    return new Response(html, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'private, no-store' } });
+  }
+
   if (me.role !== 'admin') throw new HttpError(403, 'אין הרשאה');
   const template = certTemplate(s.formId);
 
@@ -57,6 +65,7 @@ export default handle(async (req) => {
       recipient = c?.email?.trim() || recipient;
     }
     return json({
+      status: s.status,
       certificate: cert ?? null,
       template: template && { prefix: template.prefix, title: template.title, layout: template.layout },
       prefill: template ? template.prefill(asData(s.data)) : null,
@@ -91,15 +100,17 @@ export default handle(async (req) => {
     if (b.withoutTemplate && template) throw new HttpError(409, 'לטופס זה יש תבנית תעודה');
     const to = canTransition(s.status as Status, 'issue', me.role);
     if (!to) throw new HttpError(409, 'פעולה לא אפשרית במצב הנוכחי');
+    const values = {
+      number: b.withoutTemplate ? null : b.number,
+      issueDate: b.withoutTemplate ? todayIL() : b.issueDate,
+      data: b.withoutTemplate ? {} : b.data,
+      sentTo: b.sentTo,
+    };
+    // draft from approve: send with the admin's last edits
+    const draft = cert?.status === 'draft';
     try {
-      await db.insert(schema.certificates).values({
-        submissionId: id,
-        number: b.withoutTemplate ? null : b.number,
-        issueDate: b.withoutTemplate ? todayIL() : b.issueDate,
-        data: b.withoutTemplate ? {} : b.data,
-        sentTo: b.sentTo,
-        createdBy: me.id,
-      });
+      if (draft) await db.update(schema.certificates).set({ ...values, status: 'sending', error: null }).where(eq(schema.certificates.id, cert.id));
+      else await db.insert(schema.certificates).values({ submissionId: id, ...values, createdBy: me.id });
     } catch (e) {
       const text = `${String(e)} ${String((e as { cause?: unknown }).cause ?? '')}`;
       if (/certificates_number/i.test(text)) throw new HttpError(409, 'המספר כבר בשימוש');
@@ -110,8 +121,11 @@ export default handle(async (req) => {
     try {
       row = await transition(id, 'engineer_approved', { status: to, sendError: null, sendClaimedAt: null }, s.updatedAt);
     } catch (e) {
-      // status moved meanwhile: drop the row so a retry can issue
-      await db.delete(schema.certificates).where(eq(schema.certificates.submissionId, id)).catch(() => {});
+      // status moved meanwhile: undo so a retry can issue
+      await (draft
+        ? db.update(schema.certificates).set({ status: 'draft' }).where(eq(schema.certificates.id, cert.id))
+        : db.delete(schema.certificates).where(eq(schema.certificates.submissionId, id))
+      ).catch(() => {});
       throw e;
     }
     await triggerCertificate(req, id);

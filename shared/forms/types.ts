@@ -5,6 +5,8 @@ export const ANSWER_OPTIONS: Record<Exclude<AnswerSet, 'existsActive'>, string[]
   fitNotfitNA: ['מתאים', 'לא מתאים', 'ל"ר'],
   conclusion: ['מתאים', 'לא מתאים', 'ל"ר'],
 };
+// a no is printed as missing in reports
+export const answerLabel = (a: string) => (a === 'לא' ? 'חסר' : a);
 export const EXISTS_OPTIONS = ['קיים', 'לא קיים'];
 export const ACTIVE_OPTIONS = ['פעיל', 'לא פעיל'];
 

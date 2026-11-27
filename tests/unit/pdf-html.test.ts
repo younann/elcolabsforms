@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { FORMS, getForm } from '../../shared/forms';
 import { formatDate, type ReportProps } from '../../shared/pdf/Report';
+import { answerLabel } from '../../shared/forms/types';
 import { renderReportHtml, reportSubject, pdfKey, internalKeyOk } from '../../server/pdf';
 import { PRINT_CSS } from '../../shared/pdf/assets.gen';
 
@@ -53,7 +54,7 @@ describe('renderReportHtml', () => {
 
       it('wraps every user-entered value in bdi', () => {
         const dateIds = new Set(def.sections.flatMap((s) => s.fields).filter((f) => f.type === 'date').map((f) => f.id));
-        const values = leaves(Object.entries(fx.data).map(([k, v]) => (dateIds.has(k) ? formatDate(String(v)) : v)));
+        const values = leaves(Object.entries(fx.data).map(([k, v]) => (dateIds.has(k) ? formatDate(String(v)) : v))).map(answerLabel);
         expect(values.length).toBeGreaterThan(10);
         for (const v of values) expect(html, v).toMatch(new RegExp(`<bdi(?: dir="rtl")?>${reEsc(esc(v))}</bdi>`));
       });
@@ -66,6 +67,14 @@ describe('renderReportHtml', () => {
       });
     });
   }
+
+  it('prints a no answer as missing', () => {
+    const fx = load('gas');
+    const def = getForm('gas');
+    const check = def.sections.flatMap((s) => s.fields).find((f) => f.type === 'check' && f.answers === 'yesNoNA')!;
+    const html = renderReportHtml({ ...fx, def, images: {}, data: { ...fx.data, [check.id]: { answer: 'לא' } } });
+    expect(html).toMatch(/<bdi(?: dir="rtl")?>חסר<\/bdi>/);
+  });
 
   it('marks a revision as a correction', () => {
     const fx = load('f536');

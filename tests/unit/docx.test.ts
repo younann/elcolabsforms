@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { strFromU8, unzipSync } from 'fflate';
 import { DOMParser, type Element } from '@xmldom/xmldom';
 import { FORMS, getForm } from '../../shared/forms';
-import type { CheckField, CheckValue, FormData } from '../../shared/forms/types';
+import { answerLabel, type CheckField, type CheckValue, type FormData } from '../../shared/forms/types';
 import { formatDate } from '../../shared/pdf/Report';
 import { renderReportDocx, docxKey, fitsMail, type DocxInput } from '../../server/docx';
 import { bidiSegments } from '../../server/docx-xml';
@@ -214,7 +214,7 @@ describe('renderReportDocx', () => {
             continue;
           }
           const answers = [v.answer, f.answers === 'existsActive' && v.answer !== 'לא קיים' ? v.active : undefined].filter(Boolean) as string[];
-          for (const a of answers) if (!answerShown(before, after, a)) bad.push(`${f.id}: answer ${a}`);
+          for (const a of answers) if (!answerShown(before, after, a) && !answerShown(before, after, answerLabel(a))) bad.push(`${f.id}: answer ${a}`);
           if (v.note && !norm(after).includes(norm(v.note))) bad.push(`${f.id}: note`);
           for (const x of Object.values(v.inline ?? {})) if (x && !norm(after).includes(norm(x))) bad.push(`${f.id}: inline ${x}`);
         }

@@ -130,7 +130,7 @@ export const certificates = pgTable('certificates', {
   pdfKey: text('pdf_key'),
   sentTo: text('sent_to').notNull(),
   sentAt: timestamp('sent_at', { withTimezone: true }),
-  status: text('status', { enum: ['sending', 'sent', 'failed'] }).notNull().default('sending'),
+  status: text('status', { enum: ['draft', 'sending', 'sent', 'failed'] }).notNull().default('sending'),
   error: text('error'),
   mailLogged: boolean('mail_logged').notNull().default(false),
   createdBy: uuid('created_by').notNull().references(() => users.id),

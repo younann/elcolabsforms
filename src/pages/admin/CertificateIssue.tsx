@@ -3,7 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Eye, PaperPlaneTilt, Plus, Trash, WarningOctagon } from '@phosphor-icons/react';
 import { ApiError } from '../../lib/api';
 import { useLoad } from '../../lib/useLoad';
-import { getCertInfo, issueCertificate, previewCertificate, type CertData } from '../../lib/certificates';
+import { approveWithCertificate, getCertInfo, issueCertificate, previewCertificate, type CertData } from '../../lib/certificates';
+import { useAuth } from '../../lib/auth';
 import { CERT_NUMBER } from '../../../shared/certificates';
 import { Banner, Button, EmptyState, Segmented, TextArea, TextField, toast } from '../../ui';
 import { BackLink, DetailSkeleton } from '../../components/SubmissionDetail';
@@ -19,11 +20,12 @@ function Card({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-/** Admin fills and issues the certificate after the engineer approved. */
+/** Admin fills the certificate on approve, then sends it after the engineer signs. */
 export function CertificateIssue() {
   const { id = '' } = useParams();
   const navigate = useNavigate();
-  const { data: info, error, reload } = useLoad(() => getCertInfo(id), `cert:${id}`);
+  const { user } = useAuth();
+  const { data: info, error, loading, reload } = useLoad(() => getCertInfo(id), `cert:${id}`);
   const [number, setNumber] = useState('');
   const [issueDate, setIssueDate] = useState('');
   const [sentTo, setSentTo] = useState('');
@@ -31,12 +33,15 @@ export function CertificateIssue() {
   const [busy, setBusy] = useState<'preview' | 'issue' | null>(null);
 
   useEffect(() => {
-    if (!info || d) return;
-    setNumber(info.suggestedNumber ?? '');
-    setIssueDate(info.issueDate);
-    setSentTo(info.recipient);
-    if (info.prefill) setD(info.prefill);
-  }, [info, d]);
+    // cached copy may predate the draft or the status: fill from fresh data only
+    if (!info || loading || d) return;
+    // a saved draft wins over the suggestions
+    const c = info.certificate?.number ? info.certificate : null;
+    setNumber(c?.number ?? info.suggestedNumber ?? '');
+    setIssueDate(c?.issueDate ?? info.issueDate);
+    setSentTo(c?.sentTo ?? info.recipient);
+    if (info.template) setD(c ? { ...info.prefill!, ...c.data } : info.prefill);
+  }, [info, loading, d]);
 
   if (error && !info) {
     return (
@@ -45,15 +50,22 @@ export function CertificateIssue() {
       </EmptyState>
     );
   }
-  if (!info) return <DetailSkeleton />;
+  if (!info || (loading && !d)) return <DetailSkeleton />;
 
   const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sentTo.trim());
   const numberOk = CERT_NUMBER.test(number.trim());
+  const approving = info.status === 'submitted';
+  const signed = !approving || !!user?.hasSignature;
 
   async function issue() {
     if (busy) return;
     setBusy('issue');
     try {
+      if (approving && d) {
+        await approveWithCertificate(id, { number: number.trim(), issueDate, data: d, sentTo: sentTo.trim() });
+        toast.success('הטופס אושר ונשלח למהנדס');
+        return navigate(`/submissions/${id}`, { replace: true });
+      }
       await issueCertificate(
         id,
         info!.template && d
@@ -63,7 +75,8 @@ export function CertificateIssue() {
       toast.success(info!.template ? 'התעודה בהכנה ותישלח ללקוח' : 'הדוח יישלח ללקוח');
       navigate(`/submissions/${id}`, { replace: true });
     } catch (e) {
-      if (!(e instanceof ApiError && e.status === 401)) toast.error(e instanceof Error ? e.message : 'הפעולה נכשלה');
+      if (e instanceof ApiError && e.status === 422) toast.error('חסרים שדות חובה בטופס. השלם אותם או החזר לבודק');
+      else if (!(e instanceof ApiError && e.status === 401)) toast.error(e instanceof Error ? e.message : 'הפעולה נכשלה');
     } finally {
       setBusy(null);
     }
@@ -126,8 +139,13 @@ export function CertificateIssue() {
   return (
     <section className="max-w-3xl pb-28">
       <BackLink to={`/submissions/${id}`} label="לטופס" />
-      <h1 className="text-[28px] leading-tight font-bold">הפקת תעודה</h1>
+      <h1 className="text-[28px] leading-tight font-bold">{approving ? 'אישור והפקת תעודה' : 'שליחת תעודה'}</h1>
       <p className="mt-1 text-muted">{info.template.title}</p>
+      {approving && (
+        <Banner tone={signed ? 'info' : 'warning'} className="mt-5" title={signed ? 'התעודה תישלח למהנדס לבדיקה וחתימה' : 'אין חתימה שמורה'}>
+          {signed ? 'אחרי חתימת המהנדס היא חוזרת אליך לשליחה ללקוח. התעודה חתומה בחתימה השמורה שלך.' : 'יש לשמור חתימה בפרופיל לפני האישור.'}
+        </Banner>
+      )}
 
       <Card title="פרטי התעודה">
         <TextField label="מספר תעודה" dir="ltr" value={number} onChange={(e) => setNumber(e.target.value.toUpperCase())} error={number && !numberOk ? `לדוגמה ${info.template.prefix}260001` : undefined} />
@@ -342,8 +360,8 @@ export function CertificateIssue() {
           <Button variant="secondary" className="flex-1" loading={busy === 'preview'} disabled={!numberOk} icon={<Eye className="size-5" aria-hidden />} onClick={preview}>
             תצוגה מקדימה
           </Button>
-          <Button variant="accent" className="flex-1" loading={busy === 'issue'} disabled={!numberOk || !emailOk || !issueDate} icon={<PaperPlaneTilt className="size-5" aria-hidden />} onClick={issue} data-testid="issue-cert">
-            הפקה ושליחה
+          <Button variant="accent" className="flex-1" loading={busy === 'issue'} disabled={!numberOk || !emailOk || !issueDate || !signed} icon={<PaperPlaneTilt className="size-5" aria-hidden />} onClick={issue} data-testid="issue-cert">
+            {approving ? 'אישור ושליחה למהנדס' : 'שליחה ללקוח'}
           </Button>
         </div>
       </div>

@@ -45,7 +45,8 @@ export async function loadReportAssets(sub: Submission) {
     settings,
     stamp: await raw(settings.stampKey),
     inspectorName: inspector?.displayName,
-    approver: { name: approver?.displayName ?? '', date: ilDate(sub.approvedAt ?? new Date()), signature: await raw(approver?.signatureKey) },
+    approver: { name: approver?.displayName ?? '', date: ilDate(sub.approvedAt ?? new Date()), // admin signs the certificate, not the report
+    signature: undefined as DocxImage | undefined },
   };
 }
 

@@ -38,6 +38,7 @@ export async function certificateHtml(sub: Submission, input: { number: string; 
     : [];
   const [inspector] = await db.select().from(schema.users).where(eq(schema.users.id, sub.inspectorId));
   const [engineer] = sub.engineerId ? await db.select().from(schema.users).where(eq(schema.users.id, sub.engineerId)) : [];
+  const [admin] = sub.approvedBy ? await db.select().from(schema.users).where(eq(schema.users.id, sub.approvedBy)) : [];
   const settings = await loadSettings();
   const matrix =
     template.layout === 'integration'
@@ -54,9 +55,11 @@ export async function certificateHtml(sub: Submission, input: { number: string; 
     data: input.data,
     inspectorName: inspector?.displayName ?? '',
     engineerName: engineer?.displayName ?? '',
+    adminName: admin?.displayName ?? '',
     images: {
       inspectorSignature: await dataUrl(sig?.blobKey),
       engineerSignature: await dataUrl(engineer?.signatureKey),
+      adminSignature: await dataUrl(admin?.signatureKey),
       stamp: await dataUrl(settings.stampKey),
       matrix: (await Promise.all(matrix.map((m) => dataUrl(m.blobKey)))).filter((x): x is string => !!x),
     },

@@ -5,6 +5,7 @@ import { ApiError } from '../../lib/api';
 import { flushAll, readLocal } from '../../lib/autosave';
 import { useAuth } from '../../lib/auth';
 import { act } from '../../lib/submissions';
+import { certTemplate } from '../../../shared/certificates';
 import { Banner, Button, Sheet, TextArea, toast } from '../../ui';
 import { FormFiller, draftKey } from '../../fill/FormFiller';
 import { MailModeBanner } from '../../components/MailMode';
@@ -56,6 +57,12 @@ export function Review() {
     }
   }
 
+  // forms with a certificate: approve happens on the certificate screen
+  async function startApprove() {
+    if (!certTemplate(s.formId)) return setSheet('approve');
+    if (await saved(id)) navigate(`/admin/certificate/${id}`);
+  }
+
   async function doApprove() {
     if (pending) return;
     setPending('approve');
@@ -78,7 +85,7 @@ export function Review() {
       <Button variant="secondary" className="max-sm:flex-1" icon={<ArrowUUpRight className="size-5" aria-hidden />} onClick={() => setSheet('return')} disabled={pending !== null}>
         החזרה
       </Button>
-      <Button variant="accent" className="max-sm:flex-1" icon={<CheckCircle className="size-5" aria-hidden />} onClick={() => setSheet('approve')} disabled={pending !== null}>
+      <Button variant="accent" className="max-sm:flex-1" icon={<CheckCircle className="size-5" aria-hidden />} onClick={() => void startApprove()} disabled={pending !== null} data-testid="approve-btn">
         אישור
       </Button>
     </div>

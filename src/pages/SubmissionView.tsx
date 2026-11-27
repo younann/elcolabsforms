@@ -4,7 +4,8 @@ import { ArrowClockwise, ArrowUUpRight, ArrowsCounterClockwise, Certificate, Che
 import { ApiError } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { act, certPdfUrl, docxUrl, isStuck, pdfUrl } from '../lib/submissions';
-import { retryCertificate } from '../lib/certificates';
+import { certPreviewUrl, retryCertificate } from '../lib/certificates';
+import { certTemplate } from '../../shared/certificates';
 import { canShareFiles, fetchFile } from '../lib/share';
 import { Banner, Button, Sheet, TextArea, toast } from '../ui';
 import { FormFiller } from '../fill/FormFiller';
@@ -157,6 +158,12 @@ export function SubmissionView() {
           תעודה
         </a>
       )}
+      {(s.status === 'engineer_review' || s.status === 'engineer_approved') && (engineer || admin) && certTemplate(s.formId) && (
+        <a href={certPreviewUrl(s.id)} target="_blank" rel="noopener" className={linkBtn} data-testid="cert-preview">
+          <Certificate className="size-5" aria-hidden />
+          טיוטת תעודה
+        </a>
+      )}
       {engineer && (
         <>
           <Button variant="secondary" className="max-sm:flex-1" icon={<ArrowUUpRight className="size-5" aria-hidden />} onClick={() => setEngSheet('return')} disabled={pending !== null}>
@@ -198,7 +205,7 @@ export function SubmissionView() {
       )}
       {s.status === 'engineer_review' && !engineer && (
         <Banner tone="info" title="ממתין לאישור המהנדס" className="mb-5">
-          הדוח נשלח למהנדס. כשיאשר, המשרד יקבל הודעה.
+          הדוח והתעודה נשלחו למהנדס. כשיאשר ויחתום, המשרד יקבל הודעה.
         </Banner>
       )}
       {engineer && !user?.hasSignature && (
@@ -224,12 +231,12 @@ export function SubmissionView() {
             admin ? (
               <Link to={`/admin/certificate/${s.id}`} className="press inline-flex min-h-11 items-center gap-2 rounded-ctl bg-accent-fill px-4 font-semibold text-accent-fg active:scale-[0.97]" data-testid="issue-link">
                 <Certificate className="size-5" aria-hidden />
-                הפקת תעודה
+                שליחת תעודה
               </Link>
             ) : undefined
           }
         >
-          {admin ? 'אפשר להפיק את התעודה ולשלוח ללקוח.' : 'המשרד יפיק את התעודה.'}
+          {admin ? 'המהנדס חתם. אפשר לשלוח את התעודה ללקוח.' : 'המשרד ישלח את התעודה ללקוח.'}
         </Banner>
       )}
       {s.status === 'cert_sending' && (
@@ -280,7 +287,7 @@ export function SubmissionView() {
           </Button>
         }
       >
-        <p className="text-[15px] leading-relaxed">האישור ייחתם בחתימה השמורה שלך, והמשרד יקבל הודעה שאפשר להפיק תעודה.</p>
+        <p className="text-[15px] leading-relaxed">בדקו את הדוח ואת טיוטת התעודה. התעודה תיחתם בחתימה השמורה שלך ותחזור למשרד לשליחה ללקוח.</p>
       </Sheet>
       <Sheet
         open={engSheet === 'return'}

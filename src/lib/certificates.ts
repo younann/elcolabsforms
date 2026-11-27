@@ -4,7 +4,8 @@ import type { Status } from '../../shared/status';
 
 export type { CertData };
 export type CertInfo = {
-  certificate: { number: string | null; status: string; sentTo: string; sentAt: string | null; error: string | null; mailLogged: boolean } | null;
+  status: Status;
+  certificate: { number: string | null; issueDate: string; data: CertData; status: string; sentTo: string; sentAt: string | null; error: string | null; mailLogged: boolean } | null;
   template: { prefix: string; title: string; layout: CertLayout } | null;
   prefill: CertData | null;
   suggestedNumber: string | null;
@@ -16,6 +17,12 @@ const base = (id: string) => `/api/submissions/${id}/certificate`;
 export const getCertInfo = (id: string) => api<CertInfo>(base(id));
 export const issueCertificate = (id: string, body: { withoutTemplate: false; number: string; issueDate: string; data: CertData; sentTo: string } | { withoutTemplate: true; sentTo: string }) =>
   api<{ submission: { id: string; status: Status } }>(base(id), { method: 'POST', json: body });
+export type CertDraft = { number: string; issueDate: string; data: CertData; sentTo: string };
+/** Approve saves the certificate as a draft for the engineer. */
+export const approveWithCertificate = (id: string, certificate: CertDraft) =>
+  api<{ submission: { id: string; status: Status } }>(`/api/submissions/${id}/action`, { method: 'POST', json: { action: 'approve', certificate } });
+/** Saved certificate as html, for the engineer's check. */
+export const certPreviewUrl = (id: string) => `${base(id)}/preview`;
 export const retryCertificate = (id: string) => api<{ submission: { id: string; status: Status } }>(`${base(id)}/retry`, { method: 'POST' });
 
 /** Opens the certificate html in a new tab for a look before issuing. */

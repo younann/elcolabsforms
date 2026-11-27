@@ -12,10 +12,15 @@ import { canTransition, type Status } from '../../shared/status';
 import { getBlob, putBlob } from '../../server/blobs';
 import { notifyEngineerDone, notifySubmitted } from '../../server/mail';
 import { asData, assertAccess, auditSafe, loadSubmission, transition, triggerReport } from '../../server/submissions';
+import { CERT_NUMBER, CertData, certTemplate } from '../../shared/certificates';
 
 const Body = z.object({
   action: z.enum(['submit', 'return', 'approve', 'reopen', 'retry', 'engineer_approve', 'engineer_return']),
   note: z.string().trim().max(2000).optional(),
+  // forms with a template: details are saved on approve
+  certificate: z
+    .object({ number: z.string().trim().regex(CERT_NUMBER, 'מספר תעודה לא תקין'), issueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), data: CertData, sentTo: z.email() })
+    .optional(),
 });
 
 export default handle(async (req, ctx) => {
@@ -23,7 +28,7 @@ export default handle(async (req, ctx) => {
   const me = await requireUser(req);
   const id = new URL(req.url).pathname.split('/')[3];
   if (!z.uuid().safeParse(id).success) throw new HttpError(404, 'הטופס לא נמצא');
-  const { action, note } = await parseBody(req, Body);
+  const { action, note, certificate } = await parseBody(req, Body);
   const db = getDb();
   const s = await loadSubmission(id);
   assertAccess(me, s);
@@ -63,6 +68,22 @@ export default handle(async (req, ctx) => {
 
   if (action === 'approve') {
     await check(true);
+    if (certTemplate(s.formId)) {
+      if (!certificate) throw new HttpError(400, 'יש למלא את פרטי התעודה');
+      // admin signs the certificate
+      if (!me.signatureKey) throw new HttpError(409, 'יש לשמור חתימה בפרופיל לפני אישור');
+      const cert = { number: certificate.number, issueDate: certificate.issueDate, data: certificate.data, sentTo: certificate.sentTo };
+      try {
+        // draft until the engineer signs; a re-approve keeps the row
+        await db
+          .insert(schema.certificates)
+          .values({ submissionId: id, ...cert, status: 'draft', createdBy: me.id })
+          .onConflictDoUpdate({ target: schema.certificates.submissionId, set: { ...cert, status: 'draft', error: null } });
+      } catch (e) {
+        if (/certificates_number/i.test(`${String(e)} ${String((e as { cause?: unknown }).cause ?? '')}`)) throw new HttpError(409, 'המספר כבר בשימוש');
+        throw e;
+      }
+    }
     // first approval date stays for the monthly export
     const row = await transition(id, from, { status: to, approvedBy: me.id, approvedAt: s.approvedAt ?? new Date(), sendError: null, needsEngineer: true });
     await triggerReport(req, id);

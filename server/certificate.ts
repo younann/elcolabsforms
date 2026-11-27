@@ -8,7 +8,8 @@ export type CertInput = {
   data: CertData;
   inspectorName: string;
   engineerName: string;
-  images: { inspectorSignature?: string | null; engineerSignature?: string | null; stamp?: string | null; matrix?: string[] };
+  adminName: string;
+  images: { inspectorSignature?: string | null; engineerSignature?: string | null; adminSignature?: string | null; stamp?: string | null; matrix?: string[] };
 };
 
 const esc = (v: unknown) =>
@@ -67,7 +68,7 @@ ul, ol.def { margin: 1mm 0; padding-inline-start: 6mm; line-height: 1.5; font-si
 .two p { margin: 0.5mm 0 }
 .sign { width: 100%; border-collapse: collapse; margin-top: 5mm }
 .sign td, .sign th { border: 1px solid #333; padding: 1.5mm; height: 20mm; vertical-align: middle; text-align: center; white-space: nowrap }
-.sign th { width: 12% }
+.sign th { width: 10% }
 .sigimg { height: 16mm; max-width: 45mm; object-fit: contain }
 .signwrap { position: relative }
 .stamp { position: absolute; left: 2mm; top: 0; width: 36mm; mix-blend-mode: multiply; transform: rotate(-8deg) }
@@ -227,7 +228,8 @@ function renderIntegrationHtml(c: CertInput): string {
 <table class="sign">
 <tr><th>שם הבודק:</th><td>${esc(c.inspectorName)}<br>${img(c.images.inspectorSignature, 'sigimg')}</td>
 <th>${esc(d.engineerRole)}:</th><td>${esc(c.engineerName)}</td>
-<th>חתימה:</th><td>${img(c.images.engineerSignature, 'sigimg')}</td></tr>
+<th>חתימה:</th><td>${img(c.images.engineerSignature, 'sigimg')}</td>
+<th>אישור המשרד:</th><td>${esc(c.adminName)}<br>${img(c.images.adminSignature, 'sigimg')}</td></tr>
 </table>
 ${img(c.images.stamp, 'stamp')}
 </div>
@@ -351,6 +353,7 @@ ${d.defects.length ? `<ol class="def">${d.defects.map((x) => `<li>${esc(x)}</li>
   <th>שם הבודק:</th><td>${esc(c.inspectorName)}<br>${img(c.images.inspectorSignature, 'sigimg')}</td>
   <th>שם המאשר ותפקידו:</th><td>${esc(c.engineerName)}<br>${esc(d.engineerRole)}</td>
   <th>חתימה:</th><td>${img(c.images.engineerSignature, 'sigimg')}</td>
+  <th>אישור המשרד:</th><td>${esc(c.adminName)}<br>${img(c.images.adminSignature, 'sigimg')}</td>
 </tr>
 </table>
 ${img(c.images.stamp, 'stamp')}

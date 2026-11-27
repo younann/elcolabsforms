@@ -71,7 +71,7 @@ describe('detectors', () => {
     expect(d.detectorRows[0]).toMatchObject({ model: 'ערך דגם 23', battery: 'ערך דגם סוללת הגלאי 26' });
   });
   test('renders conclusion on page 1 and the not-accredited note', () => {
-    const html = renderCertificateHtml({ issueDate: '24/11/2026', inspectorName: 'א', engineerName: 'מ', images: {}, template: t, number: 'FDA260549', data: d });
+    const html = renderCertificateHtml({ issueDate: '24/11/2026', inspectorName: 'א', engineerName: 'מ', adminName: 'ש', images: {}, template: t, number: 'FDA260549', data: d });
     expect(html.indexOf('התקנת גלאים')).toBeLessThan(html.indexOf('הערות כלליות'));
     expect(html).toContain('שלא בהסמכת הרשות');
     expect(html.match(/מסקנה:/g)).toHaveLength(1);
@@ -97,7 +97,7 @@ describe('536 prefill', () => {
 });
 
 describe('other layouts render', () => {
-  const base = { issueDate: '24/11/2026', inspectorName: 'נאיל', engineerName: 'מקסים', images: {} };
+  const base = { issueDate: '24/11/2026', inspectorName: 'נאיל', engineerName: 'מקסים', adminName: 'שרה', images: {} };
   test('gas: spaces table, no ceiling note, repeat reference', () => {
     const t = certTemplate('gas')!;
     const html = renderCertificateHtml({ ...base, template: t, number: 'KG260602', data: { ...t.prefill(fixture('gas')), repeatOf: '260558' } });
@@ -133,7 +133,8 @@ describe('renderCertificateHtml', () => {
     data: { ...t.prefill(fx.data), siteName: '<b>x</b>', fit: false },
     inspectorName: 'נאיל',
     engineerName: 'מקסים',
-    images: { engineerSignature: 'data:image/png;base64,AAA', stamp: null },
+    adminName: 'שרה',
+    images: { engineerSignature: 'data:image/png;base64,AAA', adminSignature: 'data:image/png;base64,BBB', stamp: null },
   });
   test('has both pages, number, conclusion and signer', () => {
     expect(html.match(/class="page"/g)).toHaveLength(2);
@@ -142,6 +143,11 @@ describe('renderCertificateHtml', () => {
     expect(html).toContain('אינה מתאימה');
     expect(html).toContain('מקסים');
     expect(html).toContain('data:image/png;base64,AAA');
+  });
+  test('admin signs the certificate', () => {
+    expect(html).toContain('אישור המשרד');
+    expect(html).toContain('שרה');
+    expect(html).toContain('data:image/png;base64,BBB');
   });
   test('escapes form text', () => {
     expect(html).not.toContain('<b>x</b>');

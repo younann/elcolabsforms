@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { answerLabel } from '../forms/types';
 import type {
   CheckField,
   CheckValue,
@@ -78,7 +79,7 @@ function Checks({ fields, data, sectionTitle }: { fields: CheckField[]; data: Fo
           {answers.length ? (
             answers.map((a, i) => (
               <div key={i}>
-                <V v={a} />
+                <V v={answerLabel(str(a))} />
               </div>
             ))
           ) : (

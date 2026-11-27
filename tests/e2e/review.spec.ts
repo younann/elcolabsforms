@@ -26,8 +26,12 @@ test.beforeAll(async ({ playwright, baseURL }) => {
   });
   expect(r.status()).toBe(201);
   inspectorId = (await r.json()).user.id;
-  const s = await (await admin.get('/api/settings')).json();
-  expect(s.settings.recipientEmail, 'recipient email must be set in dev settings').not.toBe('');
+  // approve needs the admin's signature and an engineer to mail
+  expect((await admin.put('/api/profile/signature', { multipart: { file: { name: 's.png', mimeType: 'image/png', buffer: PNG } } })).ok()).toBe(true);
+  const e = await admin.post('/api/users', {
+    data: { username: `${inspector}-eng`, displayName: 'מהנדס סקירה', password: INSPECTOR_PASS, role: 'engineer', email: `${inspector}@example.com` },
+  });
+  expect(e.status()).toBe(201);
   await admin.dispose();
 });
 
@@ -115,11 +119,13 @@ test('return with note, resubmit, approve, emailed', async ({ page, browser }, i
   });
   await openRow(page, site);
   await page.getByRole('button', { name: 'אישור', exact: true }).click();
-  const confirm = page.getByTestId('confirm-approve');
-  await expect(page.getByRole('dialog')).toContainText('@');
+  // approve happens on the certificate screen
+  await expect(page).toHaveURL(new RegExp(`/admin/certificate/${id}$`));
+  await page.getByLabel('שליחה ללקוח (דוא״ל)').fill('client@example.com');
+  const confirm = page.getByTestId('issue-cert');
+  await expect(confirm).toHaveText('אישור ושליחה למהנדס');
   await confirm.click();
   await expect(confirm).toBeDisabled();
-  await expect(page.getByRole('button', { name: 'אישור', exact: true })).toBeDisabled();
   release();
   await expect(page).toHaveURL(new RegExp(`/submissions/${id}$`));
   await page.unroute(`**/api/submissions/${id}/action`);
@@ -127,12 +133,13 @@ test('return with note, resubmit, approve, emailed', async ({ page, browser }, i
   // background report reaches emailed
   await expect
     .poll(async () => (await (await page.request.get(`/api/submissions/${id}`)).json()).submission.status, { timeout: 150_000, intervals: [2000] })
-    .toBe('emailed');
-  // log mail mode shows the test-mode notice instead
-  const logged = (await (await page.request.get(`/api/submissions/${id}`)).json()).submission.mailLogged as boolean;
-  await expect(page.getByText(logged ? 'מצב בדיקה – המייל לא נשלח בפועל' : 'הדוח נשלח')).toBeVisible({ timeout: 15_000 });
-  if (logged) await expect(page.getByText('מצב בדיקה: מיילים אינם נשלחים')).toBeVisible();
+    .toBe('engineer_review');
+  await expect(page.getByText('ממתין לאישור המהנדס')).toBeVisible({ timeout: 15_000 });
   await expect(page.getByTestId('pdf-link')).toBeVisible();
+  // the saved certificate draft renders
+  const draft = await page.request.get(`/api/submissions/${id}/certificate/preview`);
+  expect(draft.status()).toBe(200);
+  expect(await draft.text()).toContain('אישור המשרד');
 
   // one approve only
   const audit = (await (await page.request.get(`/api/submissions/${id}`)).json()).audit as { action: string }[];
@@ -155,14 +162,16 @@ test('parallel approve: one wins, one audit row, one report', async ({ playwrigh
 
   const admin = await playwright.request.newContext({ baseURL });
   await login(admin, ADMIN_USER, ADMIN_PASS);
-  const results = await Promise.all([0, 1].map(() => admin.post(`/api/submissions/${id}/action`, { data: { action: 'approve' } })));
+  const ci = await (await admin.get(`/api/submissions/${id}/certificate`)).json();
+  const certificate = { number: ci.suggestedNumber, issueDate: ci.issueDate, data: ci.prefill, sentTo: 'client@example.com' };
+  const results = await Promise.all([0, 1].map(() => admin.post(`/api/submissions/${id}/action`, { data: { action: 'approve', certificate } })));
   expect(results.map((r) => r.status()).sort()).toEqual([200, 409]);
 
   const read = async () => (await (await admin.get(`/api/submissions/${id}`)).json()) as {
     submission: { status: string; emailedAt: string | null };
     audit: { action: string }[];
   };
-  await expect.poll(async () => (await read()).submission.status, { timeout: 150_000, intervals: [2000] }).toBe('emailed');
+  await expect.poll(async () => (await read()).submission.status, { timeout: 150_000, intervals: [2000] }).toBe('engineer_review');
   const first = await read();
   expect(first.audit.filter((a) => a.action === 'approve')).toHaveLength(1);
   // no second report run lands later

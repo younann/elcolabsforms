@@ -4,6 +4,7 @@ import {
   ACTIVE_OPTIONS,
   ANSWER_OPTIONS,
   EXISTS_OPTIONS,
+  answerLabel,
   type CheckField,
   type CheckValue,
   type ContactAckValue,
@@ -526,7 +527,7 @@ function checks(f: Filler, layout: CheckLayout, ids?: string[]) {
         const p = kids(rc, 'w:p').find((x) => labelRe(opts[0]).test(f.d.text(x)));
         if (p) done = f.mark(p, opts, answerIdx(check, answer));
       }
-      if (!done) f.setCell(rc, answer, { b: true });
+      if (!done) f.setCell(rc, answerLabel(answer), { b: true });
     }
     const note = layout.note === 'text' ? noteText(v) : str(v.note).trim();
     if (note) f.setCell(f.cell(tr, layout.note === 'text' ? layout.textCol : layout.note), note);
@@ -878,7 +879,7 @@ function fillF536(f: Filler) {
       f.setCell(f.cell(tr, 0), noteText(v));
     } else if (c.id.startsWith('pre')) {
       const p = f.para(c.text);
-      if (str(v.answer)) f.append(p, ` – ${str(v.answer)}`, { b: true });
+      if (str(v.answer)) f.append(p, ` – ${answerLabel(str(v.answer))}`, { b: true });
       if (str(v.note).trim()) f.append(p, ` (${str(v.note).trim()})`);
     } else if (c.id === 'planConclusion') {
       for (const p of f.parasWith('תכנון המערכת מתאים')) {

@@ -44,7 +44,7 @@ async function savePdf(req: APIRequestContext, url: string, file: string) {
   writeFileSync(`${OUT}/${file}`, body);
 }
 
-test('job → inspector fills → admin approves → engineer approves → admin issues certificates', async ({ browser }) => {
+test('job → inspector fills → admin approves with certificate → engineer signs → admin sends', async ({ browser }) => {
   mkdirSync(OUT, { recursive: true });
   const tag = `${Date.now() % 1e8}-${Math.random().toString(36).slice(2, 6)}`;
 
@@ -68,7 +68,7 @@ test('job → inspector fills → admin approves → engineer approves → admin
   const insp = await ctxFor(inspector.username, PASS);
   const eng = await ctxFor(engineer.username, PASS);
   const adm = await ctxFor(ADMIN_USER, ADMIN_PASS);
-  expect((await eng.page.request.put('/api/profile/signature', { multipart: { file: { name: 's.png', mimeType: 'image/png', buffer: PNG } } })).ok()).toBe(true);
+  for (const c of [eng, adm]) expect((await c.page.request.put('/api/profile/signature', { multipart: { file: { name: 's.png', mimeType: 'image/png', buffer: PNG } } })).ok()).toBe(true);
 
   // admin creates a job with all five forms
   const job = await createJob(inspector.id, ALL_FORMS);
@@ -93,30 +93,34 @@ test('job → inspector fills → admin approves → engineer approves → admin
     await expect(insp.page.getByText('ממתין לאישור').first()).toBeVisible();
   }
 
-  // admin approves each; report goes to the engineer
+  // admin approves each with its certificate; report and draft go to the engineer
   for (const f of forms) {
     await adm.page.goto(`/admin/review/${f.id}`);
     await adm.page.getByRole('button', { name: 'אישור', exact: true }).click();
-    await adm.page.getByTestId('confirm-approve').click();
+    await expect(adm.page).toHaveURL(new RegExp(`/admin/certificate/${f.id}$`));
+    await adm.page.getByLabel('שליחה ללקוח (דוא״ל)').fill(`client-${tag}@example.com`);
+    await adm.page.getByTestId('issue-cert').click();
     await expect(adm.page).toHaveURL(new RegExp(`/submissions/${f.id}$`));
   }
   for (const f of forms) await waitStatus(adm.page.request, f.id, 'engineer_review');
 
-  // engineer approves and signs
+  // engineer checks the certificate draft, approves and signs
   for (const f of forms) {
     await eng.page.goto(`/submissions/${f.id}`);
+    await expect(eng.page.getByTestId('cert-preview')).toBeVisible();
+    expect((await eng.page.request.get(`/api/submissions/${f.id}/certificate/preview`)).status()).toBe(200);
     await eng.page.getByRole('button', { name: 'אישור', exact: true }).click();
     await eng.page.getByTestId('confirm-engineer-approve').click();
     await expect(eng.page.getByText('הטופס אושר והמשרד עודכן')).toBeVisible();
     await waitStatus(eng.page.request, f.id, 'engineer_approved');
   }
 
-  // admin issues each certificate
+  // admin sends each signed certificate, details kept from approve
   for (const f of forms) {
     await adm.page.goto(`/submissions/${f.id}`);
     await adm.page.getByTestId('issue-link').click();
     await expect(adm.page).toHaveURL(new RegExp(`/admin/certificate/${f.id}$`));
-    await adm.page.getByLabel('שליחה ללקוח (דוא״ל)').fill(`client-${tag}@example.com`);
+    await expect(adm.page.getByLabel('שליחה ללקוח (דוא״ל)')).toHaveValue(`client-${tag}@example.com`);
     await adm.page.getByTestId('issue-cert').click();
     await expect(adm.page).toHaveURL(new RegExp(`/submissions/${f.id}$`));
   }
