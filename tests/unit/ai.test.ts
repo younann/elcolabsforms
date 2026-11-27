@@ -34,6 +34,8 @@ describe('ai prompt and parsing', () => {
     expect(r.contents[0].parts[0]).toEqual({ file_data: { mime_type: 'application/pdf', file_uri: 'https://g/x' } });
     expect(r.contents[2].parts).toEqual([{ text: 'ג' }]);
     expect(r.tools).toEqual([{ google_search: {} }]);
+    expect(buildRequest({ system: 's', files, messages: msgs, search: false, model: 'gemini-3.5-flash' }).generationConfig).toEqual({ thinkingConfig: { thinkingLevel: 'low' } });
+    expect(buildRequest({ system: 's', files, messages: msgs, search: false, model: 'gemini-flash-lite-latest' }).generationConfig).toBeUndefined();
     expect('tools' in buildRequest({ system: 's', files, messages: msgs, search: false })).toBe(false);
   });
 
@@ -45,6 +47,7 @@ describe('ai prompt and parsing', () => {
   it('validates the question', () => {
     expect(AiAsk.safeParse({ formId: 'gas', messages: [{ role: 'user', text: 'שאלה' }] }).success).toBe(true);
     expect(AiAsk.safeParse({ formId: 'nope', messages: [{ role: 'user', text: 'שאלה' }] }).success).toBe(false);
+    expect(AiAsk.safeParse({ messages: [{ role: 'user', text: 'שאלה כללית' }] }).success).toBe(true);
     expect(AiAsk.safeParse({ formId: 'gas', messages: [{ role: 'model', text: 'x' }] }).success).toBe(false);
   });
 
@@ -87,12 +90,35 @@ describe('askGemini', () => {
   });
 
   it('reuses a fresh upload and falls back without search', async () => {
+    vi.stubEnv('GEMINI_SEARCH', '1');
     stds.list = [{ id: 's1', name: 'n', formIds: ['gas'], size: 8, createdAt: '', gemini: { name: 'files/1', uri: 'https://g/1', expiresAt: '2999-01-01T00:00:00Z' } }];
     fetchMock.mockResolvedValueOnce(new Response('{}', { status: 400 })).mockResolvedValueOnce(ok(answer));
     await askGemini('gas', [{ role: 'user', text: 'שאלה' }]);
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(JSON.parse(fetchMock.mock.calls[0][1].body).tools).toBeDefined();
     expect(JSON.parse(fetchMock.mock.calls[1][1].body).tools).toBeUndefined();
+  });
+
+  it('search is off unless enabled', async () => {
+    fetchMock.mockResolvedValueOnce(ok(answer));
+    await askGemini('gas', [{ role: 'user', text: 'x' }]);
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).tools).toBeUndefined();
+  });
+
+  it('a busy or retired model falls through to the next', async () => {
+    fetchMock.mockResolvedValueOnce(new Response('{}', { status: 503 })).mockResolvedValueOnce(ok(answer));
+    await askGemini('gas', [{ role: 'user', text: 'x' }]);
+    expect(fetchMock.mock.calls[0][0]).toContain('gemini-3.5-flash');
+    expect(fetchMock.mock.calls[1][0]).toContain('gemini-flash-lite-latest');
+  });
+
+  it('a general question sends no standards', async () => {
+    stds.list = [{ id: 's1', name: 'n', formIds: ['gas'], size: 8, createdAt: '', gemini: { name: 'f', uri: 'https://g/1', expiresAt: '2999-01-01T00:00:00Z' } }];
+    fetchMock.mockResolvedValueOnce(ok(answer));
+    await askGemini(undefined, [{ role: 'user', text: 'x' }]);
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body.contents[0].parts).toEqual([{ text: 'x' }]);
+    expect(body.system_instruction.parts[0].text).toContain('שאלה כללית');
   });
 
   it('says when the daily limit is reached', async () => {

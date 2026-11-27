@@ -6,7 +6,8 @@ export type AiMessage = { role: 'user' | 'model'; text: string };
 const formId = z.string().refine((id) => FORMS.some((f) => f.id === id), 'טופס לא מוכר');
 
 export const AiAsk = z.object({
-  formId,
+  // none: a general question
+  formId: formId.optional(),
   messages: z
     .array(z.object({ role: z.enum(['user', 'model']), text: z.string().trim().min(1).max(4000) }))
     .min(1)

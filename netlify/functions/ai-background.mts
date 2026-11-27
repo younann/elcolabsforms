@@ -16,7 +16,7 @@ export default async (req: Request) => {
   if (!/^[0-9a-f-]{36}$/i.test(id)) return new Response('bad request', { status: 400 });
   const b = await getBlob(key(id));
   if (!b) return new Response(null, { status: 202 });
-  const q = JSON.parse(Buffer.from(b.data).toString('utf8')) as { userId: string; formId: string; messages: AiMessage[]; status: string };
+  const q = JSON.parse(Buffer.from(b.data).toString('utf8')) as { userId: string; formId?: string; messages: AiMessage[]; status: string };
   if (q.status !== 'pending') return new Response(null, { status: 202 });
   let done: Record<string, unknown>;
   try {

@@ -1,4 +1,5 @@
 import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom';
+import { AskPage } from './components/AiChat';
 import { AuthProvider, RequireRole } from './lib/auth';
 import { AppShell } from './ui/AppShell';
 import { Toaster } from './ui/toast';
@@ -47,6 +48,7 @@ export const router = createBrowserRouter([
           { path: 'fill/:id', element: <Fill /> },
           { path: 'submissions/:id', element: <SubmissionView /> },
           { path: 'profile', element: <Profile /> },
+          { path: 'ask', element: <AskPage /> },
           { path: 'jobs/new', element: <JobNew /> },
           { path: 'jobs/:id', element: <JobPage /> },
           {

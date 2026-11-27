@@ -1,4 +1,4 @@
-// AI chat: Gemini answers from the form's standards, web search as backup
+// AI chat: Gemini answers from the form's standards; web search when enabled
 import { getForm } from '../shared/forms';
 import { certTemplate } from '../shared/certificates';
 import type { AiMessage } from '../shared/ai';
@@ -6,7 +6,10 @@ import { getBlob } from './blobs';
 import { listStandards, stdKey, updateStandard, type GeminiFile, type Standard } from './standards';
 
 const BASE = 'https://generativelanguage.googleapis.com';
-const model = () => process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+// google retires models; a busy or retired one falls through to the next
+const models = () => (process.env.GEMINI_MODEL ? [process.env.GEMINI_MODEL] : ['gemini-3.5-flash', 'gemini-flash-lite-latest']);
+// free keys get no search quota
+const searchOn = () => process.env.GEMINI_SEARCH === '1';
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export class AiError extends Error {
@@ -26,19 +29,22 @@ async function fail(r: Response): Promise<never> {
 }
 
 /** Instructions: who asks, which form and standard, the form's checks. */
-export function systemPrompt(formId: string, docs: string[]): string {
-  const def = getForm(formId);
-  const standard = certTemplate(formId)?.standard ?? '';
-  const checks = def.sections
+export function systemPrompt(formId: string | undefined, docs: string[], search = false): string {
+  const def = formId ? getForm(formId) : null;
+  const standard = formId ? (certTemplate(formId)?.standard ?? '') : '';
+  const checks = (def?.sections ?? [])
     .flatMap((s) => s.fields)
     .flatMap((f) => (f.type === 'check' ? [`${f.clause ? `${f.clause} ` : ''}${f.text}`] : []))
     .join('\n')
     .slice(0, 8000);
   return [
-    'אתה עוזר לבודקים של מעבדה לבדיקות מערכות גילוי וכיבוי אש בישראל.',
-    `סוג הטופס: ${def.title}${standard ? `. התקן: ${standard}` : ''}.`,
-    docs.length ? `מסמכי התקן המצורפים: ${docs.join(', ')}. ענה קודם כול לפיהם וציין שם מסמך ומספר סעיף או עמוד.` : 'לא צורפו מסמכי תקן לסוג טופס זה.',
-    'אם התשובה לא נמצאת במסמכים, חפש באינטרנט ואמור במפורש שהתשובה אינה מהמסמכים. אל תמציא מספרי סעיפים. אם אינך בטוח, אמור זאת.',
+    'אתה עוזר לצוות של מעבדה לבדיקות מערכות גילוי וכיבוי אש בישראל.',
+    def ? `סוג הטופס: ${def.title}${standard ? `. התקן: ${standard}` : ''}.` : 'שאלה כללית, לא על טופס מסוים.',
+    docs.length ? `מסמכי התקן המצורפים: ${docs.join(', ')}. ענה קודם כול לפיהם וציין שם מסמך ומספר סעיף או עמוד.` : 'לא צורפו מסמכי תקן.',
+    search
+      ? 'אם התשובה לא נמצאת במסמכים, חפש באינטרנט ואמור במפורש שהתשובה אינה מהמסמכים.'
+      : 'אם התשובה לא נמצאת במסמכים, ענה מהידע הכללי שלך ואמור במפורש שהתשובה אינה מהמסמכים.',
+    'אל תמציא מספרי סעיפים. אם אינך בטוח, אמור זאת.',
     'ענה בעברית, קצר וברור.',
     checks && `בדיקות הטופס:\n${checks}`,
   ]
@@ -46,13 +52,19 @@ export function systemPrompt(formId: string, docs: string[]): string {
     .join('\n');
 }
 
-export function buildRequest(o: { system: string; files: GeminiFile[]; messages: AiMessage[]; search: boolean }) {
+export function buildRequest(o: { system: string; files: GeminiFile[]; messages: AiMessage[]; search: boolean; model?: string }) {
   const contents = o.messages.map((m, i) => ({
     role: m.role,
     // standards ride on the first question
     parts: [...(i === 0 ? o.files.map((f) => ({ file_data: { mime_type: 'application/pdf', file_uri: f.uri } })) : []), { text: m.text }],
   }));
-  return { system_instruction: { parts: [{ text: o.system }] }, contents, ...(o.search ? { tools: [{ google_search: {} }] } : {}) };
+  return {
+    system_instruction: { parts: [{ text: o.system }] },
+    contents,
+    ...(o.search ? { tools: [{ google_search: {} }] } : {}),
+    // full thinking takes 20s+; low answers in ~5s
+    ...(o.model && !o.model.includes('lite') ? { generationConfig: { thinkingConfig: { thinkingLevel: 'low' } } } : {}),
+  };
 }
 
 type GenResponse = {
@@ -112,30 +124,39 @@ async function geminiFile(key: string, s: Standard): Promise<GeminiFile | null> 
   return g;
 }
 
-export async function askGemini(formId: string, messages: AiMessage[]) {
+export async function askGemini(formId: string | undefined, messages: AiMessage[]) {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new AiError(503, 'עוזר ה-AI עדיין לא הוגדר');
-  const stds = (await listStandards()).filter((s) => s.formIds.includes(formId));
+  // general questions carry no pdfs: all standards together are too big
+  const stds = formId ? (await listStandards()).filter((s) => s.formIds.includes(formId)) : [];
   const files: GeminiFile[] = [];
   for (const s of stds) {
     const f = await geminiFile(key, s);
     if (f) files.push(f);
   }
-  const system = systemPrompt(formId, stds.map((s) => s.name));
-  const call = (search: boolean) =>
-    fetch(`${BASE}/v1beta/models/${model()}:generateContent`, {
+  // a hung model counts as busy
+  const call = (model: string, search: boolean) =>
+    fetch(`${BASE}/v1beta/models/${model}:generateContent`, {
       method: 'POST',
       headers: { 'x-goog-api-key': key, 'content-type': 'application/json' },
-      body: JSON.stringify(buildRequest({ system, files, messages, search })),
+      body: JSON.stringify(buildRequest({ system: systemPrompt(formId, stds.map((s) => s.name), search), files, messages, search, model })),
+      signal: AbortSignal.timeout(45_000),
+    }).catch((e) => {
+      console.warn('gemini call failed', model, String(e));
+      return new Response('{}', { status: 503 });
     });
-  let r = await call(true);
-  // free tier may not allow search: answer from the standards alone
-  if (!r.ok && (r.status === 400 || r.status === 403 || r.status === 429)) {
-    console.warn('gemini search refused', r.status, (await r.text().catch(() => '')).slice(0, 300));
-    r = await call(false);
+  let r: Response | null = null;
+  for (const model of models()) {
+    r = await call(model, searchOn());
+    if (!r.ok && searchOn() && [400, 403, 429].includes(r.status)) {
+      console.warn('gemini search refused', model, r.status, (await r.text().catch(() => '')).slice(0, 300));
+      r = await call(model, false);
+    }
+    if (r.ok || ![404, 500, 503].includes(r.status)) break;
+    console.warn('gemini model unavailable', model, r.status, (await r.text().catch(() => '')).slice(0, 300));
   }
-  if (!r.ok) await fail(r);
-  const out = parseAnswer((await r.json()) as GenResponse);
+  if (!r!.ok) await fail(r!);
+  const out = parseAnswer((await r!.json()) as GenResponse);
   if (!out.text) throw new AiError(502, 'לא התקבלה תשובה. נסו לנסח אחרת');
   return out;
 }

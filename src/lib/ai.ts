@@ -7,7 +7,7 @@ export type AiAnswer = { text: string; sources: { title: string; uri: string }[]
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /** Asks, then waits for the background answer. */
-export async function askAi(formId: string, messages: AiMessage[]): Promise<AiAnswer> {
+export async function askAi(formId: string | undefined, messages: AiMessage[]): Promise<AiAnswer> {
   const { id } = await api<{ id: string }>('/api/ai', { method: 'POST', json: { formId, messages } });
   for (let i = 0; i < 80; i++) {
     await sleep(1500);

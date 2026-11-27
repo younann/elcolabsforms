@@ -18,7 +18,7 @@ test('admin uploads a standard in parts; inspectors read it but cannot manage; c
   const pdf = Buffer.concat([Buffer.from('%PDF-1.4\n'), Buffer.alloc(7 * 1024 * 1024, 32)]);
   const name = `תקן בדיקה ${tag}`;
   await login(page.request, ADMIN_USER, ADMIN_PASS);
-  await page.goto('/admin/settings');
+  await page.goto('/admin/settings?tab=standards');
   await page.getByTestId('standard-input').setInputFiles({ name: 'std.pdf', mimeType: 'application/pdf', buffer: pdf });
   await page.getByLabel('שם התקן').fill(name);
   await page.getByRole('dialog').getByText('גז', { exact: false }).first().click();
@@ -45,19 +45,41 @@ test('admin uploads a standard in parts; inspectors read it but cannot manage; c
   expect((await page.request.put(`/api/standards/${bad}/part?n=0`, { data: Buffer.from('hello'), headers: { 'content-type': 'application/octet-stream' } })).ok()).toBe(true);
   expect((await page.request.post('/api/standards', { data: { id: bad, name: 'x', formIds: [], parts: 1 } })).status()).toBe(400);
 
-  // chat: answers when a key is set, otherwise says it is not set up
+  // admin deletes it; the fake pdf never reaches the AI
+  expect((await page.request.delete(`/api/standards/${std.id}`)).ok()).toBe(true);
+  expect((await page.request.get(`/api/standards/${std.id}/pdf`)).status()).toBe(404);
+
+  // answered when a key is set, otherwise says it is not set up
+  const answered = async (p: typeof insp, question: string) => {
+    const chat = p.getByTestId('ai-chat');
+    await p.getByLabel('השאלה').fill(question);
+    await p.getByTestId('ai-send').click();
+    await expect(chat.getByText(question)).toBeVisible();
+    const last = chat.locator('div.self-end').last();
+    await expect(last).not.toHaveText('חושב…', { timeout: 90_000 });
+    if (process.env.GEMINI_API_KEY) await expect(last).not.toHaveClass(/bg-danger-soft/);
+    else await expect(last).toHaveText('עוזר ה-AI עדיין לא הוגדר');
+  };
+
+  // inside a form
   const job = await createJob(inspectorId, ['gas']);
   await insp.goto(`/fill/${job.formIds[0]}`);
   await insp.getByTestId('ai-open').click();
-  await insp.getByLabel('השאלה').fill('מה בודקים בבדיקת אטימות החלל?');
-  await insp.getByTestId('ai-send').click();
-  const chat = insp.getByTestId('ai-chat');
-  await expect(chat.getByText('מה בודקים בבדיקת אטימות החלל?')).toBeVisible();
-  await expect(chat.locator('div.self-end').last()).not.toHaveText('חושב…', { timeout: 90_000 });
-  if (!process.env.GEMINI_API_KEY) await expect(chat.getByText('עוזר ה-AI עדיין לא הוגדר')).toBeVisible();
+  await answered(insp, 'מה בודקים בבדיקת אטימות החלל?');
+
+  // general page from the menu
+  await insp.goto('/');
+  await insp.getByRole('link', { name: 'שאל את ה-AI' }).first().click();
+  await expect(insp).toHaveURL(/\/ask$/);
+  await answered(insp, 'מה ההבדל בין גלאי עשן לגלאי חום?');
   await ctx.close();
 
-  // admin deletes it
-  expect((await page.request.delete(`/api/standards/${std.id}`)).ok()).toBe(true);
-  expect((await page.request.get(`/api/standards/${std.id}/pdf`)).status()).toBe(404);
+  // admin has it too, under settings tabs
+  await page.goto('/ask');
+  await expect(page.getByTestId('ai-topic')).toBeVisible();
+  await page.goto('/admin/settings');
+  await expect(page.getByTestId('standards')).toHaveCount(0);
+  await page.getByRole('radio', { name: 'תקנים' }).or(page.getByRole('button', { name: 'תקנים' })).first().click();
+  await expect(page).toHaveURL(/tab=standards/);
+  await expect(page.getByTestId('standards')).toBeVisible();
 });

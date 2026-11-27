@@ -10,6 +10,7 @@ import {
   GearSix,
   House,
   SignOut,
+  Sparkle,
   UserCircle,
   UsersThree,
   type IconProps,
@@ -34,10 +35,12 @@ type Tab = {
 const TABS: Record<Role, Tab[]> = {
   inspector: [
     { to: '/', label: 'הבית', Icon: House, end: true },
+    { to: '/ask', label: 'שאל את ה-AI', short: 'AI', Icon: Sparkle },
     { to: '/profile', label: 'פרופיל', Icon: UserCircle },
   ],
   engineer: [
     { to: '/', label: 'הבית', Icon: House, end: true },
+    { to: '/ask', label: 'שאל את ה-AI', short: 'AI', Icon: Sparkle },
     { to: '/profile', label: 'פרופיל', Icon: UserCircle },
   ],
   admin: [
@@ -47,6 +50,7 @@ const TABS: Record<Role, Tab[]> = {
     { to: '/admin/calendar', label: 'יומן', Icon: CalendarDots },
     { to: '/admin/clients', label: 'לקוחות', Icon: AddressBook, more: true },
     { to: '/admin/users', label: 'משתמשים', Icon: UsersThree, more: true },
+    { to: '/ask', label: 'שאל את ה-AI', Icon: Sparkle, more: true },
     { to: '/admin/settings', label: 'הגדרות', Icon: GearSix, more: true },
     { to: '/profile', label: 'פרופיל', Icon: UserCircle, more: true },
   ],

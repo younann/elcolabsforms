@@ -134,7 +134,7 @@ describe('app shell', () => {
     expect(labels).toEqual(['הבית', 'עבודות', 'טפסים', 'יומן', 'עוד']);
     // desktop side nav lists every item
     const side = within(navs[0]).getAllByRole('link').map((a) => a.textContent);
-    expect(side).toEqual(['הבית', 'עבודות', 'כל הטפסים', 'יומן', 'לקוחות', 'משתמשים', 'הגדרות', 'פרופיל']);
+    expect(side).toEqual(['הבית', 'עבודות', 'כל הטפסים', 'יומן', 'לקוחות', 'משתמשים', 'שאל את ה-AI', 'הגדרות', 'פרופיל']);
   });
 
   test('task pages hide the bottom tab bar', () => {

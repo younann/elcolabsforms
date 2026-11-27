@@ -3,14 +3,26 @@ import { FileXls, ImageSquare, UploadSimple, WarningOctagon } from '@phosphor-ic
 import { api, ApiError } from '../../lib/api';
 import { useLoad } from '../../lib/useLoad';
 import { compressImage } from '../../lib/image';
-import { Button, EmptyState, TextArea, TextField, toast } from '../../ui';
+import { useSearchParams } from 'react-router-dom';
+import { Button, EmptyState, Segmented, TextArea, TextField, toast } from '../../ui';
 import { RequiredFieldsCard } from './RequiredFields';
 import { StandardsCard } from './Standards';
 import type { RequiredOverrides } from '../../../shared/forms/required';
 
+const TABS = [
+  { value: 'company', label: 'פרטים' },
+  { value: 'required', label: 'שדות חובה' },
+  { value: 'standards', label: 'תקנים' },
+  { value: 'export', label: 'ייצוא' },
+] as const;
+type TabId = (typeof TABS)[number]['value'];
+
 type S = { recipientEmail: string; companyName: string; companyDetails: string; hasStamp: boolean; requiredOverrides?: RequiredOverrides };
 
 export function Settings() {
+  // tab in the url: back and refresh keep it
+  const [params, setParams] = useSearchParams();
+  const tab: TabId = TABS.find((t) => t.value === params.get('tab'))?.value ?? 'company';
   const { data, error, reload } = useLoad(() => api<{ settings: S }>('/api/settings').then((r) => r.settings), 'settings');
   if (error && !data) {
     return (
@@ -22,15 +34,20 @@ export function Settings() {
   return (
     <section className="max-w-2xl">
       <h1 className="text-[28px] leading-tight font-bold sm:text-[32px]">הגדרות</h1>
+      <Segmented label="אזור בהגדרות" className="mt-4" value={tab} onChange={(v) => setParams({ tab: v }, { replace: true })} options={[...TABS]} />
       {!data ? (
         <div aria-busy="true" aria-label="טוען" className="mt-6 h-96 rounded-box bg-surface shadow-[var(--shadow-card)]" />
       ) : (
         <>
-          <DetailsForm initial={data} />
-          <StampCard hasStamp={data.hasStamp} />
-          <RequiredFieldsCard initial={data.requiredOverrides ?? {}} />
-          <StandardsCard />
-          <ExportCard />
+          {tab === 'company' && (
+            <>
+              <DetailsForm initial={data} />
+              <StampCard hasStamp={data.hasStamp} />
+            </>
+          )}
+          {tab === 'required' && <RequiredFieldsCard initial={data.requiredOverrides ?? {}} />}
+          {tab === 'standards' && <StandardsCard />}
+          {tab === 'export' && <ExportCard />}
         </>
       )}
     </section>
