@@ -5,6 +5,7 @@ import { useLoad } from '../../lib/useLoad';
 import { compressImage } from '../../lib/image';
 import { Button, EmptyState, TextArea, TextField, toast } from '../../ui';
 import { RequiredFieldsCard } from './RequiredFields';
+import { StandardsCard } from './Standards';
 import type { RequiredOverrides } from '../../../shared/forms/required';
 
 type S = { recipientEmail: string; companyName: string; companyDetails: string; hasStamp: boolean; requiredOverrides?: RequiredOverrides };
@@ -28,6 +29,7 @@ export function Settings() {
           <DetailsForm initial={data} />
           <StampCard hasStamp={data.hasStamp} />
           <RequiredFieldsCard initial={data.requiredOverrides ?? {}} />
+          <StandardsCard />
           <ExportCard />
         </>
       )}

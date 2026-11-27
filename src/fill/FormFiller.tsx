@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { AiChat } from '../components/AiChat';
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { CheckCircle, CircleNotch, ListChecks, CloudSlash, Checks, ListBullets, PaperPlaneTilt, WarningCircle } from '@phosphor-icons/react';
 import { Banner, Button, Sheet, StatusBadge, cx, toast, type SubmissionStatus } from '../ui';
@@ -316,6 +317,9 @@ export function FormFiller({
             <div className="flex flex-wrap items-center gap-2">
               <StatusBadge status={submission.status} />
               {def.docNumber && <span className="text-[13px] text-muted tabular-nums">{def.docNumber}</span>}
+              <span className="ms-auto">
+                <AiChat formId={def.id} formName={def.shortTitle} />
+              </span>
             </div>
             <h1 className="mt-2 text-[22px] leading-tight font-semibold tracking-tight text-balance md:text-2xl">{def.title}</h1>
             {context && (
